@@ -14,7 +14,8 @@
     "eval:seed": "tsx --env-file=.env.local scripts/eval-seed.ts",
     "eval": "tsx --env-file=.env.local scripts/eval.ts",
     "assess": "tsx --env-file=.env.local scripts/assess.ts",
-    "tracking:push": "tsx --env-file=.env.local scripts/push-tracking.ts"
+    "tracking:push": "tsx --env-file=.env.local scripts/push-tracking.ts",
+    "demo:orders": "tsx --env-file=.env.local scripts/demo-orders.ts"
   },
   "dependencies": {
     "@paypal/agent-toolkit": "^1.11.0",
