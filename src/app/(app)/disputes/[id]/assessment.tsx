@@ -1,7 +1,7 @@
 import type { computeUrgency } from "@/lib/agent";
 import type { Decision } from "@/lib/dashboard";
 import type { ActionsMode } from "@/lib/respond";
-import { DRAFT_LABELS, formatAmount, LevelBadge, RECOMMENDATION, RecommendationBadge } from "../../_components/dispute-ui";
+import { DRAFT_LABELS, formatAmount, LevelBadge, RECOMMENDATION, RecommendationBadge } from "@/app/_components/dispute-ui";
 import { ReviewForm } from "./review";
 
 
@@ -106,6 +106,20 @@ export function AssessmentReport({
               <li key={alt.option}>
                 <span className="font-medium">{RECOMMENDATION[alt.option]?.label ?? alt.option}:</span>{" "}
                 <span className="text-zinc-600 dark:text-zinc-400">{alt.what_happens}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      {a.investigation && a.investigation.length > 0 && (
+        <Section title="What the agent checked">
+          <ul className="space-y-1.5">
+            {a.investigation.map((t, i) => (
+              <li key={i} className="flex gap-2">
+                <span className={t.ok ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"}>{t.ok ? "✓" : "–"}</span>
+                <span className={t.ok ? "" : "text-zinc-500 dark:text-zinc-400"}>{t.summary}</span>
+                <span className="ml-auto shrink-0 font-mono text-[11px] text-zinc-400">{t.tool}</span>
               </li>
             ))}
           </ul>

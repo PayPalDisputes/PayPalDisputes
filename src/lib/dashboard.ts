@@ -1,4 +1,6 @@
 import type { Assessment } from "@/lib/agent";
+import { getBuyerHistory, type BuyerHistory } from "@/lib/buyer-history";
+import { cache } from "react";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export type DisputeRow = {
@@ -27,51 +29,6 @@ export type ReportSummary = {
 };
 
 export type ListedDispute = DisputeRow & { report: ReportSummary | null };
-
-/** Every dispute with its seller's name and latest AI report, soonest seller deadline first. */
-export async function listDisputes(): Promise<ListedDispute[]> {
-  const db = supabaseAdmin();
-
-  const [disputes, sellers, decisions] = await Promise.all([
-    db
-      .from("disputes")
-      .select("id, seller_id, merchant_id, reason, status, lifecycle_stage, amount, currency, seller_response_due_at, paypal_updated_at")
-      .order("seller_response_due_at", { ascending: true, nullsFirst: false }),
-    db.from("sellers").select("id, name"),
-    db
-      .from("decisions")
-      .select("dispute_id, status, risk, settle_amount, dispute_updated_at, recommendation:assessment->>recommendation")
-      .not("assessment", "is", null)
-      .order("created_at", { ascending: false }),
-  ]);
-  if (disputes.error) throw disputes.error;
-  if (sellers.error) throw sellers.error;
-  if (decisions.error) throw decisions.error;
-
-  // Rows are newest first, so the first one seen per dispute is its current report.
-  const latest = new Map<string, (typeof decisions.data)[number]>();
-  for (const r of decisions.data) if (!latest.has(r.dispute_id)) latest.set(r.dispute_id, r);
-
-  const now = Date.now();
-  const sellerNames = new Map(sellers.data.map((s) => [s.id, s.name as string]));
-
-  return disputes.data.map((d) => ({
-    id: d.id,
-    sellerName: d.seller_id ? (sellerNames.get(d.seller_id) ?? null) : null,
-    merchantId: d.merchant_id,
-    reason: d.reason,
-    status: d.status,
-    stage: d.lifecycle_stage,
-    amount: d.amount,
-    currency: d.currency,
-    dueAt: d.seller_response_due_at,
-    daysLeft: d.seller_response_due_at
-      ? Math.ceil((new Date(d.seller_response_due_at).getTime() - now) / 86_400_000)
-      : null,
-    updatedAt: d.paypal_updated_at,
-    report: reportSummary(latest.get(d.id), d.paypal_updated_at),
-  }));
-}
 
 function reportSummary(
   r: { status: string; risk: string | null; settle_amount: number | null; dispute_updated_at: string | null; recommendation: unknown } | undefined,
@@ -141,6 +98,10 @@ export type OrderEvidence = {
   trackingEvents: { at: string; location?: string; description: string }[];
   notes: string | null;
   simulated: boolean;
+  /** What we last uploaded to PayPal's tracking for this transaction (SHIPPED/DELIVERED), if anything. */
+  payPalTrackingStatus: string | null;
+  payPalTrackingUploadedAt: string | null;
+  payPalTrackingError: string | null;
 };
 
 /** The agent's latest report on a dispute (`decisions` table). */
@@ -163,6 +124,7 @@ export type DisputeDetail = DisputeRow & {
   raw: PayPalDisputeDetail;
   order: OrderEvidence | null;
   decision: Decision | null;
+  buyerHistory: BuyerHistory | null;
 };
 
 /** The newest decision for a dispute, or null if the agent hasn't assessed it. */
@@ -238,6 +200,9 @@ export async function getOrder(paypalTransactionId: string | undefined): Promise
     trackingEvents: o.tracking_events ?? [],
     notes: o.notes,
     simulated: o.simulated,
+    payPalTrackingStatus: o.paypal_tracking_status ?? null,
+    payPalTrackingUploadedAt: o.paypal_tracking_uploaded_at ?? null,
+    payPalTrackingError: o.paypal_tracking_error ?? null,
   };
 }
 
@@ -254,9 +219,10 @@ export async function getDisputeDetail(id: string): Promise<DisputeDetail | null
 
   const seller = d.sellers as { name: string } | { name: string }[] | null;
   const raw = d.raw as PayPalDisputeDetail;
-  const [order, decision] = await Promise.all([
+  const [order, decision, buyerHistory] = await Promise.all([
     getOrder(raw.disputed_transactions?.[0]?.seller_transaction_id),
     getLatestDecision(d.id, d.paypal_updated_at),
+    getBuyerHistory(d.id),
   ]);
   return {
     id: d.id,
@@ -275,5 +241,74 @@ export async function getDisputeDetail(id: string): Promise<DisputeDetail | null
     raw,
     order,
     decision,
+    buyerHistory,
   };
 }
+
+/** A dispute as the dashboard pages show it: the list row plus buyer, outcome and the latest AI report. */
+export type HomeDispute = ListedDispute & {
+  sellerId: string | null;
+  buyerName: string | null;
+  /** PayPal's outcome code once resolved, e.g. RESOLVED_SELLER_FAVOUR. */
+  outcome: string | null;
+};
+
+/** Everything the dashboard home needs, optionally narrowed to one seller. */
+export async function getHomeData(sellerId?: string): Promise<{ disputes: HomeDispute[]; sellers: { id: string; name: string }[] }> {
+  const db = supabaseAdmin();
+  let disputesQuery = db
+    .from("disputes")
+    .select(
+      "id, seller_id, merchant_id, reason, status, lifecycle_stage, amount, currency, seller_response_due_at, paypal_updated_at, buyer:raw->disputed_transactions->0->buyer->>name, outcome:raw->dispute_outcome->>outcome_code",
+    )
+    .order("paypal_updated_at", { ascending: false, nullsFirst: false });
+  if (sellerId) disputesQuery = disputesQuery.eq("seller_id", sellerId);
+
+  const [disputes, sellers, decisions] = await Promise.all([
+    disputesQuery,
+    db.from("sellers").select("id, name").order("name"),
+    db
+      .from("decisions")
+      .select("dispute_id, status, risk, settle_amount, dispute_updated_at, recommendation:assessment->>recommendation")
+      .not("assessment", "is", null)
+      .order("created_at", { ascending: false }),
+  ]);
+  if (disputes.error) throw disputes.error;
+  if (sellers.error) throw sellers.error;
+  if (decisions.error) throw decisions.error;
+
+  // Newest decision per dispute (rows are already newest first).
+  const latest = new Map<string, (typeof decisions.data)[number]>();
+  for (const d of decisions.data) if (!latest.has(d.dispute_id)) latest.set(d.dispute_id, d);
+
+  const now = Date.now();
+  const sellerNames = new Map(sellers.data.map((s) => [s.id, s.name as string]));
+
+  return {
+    sellers: sellers.data as { id: string; name: string }[],
+    disputes: disputes.data.map((d) => {
+      return {
+        id: d.id,
+        sellerId: d.seller_id,
+        sellerName: d.seller_id ? (sellerNames.get(d.seller_id) ?? null) : null,
+        merchantId: d.merchant_id,
+        reason: d.reason,
+        status: d.status,
+        stage: d.lifecycle_stage,
+        amount: d.amount,
+        currency: d.currency,
+        dueAt: d.seller_response_due_at,
+        daysLeft: d.seller_response_due_at
+          ? Math.ceil((new Date(d.seller_response_due_at).getTime() - now) / 86_400_000)
+          : null,
+        updatedAt: d.paypal_updated_at,
+        buyerName: (d.buyer as string | null) ?? null,
+        outcome: (d.outcome as string | null) ?? null,
+        report: reportSummary(latest.get(d.id), d.paypal_updated_at),
+      };
+    }),
+  };
+}
+
+/** Per-request memo so the app layout and the page can both ask without querying twice. */
+export const getHomeDataCached = cache(getHomeData);

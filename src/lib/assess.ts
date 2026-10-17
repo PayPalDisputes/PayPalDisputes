@@ -1,4 +1,6 @@
 import { analyzeDispute, PROMPT_VERSION, type Assessment } from "@/lib/agent";
+import { getBuyerHistory } from "@/lib/buyer-history";
+import { liveTools } from "@/lib/investigate";
 import { getOrder, type PayPalDisputeDetail } from "@/lib/dashboard";
 import { supabaseAdmin } from "@/lib/supabase";
 
@@ -52,12 +54,15 @@ export async function assessDispute(disputeId: string, { force = false } = {}): 
   }
 
   const raw = dispute.raw as PayPalDisputeDetail & Record<string, unknown>;
-  const order = await getOrder(raw.disputed_transactions?.[0]?.seller_transaction_id);
-  const { assessment: a, model, inputTokens, outputTokens } = await analyzeDispute({
-    asOf: new Date().toISOString(),
-    dispute: raw,
-    order,
-  });
+  const asOf = new Date().toISOString();
+  const [order, buyerHistory] = await Promise.all([
+    getOrder(raw.disputed_transactions?.[0]?.seller_transaction_id),
+    getBuyerHistory(disputeId, asOf),
+  ]);
+  const { assessment: a, model, inputTokens, outputTokens } = await analyzeDispute(
+    { asOf, dispute: raw, order, buyerHistory },
+    { tools: liveTools() },
+  );
 
   const { data: inserted, error: insertError } = await db
     .from("decisions")

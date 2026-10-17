@@ -1,8 +1,41 @@
 @import "tailwindcss";
 
+/* Light-only for now: `dark:` utilities apply only under a .dark class, which nothing sets yet. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* ---- Marketing design tokens (light only; warm cream + brown ink) ---- */
+  --mk-bg: #fdfcfb;          /* card / surface */
+  --mk-bg-subtle: #f7f5f3;   /* page canvas */
+  --mk-bg-muted: #efebe7;
+  --mk-bg-inset: #e8e3de;
+
+  --mk-fg: #2a2522;          /* strongest text, primary button */
+  --mk-fg-heading: #37322f;  /* headings */
+  --mk-fg-body: #605a57;     /* paragraphs */
+  --mk-fg-muted: #8f8681;    /* labels, captions */
+
+  --mk-line: rgba(55, 50, 47, 0.12);
+  --mk-line-subtle: rgba(55, 50, 47, 0.07);
+  --mk-line-strong: rgba(55, 50, 47, 0.2);
+
+  --mk-accent: #c2623a;      /* copper: used sparingly for money + highlights */
+
+  --mk-ok: #2f7d4f;
+  --mk-ok-bg: #ecf6ef;
+  --mk-warn: #a2620d;
+  --mk-warn-bg: #fbf3e4;
+  --mk-bad: #b4372f;
+  --mk-bad-bg: #fbecea;
+  --mk-info: #3a5fa8;
+  --mk-info-bg: #edf1fa;
+
+  --mk-shadow-card: 0 1px 2px rgba(28, 25, 20, 0.04), 0 8px 30px rgba(28, 25, 20, 0.04);
+  --mk-shadow-float: 0 1px 2px rgba(28, 25, 20, 0.06), 0 12px 40px -8px rgba(28, 25, 20, 0.12);
+  --mk-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
@@ -10,6 +43,32 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-canvas: var(--mk-bg);
+  --color-subtle: var(--mk-bg-subtle);
+  --color-muted: var(--mk-bg-muted);
+  --color-inset: var(--mk-bg-inset);
+  --color-fg: var(--mk-fg);
+  --color-fg-heading: var(--mk-fg-heading);
+  --color-fg-body: var(--mk-fg-body);
+  --color-fg-muted: var(--mk-fg-muted);
+  --color-line: var(--mk-line);
+  --color-line-subtle: var(--mk-line-subtle);
+  --color-line-strong: var(--mk-line-strong);
+  --color-accent: var(--mk-accent);
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --color-ok: var(--mk-ok);
+  --color-ok-bg: var(--mk-ok-bg);
+  --color-warn: var(--mk-warn);
+  --color-warn-bg: var(--mk-warn-bg);
+  --color-bad: var(--mk-bad);
+  --color-bad-bg: var(--mk-bad-bg);
+  --color-info: var(--mk-info);
+  --color-info-bg: var(--mk-info-bg);
+
+  --shadow-card: var(--mk-shadow-card);
+  --shadow-float: var(--mk-shadow-float);
+  --ease-out-soft: var(--mk-ease);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +81,197 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* ---- Type scale (marketing) ---- */
+@utility t-display {
+  font-family: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  font-size: clamp(3rem, 1.7rem + 4.8vw, 5.25rem);
+  line-height: 1;
+  letter-spacing: -0.015em;
+  font-weight: 400;
+  color: var(--mk-fg-heading);
+  text-wrap: balance;
+}
+@utility t-h1 {
+  font-family: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  font-size: clamp(2.6rem, 1.7rem + 3vw, 4.25rem);
+  line-height: 1.02;
+  letter-spacing: -0.012em;
+  font-weight: 400;
+  color: var(--mk-fg-heading);
+  text-wrap: balance;
+}
+@utility t-h2 {
+  font-family: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  font-size: clamp(2.25rem, 1.6rem + 2vw, 3.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+  color: var(--mk-fg-heading);
+  text-wrap: balance;
+}
+@utility t-h3 {
+  font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--mk-fg-heading);
+}
+@utility t-body-lg {
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  line-height: 1.55;
+  color: var(--mk-fg-body);
+  text-wrap: pretty;
+}
+@utility t-body {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--mk-fg-body);
+  text-wrap: pretty;
+}
+@utility t-small {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--mk-fg-body);
+}
+@utility t-label {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--mk-fg-muted);
+}
+@utility t-eyebrow {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mk-fg-muted);
+}
+
+/* ---- Grid background: CSS-only, faded at the edges ---- */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, var(--mk-line-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--mk-line-subtle) 1px, transparent 1px);
+  background-size: 44px 44px;
+  background-position: center top;
+  @media (width >= 48rem) {
+    background-size: 64px 64px;
+  }
+}
+
+/* ---- Diagonal hatch (gutter strips, CTA band) ---- */
+@utility bg-hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--mk-line) 0 1px,
+    transparent 1px 7px
+  );
+}
+
+/* ---- Motion ---- */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+  transition:
+    opacity 650ms var(--mk-ease),
+    transform 650ms var(--mk-ease);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal[data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes mk-fade-up {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to { opacity: 1; transform: none; }
+}
+.animate-fade-up {
+  animation: mk-fade-up 320ms var(--mk-ease) both;
+}
+
+@keyframes mk-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.animate-marquee {
+  animation: mk-marquee 60s linear infinite;
+}
+
+@keyframes mk-slide-y {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, -50%, 0); }
+}
+.animate-slide-y {
+  animation: mk-slide-y 28s linear infinite;
+}
+
+@keyframes mk-spin {
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: mk-spin 1.1s linear infinite;
+}
+
+@keyframes mk-pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(47, 125, 79, 0.35); }
+  50% { box-shadow: 0 0 0 4px rgba(47, 125, 79, 0); }
+}
+.animate-pulse-dot {
+  animation: mk-pulse-dot 2.4s ease-in-out infinite;
+}
+
+@keyframes mk-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: mk-fade-in 200ms ease-out both;
+}
+
+@keyframes mk-slide-in-right {
+  from { transform: translate3d(24px, 0, 0); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.animate-slide-in-right {
+  animation: mk-slide-in-right 260ms var(--mk-ease) both;
+}
+
+.rolling-strip {
+  transition: transform 3200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes mk-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.animate-progress {
+  transform-origin: left;
+  animation: mk-progress var(--progress-duration, 6s) linear both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .animate-fade-up,
+  .animate-marquee,
+  .animate-slide-y,
+  .animate-spin-slow,
+  .animate-pulse-dot,
+  .animate-progress,
+  .animate-fade-in,
+  .animate-slide-in-right {
+    animation: none;
+  }
+  .rolling-strip {
+    transition: none;
+  }
 }

@@ -2,7 +2,7 @@
 
 import { useActionState, useSyncExternalStore } from "react";
 import type { PayPalAction } from "@/lib/agent";
-import { DRAFT_LABELS } from "../../_components/dispute-ui";
+import { DRAFT_LABELS } from "@/app/_components/dispute-ui";
 import { approveAction, rejectAction, type ReviewState } from "./actions";
 
 type Draft = { action: PayPalAction; recipient: "buyer" | "paypal"; text: string };

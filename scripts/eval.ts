@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { analyzeDispute, PROMPT_VERSION, type Assessment, type DisputeInput } from "@/lib/agent";
+import { fixtureTools } from "@/lib/investigate";
 import { MODELS } from "@/lib/openai";
 import { supabaseAdmin } from "@/lib/supabase";
 
@@ -48,6 +49,12 @@ function draftProblems(c: CaseRow, a: Assessment): string[] {
   const links = (c.input.dispute as { links?: { rel: string; method: string }[] }).links ?? [];
   const allowed = new Set(links.filter((l) => l.method === "POST").map((l) => l.rel));
   const problems = a.drafts.filter((d) => !allowed.has(d.action)).map((d) => `${d.action} isn't allowed on this dispute`);
+  for (const d of a.drafts) {
+    if (/\b(fraud\w*|scam\w*)\b/i.test(d.text)) problems.push(`${d.action} draft calls the buyer a fraud/scam`);
+    if (d.recipient === "buyer" && /other disputes?|previous disputes?|dispute history/i.test(d.text)) {
+      problems.push(`${d.action} draft (read by the buyer) mentions their dispute history`);
+    }
+  }
   if (!a.drafts.some((d) => REQUIRED_ACTIONS[a.recommendation].includes(d.action))) {
     problems.push(`no ${REQUIRED_ACTIONS[a.recommendation].join(" or ")} draft for "${a.recommendation}"`);
   }
@@ -62,7 +69,7 @@ function arg(name: string) {
 async function runCase(c: CaseRow, model: string): Promise<Result> {
   const started = Date.now();
   try {
-    const { assessment, inputTokens, outputTokens } = await analyzeDispute(c.input, model);
+    const { assessment, inputTokens, outputTokens } = await analyzeDispute(c.input, { model, tools: fixtureTools(c.input) });
     const recommendationOk = [c.expected_recommendation, ...c.acceptable_recommendations].includes(assessment.recommendation);
     const urgencyOk = assessment.urgency === c.expected_urgency;
     const riskOk = assessment.risk === c.expected_risk;
@@ -117,6 +124,7 @@ function printReport(results: Result[], model: string) {
           `risk ${cell(r.riskOk, a.risk, r.c.expected_risk)}`,
           `conf ${a.confidence.toFixed(2)}`,
           `drafts ${a.drafts.map((d) => `${d.action}→${d.recipient}`).join(", ")}`,
+          `looked up ${(a.investigation ?? []).map((t) => t.tool).join(", ") || "nothing"}`,
         ].join("   "),
     );
     for (const p of r.draftProblems) console.log(`    ! draft: ${p}`);
@@ -136,6 +144,7 @@ Recommendation        ${pct(count((r) => r.recommendationOk), n)}
 Urgency               ${pct(count((r) => r.urgencyOk), n)}
 Risk                  ${pct(count((r) => r.riskOk), n)}
 Drafts ok             ${pct(count((r) => !!r.assessment && r.draftProblems.length === 0), n)}
+Checked store order   ${pct(count((r) => !!r.assessment?.investigation?.some((t) => t.tool === "get_store_order")), n)}
 Avg confidence        ${avgConf(answered.filter((r) => r.recommendationOk))} when right · ${avgConf(answered.filter((r) => !r.recommendationOk))} when wrong
 Errors                ${count((r) => r.error !== null)}
 Tokens                ${tokensIn} in · ${tokensOut} out`);

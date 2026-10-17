@@ -1,4 +1,5 @@
 import type { DisputeInput } from "@/lib/agent";
+import { buyerSignal, type BuyerHistory } from "@/lib/buyer-history";
 import type { OrderEvidence } from "@/lib/dashboard";
 
 // The eval set: made-up disputes whose right answers we already know.
@@ -89,6 +90,9 @@ function order(o: Partial<OrderEvidence>): OrderEvidence {
     trackingEvents: [],
     notes: null,
     simulated: true,
+    payPalTrackingStatus: null,
+    payPalTrackingUploadedAt: null,
+    payPalTrackingError: null,
     ...o,
   };
 }
@@ -99,15 +103,78 @@ const delivered = (signed: boolean) => [
   { at: daysFromAsOf(-9), location: "Springfield, IL", description: signed ? "Delivered, signed for by recipient" : "Delivered, left at front door" },
 ];
 
-const c = (x: Omit<EvalCase, "input"> & { dispute: DisputeSpec; order: OrderEvidence | null }): EvalCase => ({
+/** A buyer track record; the signal and summary follow the same rules as production. */
+function history(h: { disputes: number; last30: number; notReceivedDelivered: number; purchases: number | null }): BuyerHistory {
+  const otherDisputes = Array.from({ length: h.disputes }, (_, i) => ({
+    id: `PP-R-PAST-${i}`,
+    reason: i < h.notReceivedDelivered ? "MERCHANDISE_OR_SERVICE_NOT_RECEIVED" : "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    status: "RESOLVED",
+    openedAt: daysFromAsOf(i < h.last30 ? -5 - i : -60 - i),
+    deliveredParcel: i < h.notReceivedDelivered,
+  }));
+  const partial = {
+    buyerName: "Sam Buyer",
+    otherDisputes,
+    otherDisputesLast30Days: h.last30,
+    notReceivedOnDeliveredParcels: h.notReceivedDelivered,
+    recentPurchases: h.purchases,
+  };
+  const signal = buyerSignal(partial);
+  const summary =
+    signal === "possible_serial_disputer"
+      ? `Sam Buyer has opened ${h.disputes} other disputes with you (${h.last30} in the last 30 days), including ${h.notReceivedDelivered} "not received" claims on parcels marked delivered. That's an unusual pattern worth noting.`
+      : signal === "trusted_customer"
+        ? `Sam Buyer is a regular customer with no previous disputes. ${h.purchases} purchases from you in the last month.`
+        : `This is Sam Buyer's first dispute with you.`;
+  return { ...partial, signal, summary };
+}
+
+const c = (
+  x: Omit<EvalCase, "input"> & { dispute: DisputeSpec; order: OrderEvidence | null; buyerHistory?: BuyerHistory },
+): EvalCase => ({
   id: x.id,
   title: x.title,
-  input: { asOf: AS_OF, dispute: dispute(x.dispute), order: x.order },
+  input: { asOf: AS_OF, dispute: dispute(x.dispute), order: x.order, buyerHistory: x.buyerHistory },
   expected: x.expected,
   rationale: x.rationale,
 });
 
 export const CASES: EvalCase[] = [
+  // --- Buyer history: it informs, but never overrides the evidence. ---
+  c({
+    id: "history-serial-disputer-delivered-signed",
+    title: "Serial disputer, and the parcel was delivered with signature",
+    dispute: { id: "history-serial-disputer-delivered-signed", reason: "MERCHANDISE_OR_SERVICE_NOT_RECEIVED", amount: 75, daysLeft: 12, buyerMessage: "My order never arrived.", item: "Bluetooth speaker", sellerProtection: true },
+    order: order({ signatureConfirmed: true, trackingEvents: delivered(true) }),
+    buyerHistory: history({ disputes: 4, last30: 4, notReceivedDelivered: 3, purchases: null }),
+    expected: { recommendation: "fight", urgency: "low", risk: "low" },
+    rationale: "Strong evidence and a pattern of 'not received' claims on delivered parcels: fight, and the pattern can be noted to PayPal (never to the buyer).",
+  }),
+  c({
+    id: "history-serial-disputer-never-shipped",
+    title: "Serial disputer, but the seller never shipped",
+    dispute: { id: "history-serial-disputer-never-shipped", reason: "MERCHANDISE_OR_SERVICE_NOT_RECEIVED", amount: 40, daysLeft: 12, buyerMessage: "Nothing has arrived and tracking hasn't moved.", item: "Desk organiser", sellerProtection: true },
+    order: order({
+      shippingStatus: "LABEL_CREATED",
+      shippedAt: null,
+      deliveredAt: null,
+      trackingEvents: [{ at: daysFromAsOf(-10), location: "Columbus, OH", description: "Shipping label created, awaiting item" }],
+      notes: "Label was printed but the carrier never received the parcel.",
+    }),
+    buyerHistory: history({ disputes: 5, last30: 5, notReceivedDelivered: 3, purchases: null }),
+    expected: { recommendation: "refund", urgency: "low", risk: "high" },
+    rationale: "History must not override the evidence: with no proof of shipment the buyer is right this time.",
+  }),
+  c({
+    id: "history-trusted-customer-damaged",
+    title: "Trusted customer reports damage",
+    dispute: { id: "history-trusted-customer-damaged", reason: "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED", amount: 140, daysLeft: 7, buyerMessage: "The mirror arrived with a cracked frame. Photos attached.", item: "Wall mirror", sellerProtection: false },
+    order: order({ trackingEvents: delivered(false), notes: "Packed in a single box with bubble wrap; no insurance." }),
+    buyerHistory: history({ disputes: 0, last30: 0, notReceivedDelivered: 0, purchases: 9 }),
+    expected: { recommendation: "settle", alsoAcceptable: ["refund"], urgency: "medium", risk: "medium" },
+    rationale: "Credible damage claim from a loyal customer: settle or refund; definitely not fight.",
+  }),
+
   c({
     id: "inr-delivered-signed",
     title: "Not received, but delivered with signature to the PayPal address",

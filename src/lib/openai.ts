@@ -19,6 +19,6 @@ export function openai(): OpenAI {
  */
 export const MODELS = {
   cheap: process.env.OPENAI_MODEL_CHEAP || "gpt-5.4-nano",
-  smart: process.env.OPENAI_MODEL_SMART || "gpt-5.4-mini",
+  smart: process.env.OPENAI_MODEL_SMART || "gpt-6-luna", // 17/17 on eval v6 vs 94.1% for gpt-5.4-mini, ~6x cheaper
 } as const;
 export type ModelTier = keyof typeof MODELS;

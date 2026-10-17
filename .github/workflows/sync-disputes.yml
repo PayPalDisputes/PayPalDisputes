@@ -1,0 +1,26 @@
+# Pulls disputes from PayPal every 15 minutes by calling the live site's sync endpoint.
+# A backstop for webhooks, which the PayPal sandbox doesn't send for disputes.
+# Needs the repo secret CRON_SECRET, matching CRON_SECRET in Vercel production.
+name: Sync PayPal disputes
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: # "Run workflow" button for a manual sync
+
+concurrency:
+  group: sync-disputes
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Call /api/cron/sync
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 320 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            https://paypal-disputes-one.vercel.app/api/cron/sync
