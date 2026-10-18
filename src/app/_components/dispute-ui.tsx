@@ -46,6 +46,20 @@ export function LevelBadge({ name, level }: { name: string; level: Level }) {
   );
 }
 
+/** "Evidence pack (PDF)" link shown on evidence drafts; opens the preview in a new tab. */
+export function EvidencePackLink({ disputeId }: { disputeId: string }) {
+  return (
+    <a
+      href={`/api/disputes/${encodeURIComponent(disputeId)}/evidence-pack`}
+      target="_blank"
+      rel="noopener"
+      className="float-right font-medium text-sky-700 hover:underline dark:text-sky-400"
+    >
+      📎 Evidence pack (PDF)
+    </a>
+  );
+}
+
 /** What each agent draft does once sent, in seller-facing words. */
 export const DRAFT_LABELS: Record<PayPalAction, string> = {
   provide_evidence: "Submit evidence",

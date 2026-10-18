@@ -67,7 +67,15 @@ function buildTimeline(raw: PayPalDisputeDetail, currency: string | null): Timel
       at: e.date,
       actor: e.source === "SUBMITTED_BY_SELLER" ? "SELLER" : "BUYER",
       kind: "evidence",
-      text: [humanize(e.evidence_type), tracking, e.notes].filter(Boolean).join(" · "),
+      text: [
+        humanize(e.evidence_type),
+        tracking,
+        e.evidence_info?.refund_ids?.length ? `refund ${e.evidence_info.refund_ids.join(", ")}` : null,
+        e.documents?.length ? `📎 ${e.documents.map((doc) => doc.name).join(", ")}` : null,
+        e.notes,
+      ]
+        .filter(Boolean)
+        .join(" · "),
     });
   }
   return events.sort((a, b) => a.at.localeCompare(b.at));
@@ -225,6 +233,7 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
 
           <Card title="AI assessment">
             <AssessmentReport
+              disputeId={dispute.id}
               decision={dispute.decision}
               urgency={computeUrgency(raw as Parameters<typeof computeUrgency>[0], new Date().toISOString())}
               amount={dispute.amount}

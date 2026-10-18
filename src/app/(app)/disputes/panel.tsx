@@ -69,6 +69,7 @@ export function DisputePanel({
           <h3 className="mb-2 text-[12px] font-medium tracking-[0.04em] text-fg-muted uppercase">Recommendation</h3>
           <div className="rounded-xl border border-line p-4">
             <AssessmentReport
+              disputeId={dispute.id}
               decision={dispute.decision}
               urgency={computeUrgency(raw as Parameters<typeof computeUrgency>[0], new Date().toISOString())}
               amount={dispute.amount}

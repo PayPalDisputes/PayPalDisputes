@@ -58,7 +58,8 @@ export type PayPalDisputeDetail = {
     source: string;
     date?: string;
     notes?: string;
-    evidence_info?: { tracking_info?: { carrier_name: string; tracking_number: string }[] };
+    evidence_info?: { tracking_info?: { carrier_name: string; tracking_number: string }[]; refund_ids?: string[] };
+    documents?: { name: string }[];
   }[];
   offer?: {
     buyer_requested_amount?: Money;

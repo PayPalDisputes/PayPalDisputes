@@ -1,5 +1,6 @@
 import type { Assessment, PayPalAction } from "@/lib/agent";
 import { getOrder, type PayPalDisputeDetail } from "@/lib/dashboard";
+import { evidencePackFor, evidencePackName, refundIdsFromNotes } from "@/lib/evidence-pack";
 import { upsertDispute, type PayPalDispute } from "@/lib/disputes";
 import { getDispute, PayPalError, paypalPost } from "@/lib/paypal";
 import { supabaseAdmin } from "@/lib/supabase";
@@ -35,10 +36,14 @@ type Dispute = PayPalDisputeDetail & {
   links?: { rel: string; method: string }[];
 };
 
-/** provide-evidence and send-message only accept multipart/form-data, with the JSON in an "input" part. */
-function multipart(input: unknown) {
+/**
+ * provide-evidence and send-message only accept multipart/form-data, with the JSON in an "input"
+ * part and any documents in "evidence-file" parts (named to match the evidence's documents list).
+ */
+function multipart(input: unknown, files: { name: string; data: Uint8Array; type: string }[] = []) {
   const form = new FormData();
   form.append("input", new Blob([JSON.stringify(input)], { type: "application/json" }));
+  for (const f of files) form.append("evidence-file", new Blob([f.data as BlobPart], { type: f.type }), f.name);
   return form;
 }
 
@@ -46,6 +51,7 @@ function multipart(input: unknown) {
 async function buildRequest(
   action: PayPalAction,
   text: string,
+  disputeId: string,
   dispute: Dispute,
   settleAmount: number | null,
 ): Promise<{ body: unknown; summary: unknown } | { error: string }> {
@@ -59,11 +65,21 @@ async function buildRequest(
         order?.carrier && order.trackingNumber
           ? { tracking_info: [{ carrier_name: order.carrier, tracking_number: order.trackingNumber }] }
           : null;
-      const evidence = tracking
-        ? { evidence_type: "PROOF_OF_FULFILLMENT", evidence_info: tracking, notes: text }
-        : { evidence_type: "OTHER", notes: text };
-      const input = { evidences: [evidence] };
-      return { body: multipart(input), summary: input };
+      // An earlier refund is proven with its refund id; a shipment with its tracking; anything else as notes.
+      const refundIds = refundIdsFromNotes(order?.notes ?? null);
+      const evidence = refundIds.length > 0
+        ? { evidence_type: "PROOF_OF_REFUND", evidence_info: { refund_ids: refundIds }, notes: text }
+        : tracking
+          ? { evidence_type: "PROOF_OF_FULFILLMENT", evidence_info: tracking, notes: text }
+          : { evidence_type: "OTHER", notes: text };
+      // The PDF evidence pack (order, shipping, carrier scans, statement, buyer's words) goes with it.
+      const pack = await evidencePackFor(disputeId, text);
+      const name = evidencePackName(disputeId);
+      const input = { evidences: [{ ...evidence, ...(pack ? { documents: [{ name }] } : {}) }] };
+      return {
+        body: multipart(input, pack ? [{ name, data: pack, type: "application/pdf" }] : []),
+        summary: { ...input, attachment: pack ? { name, bytes: pack.length } : null },
+      };
     }
 
     case "make_offer": {
@@ -160,13 +176,14 @@ export async function approveDecision(decisionId: string, texts: string[]): Prom
       steps.push({ action: draft.action, ok: false, message: "PayPal doesn't allow this on the dispute right now." });
       continue;
     }
-    const request = await buildRequest(draft.action, draft.text, dispute, decision.settle_amount);
+    const request = await buildRequest(draft.action, draft.text, decision.dispute_id, dispute, decision.settle_amount);
     if ("error" in request) {
       steps.push({ action: draft.action, ok: false, message: request.error });
       continue;
     }
     if (mode === "demo") {
-      steps.push({ action: draft.action, ok: true, message: "Ready to send (demo mode: not sent)." });
+      const attached = draft.action === "provide_evidence" ? " with the PDF evidence pack" : "";
+      steps.push({ action: draft.action, ok: true, message: `Ready to send${attached} (demo mode: not sent).` });
       continue;
     }
 
@@ -177,7 +194,8 @@ export async function approveDecision(decisionId: string, texts: string[]): Prom
       // Network failure: record it like any other failed step so the report doesn't stay "approved".
       res = { ok: false, status: 0, body: { message: err instanceof Error ? err.message : String(err) } };
     }
-    steps.push({ action: draft.action, ok: res.ok, message: res.ok ? "Sent." : paypalReason(res.status, res.body) });
+    const sent = draft.action === "provide_evidence" ? "Sent, with the PDF evidence pack attached." : "Sent.";
+    steps.push({ action: draft.action, ok: res.ok, message: res.ok ? sent : paypalReason(res.status, res.body) });
     const { error: logError } = await db.from("actions").insert({
       dispute_id: decision.dispute_id,
       decision_id: decision.id,
