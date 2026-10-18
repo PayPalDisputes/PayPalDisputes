@@ -2,7 +2,7 @@
 
 import { useActionState, useSyncExternalStore } from "react";
 import type { PayPalAction } from "@/lib/agent";
-import { DRAFT_LABELS } from "@/app/_components/dispute-ui";
+import { DRAFT_LABELS, EvidencePackLink } from "@/app/_components/dispute-ui";
 import { approveAction, rejectAction, type ReviewState } from "./actions";
 
 type Draft = { action: PayPalAction; recipient: "buyer" | "paypal"; text: string };
@@ -19,12 +19,14 @@ function useHydrated() {
 /** Editable drafts with Approve & send / Reject. Nothing is sent until the seller approves. */
 export function ReviewForm({
   decisionId,
+  disputeId,
   drafts,
   mode,
   refundAmount,
   offerAmount,
 }: {
   decisionId: string;
+  disputeId: string;
   drafts: Draft[];
   mode: "live" | "demo";
   /** Formatted disputed amount, shown in the confirmation when approving a refund. */
@@ -57,6 +59,7 @@ export function ReviewForm({
           <label key={i} className="block rounded-md border border-zinc-200 dark:border-zinc-800">
             <span className="block border-b border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
               {DRAFT_LABELS[d.action] ?? d.action} → {d.recipient === "paypal" ? "PayPal" : "buyer"}
+              {d.action === "provide_evidence" && <EvidencePackLink disputeId={disputeId} />}
             </span>
             <textarea
               name={`draft_${i}`}

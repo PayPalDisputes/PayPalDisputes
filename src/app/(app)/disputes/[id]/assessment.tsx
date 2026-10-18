@@ -1,7 +1,7 @@
 import type { computeUrgency } from "@/lib/agent";
 import type { Decision } from "@/lib/dashboard";
 import type { ActionsMode } from "@/lib/respond";
-import { DRAFT_LABELS, formatAmount, LevelBadge, RECOMMENDATION, RecommendationBadge } from "@/app/_components/dispute-ui";
+import { DRAFT_LABELS, EvidencePackLink, formatAmount, LevelBadge, RECOMMENDATION, RecommendationBadge } from "@/app/_components/dispute-ui";
 import { ReviewForm } from "./review";
 
 
@@ -43,6 +43,7 @@ function SentActions({ actions }: { actions: Decision["actions"] }) {
 
 /** The agent's report: recommendation, risk, urgency, reasoning, other options, evidence and drafts. */
 export function AssessmentReport({
+  disputeId,
   decision,
   urgency,
   amount,
@@ -50,6 +51,7 @@ export function AssessmentReport({
   disputeStatus,
   mode,
 }: {
+  disputeId: string;
   decision: Decision | null;
   /** Worked out when the page loads, so it tracks the deadline instead of the report's age. */
   urgency: ReturnType<typeof computeUrgency>;
@@ -160,6 +162,7 @@ export function AssessmentReport({
             {decision.status === "failed" && <SentActions actions={decision.actions} />}
             <ReviewForm
               decisionId={decision.id}
+              disputeId={disputeId}
               drafts={a.drafts}
               mode={mode}
               refundAmount={formatAmount(amount, currency)}
@@ -173,6 +176,7 @@ export function AssessmentReport({
                 <div key={i} className="rounded-md border border-zinc-200 dark:border-zinc-800">
                   <p className="border-b border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                     {DRAFT_LABELS[d.action] ?? d.action} → {d.recipient === "paypal" ? "PayPal" : "buyer"}
+                    {d.action === "provide_evidence" && <EvidencePackLink disputeId={disputeId} />}
                   </p>
                   <p className="whitespace-pre-wrap px-3 py-2 leading-relaxed">{d.text}</p>
                 </div>
