@@ -80,7 +80,7 @@ export const features = {
     eyebrow: "Settlements",
     title: "Know when a partial refund wins",
     description:
-      "Some disputes aren't worth fighting in full. When an offer is the better outcome, Kaleshi drafts one with the amount and the note to the buyer.",
+      "Some disputes aren't worth fighting in full. When an offer is the better outcome, Sira drafts one with the amount and the note to the buyer.",
     bullets: ["Offer amount suggested alongside the reasoning", "Buyer-facing note drafted in your voice"],
   },
   sellers: {
@@ -113,7 +113,7 @@ export const bento = {
 
 export const finalCta = {
   title: "Every dispute.\nOne calm queue.",
-  body: "Connect a PayPal account and see what Kaleshi recommends for your open cases.",
+  body: "Connect a PayPal account and see what Sira recommends for your open cases.",
   primary: { label: "Open dashboard", href: "/dashboard" },
   secondary: { label: "View pricing", href: "/pricing" },
 };
@@ -144,30 +144,30 @@ export const steps: { title: string; body: string; code: Record<Lang, string> }[
     title: "Receive the dispute",
     body: "Verify PayPal's webhook and store the case.",
     code: {
-      typescript: `import { Kaleshi } from "@kaleshi/sdk";
+      typescript: `import { Sira } from "@sira/sdk";
 
-const kaleshi = new Kaleshi({ apiKey: process.env.KALESHI_API_KEY });
+const sira = new Sira({ apiKey: process.env.SIRA_API_KEY });
 
 export async function POST(req: Request) {
-  const event = await kaleshi.webhooks.verify(req);
+  const event = await sira.webhooks.verify(req);
 
   if (event.type === "CUSTOMER.DISPUTE.CREATED") {
-    await kaleshi.disputes.sync(event.resource.dispute_id);
+    await sira.disputes.sync(event.resource.dispute_id);
   }
   return new Response(null, { status: 200 });
 }`,
-      python: `from kaleshi import Kaleshi
+      python: `from sira import Sira
 
-kaleshi = Kaleshi(api_key=os.environ["KALESHI_API_KEY"])
+sira = Sira(api_key=os.environ["SIRA_API_KEY"])
 
 @app.post("/webhooks/paypal")
 async def paypal_webhook(request: Request):
-    event = await kaleshi.webhooks.verify(request)
+    event = await sira.webhooks.verify(request)
 
     if event.type == "CUSTOMER.DISPUTE.CREATED":
-        kaleshi.disputes.sync(event.resource["dispute_id"])
+        sira.disputes.sync(event.resource["dispute_id"])
     return {"ok": True}`,
-      go: `client := kaleshi.NewClient(os.Getenv("KALESHI_API_KEY"))
+      go: `client := sira.NewClient(os.Getenv("SIRA_API_KEY"))
 
 func paypalWebhook(w http.ResponseWriter, r *http.Request) {
 	event, err := client.Webhooks.Verify(r)
@@ -180,8 +180,8 @@ func paypalWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 }`,
-      curl: `curl https://api.kaleshi.dev/v1/disputes/sync \\
-  -H "Authorization: Bearer $KALESHI_API_KEY" \\
+      curl: `curl https://api.sira.dev/v1/disputes/sync \\
+  -H "Authorization: Bearer $SIRA_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "dispute_id": "PP-D-48213"
@@ -192,7 +192,7 @@ func paypalWebhook(w http.ResponseWriter, r *http.Request) {
     title: "Assess the case",
     body: "Get a decision, confidence and drafts.",
     code: {
-      typescript: `const assessment = await kaleshi.disputes.assess("PP-D-48213");
+      typescript: `const assessment = await sira.disputes.assess("PP-D-48213");
 
 console.log(assessment.decision);    // "fight"
 console.log(assessment.confidence);  // 0.91
@@ -201,7 +201,7 @@ console.log(assessment.sellerProtection.status); // "met"
 for (const draft of assessment.drafts) {
   console.log(draft.action, draft.text);
 }`,
-      python: `assessment = kaleshi.disputes.assess("PP-D-48213")
+      python: `assessment = sira.disputes.assess("PP-D-48213")
 
 print(assessment.decision)    # "fight"
 print(assessment.confidence)  # 0.91
@@ -220,9 +220,9 @@ fmt.Println(assessment.Confidence) // 0.91
 for _, d := range assessment.Drafts {
 	fmt.Println(d.Action, d.Text)
 }`,
-      curl: `curl https://api.kaleshi.dev/v1/disputes/PP-D-48213/assess \\
+      curl: `curl https://api.sira.dev/v1/disputes/PP-D-48213/assess \\
   -X POST \\
-  -H "Authorization: Bearer $KALESHI_API_KEY"
+  -H "Authorization: Bearer $SIRA_API_KEY"
 
 # {
 #   "decision": "fight",
@@ -234,9 +234,9 @@ for _, d := range assessment.Drafts {
   },
   {
     title: "Approve and send",
-    body: "A person signs off; Kaleshi responds to PayPal.",
+    body: "A person signs off; Sira responds to PayPal.",
     code: {
-      typescript: `const result = await kaleshi.decisions.approve(assessment.id, {
+      typescript: `const result = await sira.decisions.approve(assessment.id, {
   drafts: assessment.drafts.map((d) => ({
     ...d,
     text: d.text.trim(),
@@ -245,14 +245,14 @@ for _, d := range assessment.Drafts {
 });
 
 console.log(result.status); // "sent"`,
-      python: `result = kaleshi.decisions.approve(
+      python: `result = sira.decisions.approve(
     assessment.id,
     drafts=[{**d, "text": d.text.strip()} for d in assessment.drafts],
     approved_by="ops@northwind.example",
 )
 
 print(result.status)  # "sent"`,
-      go: `result, err := client.Decisions.Approve(ctx, assessment.ID, &kaleshi.ApproveParams{
+      go: `result, err := client.Decisions.Approve(ctx, assessment.ID, &sira.ApproveParams{
 	Drafts:     assessment.Drafts,
 	ApprovedBy: "ops@northwind.example",
 })
@@ -261,9 +261,9 @@ if err != nil {
 }
 
 fmt.Println(result.Status) // "sent"`,
-      curl: `curl https://api.kaleshi.dev/v1/decisions/dec_7Hq2/approve \\
+      curl: `curl https://api.sira.dev/v1/decisions/dec_7Hq2/approve \\
   -X POST \\
-  -H "Authorization: Bearer $KALESHI_API_KEY" \\
+  -H "Authorization: Bearer $SIRA_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "approved_by": "ops@northwind.example"
@@ -306,11 +306,11 @@ export const faq = {
   body: "How the agent decides, what it sends, and what stays in your hands.",
   items: [
     {
-      q: "What is Kaleshi and who is it for?",
-      a: "Kaleshi is a dispute desk for sellers who take payments through PayPal. It reads each dispute, checks it against your order, recommends whether to fight, refund or settle, and drafts the response.",
+      q: "What is Sira and who is it for?",
+      a: "Sira is a dispute desk for sellers who take payments through PayPal. It reads each dispute, checks it against your order, recommends whether to fight, refund or settle, and drafts the response.",
     },
     {
-      q: "Does Kaleshi send anything to PayPal without me?",
+      q: "Does Sira send anything to PayPal without me?",
       a: "No. Every response, refund and offer waits for a person to approve it. Demo mode lets you try the whole flow without contacting PayPal at all.",
     },
     {

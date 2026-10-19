@@ -137,7 +137,7 @@ export async function buildEvidencePack(p: PackInput): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.setTitle(`Dispute evidence ${p.disputeId}`);
   doc.setAuthor(p.sellerName ?? "Seller");
-  doc.setCreator("Kaleshi");
+  doc.setCreator("Sira");
   const w = new Writer(doc, await doc.embedFont(StandardFonts.Helvetica), await doc.embedFont(StandardFonts.HelveticaBold));
   const o = p.order;
 

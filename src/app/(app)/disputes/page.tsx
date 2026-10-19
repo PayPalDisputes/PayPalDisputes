@@ -7,7 +7,7 @@ import { getDisputeDetail, getHomeDataCached, type HomeDispute } from "@/lib/das
 import { DisputePanel } from "./panel";
 import { cn } from "@/lib/cn";
 
-export const metadata: Metadata = { title: "Disputes · Kaleshi" };
+export const metadata: Metadata = { title: "Disputes · Sira" };
 
 const VIEWS = {
   all: { label: "All", match: () => true },
@@ -88,7 +88,7 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
         </p>
       ) : (
         <div className="mt-6">
-          <DisputesGrid rows={rows} listHref={listHref} csvName={`kaleshi-disputes-${view}`} />
+          <DisputesGrid rows={rows} listHref={listHref} csvName={`sira-disputes-${view}`} />
         </div>
       )}
 

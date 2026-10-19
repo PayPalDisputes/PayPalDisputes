@@ -4,7 +4,7 @@ import { EvalLatencyChart, EvalPassChart } from "@/components/app/Charts";
 import { EvalGrid } from "@/components/app/EvalGrid";
 import { getEvalData } from "@/lib/evals";
 
-export const metadata: Metadata = { title: "Evals · Kaleshi" };
+export const metadata: Metadata = { title: "Evals · Sira" };
 
 /** Internal: how each prompt version scored on the saved eval cases (`npm run eval`). */
 export default async function EvalsPage() {

@@ -82,7 +82,7 @@ export const comparison: { section: string; rows: { label: string; values: [Cell
 
 export const pricingFaq = [
   {
-    q: "Does Kaleshi send anything to PayPal without me?",
+    q: "Does Sira send anything to PayPal without me?",
     a: "No. Every response, refund and offer waits for a person to approve it. Demo mode lets you try the whole flow without contacting PayPal at all.",
   },
   {

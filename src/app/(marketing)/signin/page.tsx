@@ -3,13 +3,13 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { getSession } from "@/lib/session";
 
-export const metadata: Metadata = { title: "Sign in · Kaleshi" };
+export const metadata: Metadata = { title: "Sign in · Sira" };
 
 const ERRORS: Record<string, string> = {
   cancelled: "PayPal sign-in was cancelled. Try again whenever you're ready.",
   expired: "That sign-in link expired. Please try again.",
   paypal: "We couldn't confirm your PayPal account. Please try again.",
-  no_store: "This PayPal account isn't connected to a Kaleshi store yet. Try the demo to look around.",
+  no_store: "This PayPal account isn't connected to a Sira store yet. Try the demo to look around.",
 };
 
 export default async function SignInPage({ searchParams }: PageProps<"/signin">) {
@@ -19,9 +19,9 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col px-4 py-20 sm:py-28">
-      <h1 className="text-[32px] leading-tight font-semibold tracking-[-0.02em] text-fg">Sign in to Kaleshi</h1>
+      <h1 className="text-[32px] leading-tight font-semibold tracking-[-0.02em] text-fg">Sign in to Sira</h1>
       <p className="mt-3 text-[15px] leading-6 text-fg-body">
-        Use your PayPal business account. You sign in on PayPal&apos;s own page, so Kaleshi never sees your password.
+        Use your PayPal business account. You sign in on PayPal&apos;s own page, so Sira never sees your password.
       </p>
 
       {message && (

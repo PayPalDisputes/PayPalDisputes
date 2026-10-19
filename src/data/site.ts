@@ -3,14 +3,12 @@
  * Rename the product here: `name` is used in the navbar, footer, metadata and code samples.
  */
 export const site = {
-  name: "Kaleshi",
-  /** The wordmark as shown in the logo: Kaleshi in Devanagari. */
-  wordmark: "कलेशी",
+  name: "Sira",
   tagline: "Your disputes settled in seconds.",
   description:
-    "Kaleshi reads every PayPal dispute, recommends whether to fight, refund or settle, and drafts the response for you to approve.",
+    "Sira reads every PayPal dispute, recommends whether to fight, refund or settle, and drafts the response for you to approve.",
   appHref: "/dashboard",
-  sdkPackage: "@kaleshi/sdk",
+  sdkPackage: "@sira/sdk",
   announcement: {
     enabled: true,
     label: "New",
@@ -121,5 +119,5 @@ export const footer = {
     { label: "Terms", href: "#" },
   ],
   disclaimer:
-    "Kaleshi is an independent tool and is not affiliated with or endorsed by PayPal. PayPal is a trademark of PayPal, Inc.",
+    "Sira is an independent tool and is not affiliated with or endorsed by PayPal. PayPal is a trademark of PayPal, Inc.",
 };

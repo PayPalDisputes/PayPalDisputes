@@ -9,7 +9,7 @@ import { formatAmount, reasonLabel, StatusBadge } from "@/app/_components/disput
 import { requireSession } from "@/lib/auth";
 import { getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
 
-export const metadata: Metadata = { title: "Home · Kaleshi" };
+export const metadata: Metadata = { title: "Home · Sira" };
 
 const RESOLUTION_CENTER = (process.env.PAYPAL_API_BASE ?? "").includes("sandbox") || !process.env.PAYPAL_API_BASE
   ? "https://www.sandbox.paypal.com/disputes/"
