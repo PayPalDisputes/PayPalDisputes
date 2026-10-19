@@ -4,8 +4,8 @@ import { Bell, FileText, FlaskConical, House, Inbox, Settings, Store } from "luc
 import { NavLink } from "@/components/app/NavLink";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
+import { requireSession, sellerScope, sessionMode } from "@/lib/auth";
 import { getHomeDataCached } from "@/lib/dashboard";
-import { actionsMode } from "@/lib/respond";
 
 /**
  * Seller workspace shell, laid out like the PayPal business dashboard sellers already know
@@ -13,12 +13,15 @@ import { actionsMode } from "@/lib/respond";
  */
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   await connection(); // counts come from live Supabase rows
-  const { disputes } = await getHomeDataCached();
+  const session = await requireSession();
+  const { disputes } = await getHomeDataCached(sellerScope(session));
+  const accountName = session.kind === "seller" ? session.name : "Demo account";
+  const initials = accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "K";
   const needsResponse = disputes.filter((d) => d.status === "WAITING_FOR_SELLER_RESPONSE").length;
   const awaitingApproval = disputes.filter(
     (d) => d.status !== "RESOLVED" && d.report?.status === "pending_review" && d.report.current,
   ).length;
-  const mode = actionsMode();
+  const mode = sessionMode(session);
   // Team-only tools (Evals) stay out of the seller's sidebar unless SHOW_INTERNAL_TOOLS=true.
   const showInternal = process.env.SHOW_INTERNAL_TOOLS === "true";
 
@@ -103,11 +106,17 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               </Link>
               <span className="h-6 w-px bg-line" aria-hidden />
               <span
-                aria-label="Account"
+                title={accountName}
+                aria-label={`Signed in as ${accountName}`}
                 className="inline-flex size-9 items-center justify-center rounded-full bg-[#e8dccf] text-[12px] font-semibold text-fg-heading"
               >
-                KS
+                {initials}
               </span>
+              <form action="/api/auth/logout" method="post">
+                <button type="submit" className="rounded-full px-3 py-1.5 text-[13px] text-fg-muted transition-colors hover:bg-muted hover:text-fg">
+                  Sign out
+                </button>
+              </form>
             </div>
           </div>
           {/* Section tabs (mobile / tablet) */}

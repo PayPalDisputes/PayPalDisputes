@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { DisputesGrid } from "@/components/app/DisputesGrid";
+import { canAccessDispute, requireSession, sellerScope, sessionMode } from "@/lib/auth";
 import { getDisputeDetail, getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
 import { DisputePanel } from "./panel";
 import { cn } from "@/lib/cn";
@@ -34,9 +35,11 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
   const { view: rawView, open } = await searchParams;
   const view: View = typeof rawView === "string" && rawView in VIEWS ? (rawView as View) : "all";
   const listHref = view === "all" ? "/disputes" : `/disputes?view=${view}`;
+  const session = await requireSession();
+  const canOpen = typeof open === "string" && (await canAccessDispute(open));
   const [{ disputes }, opened] = await Promise.all([
-    getHomeDataCached(),
-    typeof open === "string" ? getDisputeDetail(open) : Promise.resolve(null),
+    getHomeDataCached(sellerScope(session)),
+    canOpen ? getDisputeDetail(open) : Promise.resolve(null),
   ]);
   const rows = disputes.filter(VIEWS[view].match).sort(byDeadline);
 
@@ -89,7 +92,7 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
         </div>
       )}
 
-      {opened && <DisputePanel dispute={opened} disputes={disputes} listHref={listHref} />}
+      {opened && <DisputePanel dispute={opened} disputes={disputes} listHref={listHref} mode={sessionMode(session)} />}
     </div>
   );
 }

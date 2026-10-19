@@ -130,7 +130,7 @@ export function Navbar() {
           </nav>
 
           <div className="hidden items-center gap-1 lg:flex">
-            <Button href={site.appHref} variant="ghost" size="sm">
+            <Button href="/signin" variant="ghost" size="sm">
               Sign in
             </Button>
             <Button href={site.appHref} size="md">
@@ -271,7 +271,7 @@ function MobileNav({ open, top, onClose }: { open: boolean; top: number; onClose
           <Button href={site.appHref} size="lg" onClick={onClose} tabIndex={open ? 0 : -1}>
             Open dashboard
           </Button>
-          <Button href={site.appHref} size="lg" variant="secondary" onClick={onClose} tabIndex={open ? 0 : -1}>
+          <Button href="/signin" size="lg" variant="secondary" onClick={onClose} tabIndex={open ? 0 : -1}>
             Sign in
           </Button>
         </div>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { computeUrgency } from "@/lib/agent";
-import { actionsMode } from "@/lib/respond";
+import { canAccessDispute, requireSession, sessionMode } from "@/lib/auth";
 import { getDisputeDetail, type OrderEvidence, type PayPalDisputeDetail } from "@/lib/dashboard";
 import { Deadline, formatAmount, humanize, reasonLabel, StatusBadge } from "@/app/_components/dispute-ui";
 import { AssessmentReport } from "./assessment";
@@ -183,6 +183,8 @@ function Shipping({ order }: { order: OrderEvidence | null }) {
 export default async function DisputeDetailPage({ params }: PageProps<"/disputes/[id]">) {
   await connection();
   const { id } = await params;
+  const session = await requireSession();
+  if (!(await canAccessDispute(id))) notFound();
   const dispute = await getDisputeDetail(id);
   if (!dispute) notFound();
 
@@ -239,7 +241,7 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
               amount={dispute.amount}
               currency={dispute.currency}
               disputeStatus={dispute.status}
-              mode={actionsMode()}
+              mode={sessionMode(session)}
             />
           </Card>
 
