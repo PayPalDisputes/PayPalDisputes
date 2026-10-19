@@ -1,7 +1,7 @@
 import { SidePanel } from "@/components/app/SidePanel";
 import { computeUrgency } from "@/lib/agent";
-import { actionsMode } from "@/lib/respond";
 import type { DisputeDetail, HomeDispute } from "@/lib/dashboard";
+import type { ActionsMode } from "@/lib/respond";
 import { Deadline, formatAmount, humanize, reasonLabel, StatusBadge } from "@/app/_components/dispute-ui";
 import { AssessmentReport } from "./[id]/assessment";
 import { BuyerHistoryCard } from "./[id]/buyer-history";
@@ -18,7 +18,10 @@ export function DisputePanel({
   dispute,
   disputes,
   listHref,
+  mode,
 }: {
+  /** Live/demo for the signed-in session (the demo account is always demo). */
+  mode: ActionsMode;
   dispute: DisputeDetail;
   disputes: HomeDispute[];
   /** The list URL (with its current view) that the panel opens on top of. */
@@ -75,7 +78,7 @@ export function DisputePanel({
               amount={dispute.amount}
               currency={dispute.currency}
               disputeStatus={dispute.status}
-              mode={actionsMode()}
+              mode={mode}
             />
           </div>
         </section>

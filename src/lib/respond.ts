@@ -109,8 +109,12 @@ function paypalReason(status: number, body: unknown) {
  * Carries out an approved report: sends each draft (as edited by the seller) with its PayPal action.
  * `texts` holds the edited draft text by index into the report's drafts.
  */
-export async function approveDecision(decisionId: string, texts: string[]): Promise<ApproveResult> {
-  const mode = actionsMode();
+export async function approveDecision(
+  decisionId: string,
+  texts: string[],
+  { demoOnly = false }: { demoOnly?: boolean } = {},
+): Promise<ApproveResult> {
+  const mode: ActionsMode = demoOnly ? "demo" : actionsMode();
   const db = supabaseAdmin();
   const fail = (error: string): ApproveResult => ({ ok: false, mode, steps: [], error });
 
@@ -225,8 +229,11 @@ export async function approveDecision(decisionId: string, texts: string[]): Prom
 }
 
 /** The seller turned the report down; nothing is sent to PayPal. */
-export async function rejectDecision(decisionId: string): Promise<{ ok: boolean; mode: ActionsMode; error?: string }> {
-  const mode = actionsMode();
+export async function rejectDecision(
+  decisionId: string,
+  { demoOnly = false }: { demoOnly?: boolean } = {},
+): Promise<{ ok: boolean; mode: ActionsMode; error?: string }> {
+  const mode: ActionsMode = demoOnly ? "demo" : actionsMode();
   const db = supabaseAdmin();
   const { data: decision, error } = await db.from("decisions").select("id, status").eq("id", decisionId).maybeSingle();
   if (error) throw error;

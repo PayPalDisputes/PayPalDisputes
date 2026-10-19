@@ -1,6 +1,8 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { canAccessDecision } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { approveDecision, rejectDecision, type ApproveResult } from "@/lib/respond";
 
 // Server Actions for the Approve / Reject buttons. They can be called by anyone who can POST to
@@ -14,13 +16,15 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function approveAction(_prev: ReviewState, formData: FormData): Promise<ReviewState> {
   const decisionId = String(formData.get("decisionId") ?? "");
   if (!UUID.test(decisionId)) return { kind: "approve", ok: false, mode: "demo", steps: [], error: "Invalid report id." };
+  if (!(await canAccessDecision(decisionId))) return { kind: "approve", ok: false, mode: "demo", steps: [], error: "You can't act on this dispute." };
 
   // Drafts arrive as draft_0, draft_1, ... in the order of the report's drafts.
   const texts: string[] = [];
   for (let i = 0; formData.has(`draft_${i}`); i++) texts.push(String(formData.get(`draft_${i}`)));
 
   try {
-    const result = await approveDecision(decisionId, texts);
+    const demoOnly = (await getSession())?.kind !== "seller";
+    const result = await approveDecision(decisionId, texts, { demoOnly });
     if (result.mode === "live") refresh();
     return { kind: "approve", ...result };
   } catch (err) {
@@ -32,8 +36,10 @@ export async function approveAction(_prev: ReviewState, formData: FormData): Pro
 export async function rejectAction(_prev: ReviewState, formData: FormData): Promise<ReviewState> {
   const decisionId = String(formData.get("decisionId") ?? "");
   if (!UUID.test(decisionId)) return { kind: "reject", ok: false, mode: "demo", error: "Invalid report id." };
+  if (!(await canAccessDecision(decisionId))) return { kind: "reject", ok: false, mode: "demo", error: "You can't act on this dispute." };
   try {
-    const result = await rejectDecision(decisionId);
+    const demoOnly = (await getSession())?.kind !== "seller";
+    const result = await rejectDecision(decisionId, { demoOnly });
     if (result.mode === "live") refresh();
     return { kind: "reject", ...result };
   } catch (err) {

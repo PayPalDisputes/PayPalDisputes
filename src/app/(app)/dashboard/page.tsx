@@ -6,6 +6,7 @@ import { DeadlineChart, ReasonChart, RecommendationChart, type Bucket } from "@/
 import { RollingNumber } from "@/components/motion/RollingNumber";
 import { Badge, DecisionBadge } from "@/components/ui/primitives";
 import { formatAmount, reasonLabel, StatusBadge } from "@/app/_components/dispute-ui";
+import { requireSession } from "@/lib/auth";
 import { getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
 
 export const metadata: Metadata = { title: "Home · Kaleshi" };
@@ -27,9 +28,11 @@ function splitCurrency(amount: number, currency: string) {
 
 export default async function DashboardHome({ searchParams }: PageProps<"/dashboard">) {
   await connection();
+  const session = await requireSession();
   const { seller } = await searchParams;
-  const sellerId = typeof seller === "string" ? seller : undefined;
-  const { disputes, sellers } = await getHomeDataCached(sellerId);
+  const sellerId = session.kind === "seller" ? session.sellerId : typeof seller === "string" ? seller : undefined;
+  const { disputes, sellers: allSellers } = await getHomeDataCached(sellerId);
+  const sellers = session.kind === "seller" ? allSellers.filter((s) => s.id === session.sellerId) : allSellers;
   const store = sellers.find((s) => s.id === sellerId);
 
   const open = disputes.filter(isOpen);
