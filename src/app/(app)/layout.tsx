@@ -46,6 +46,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           <NavLink href="/disputes" icon={<Inbox strokeWidth={1.6} />} badge={needsResponse}>
             Disputes
           </NavLink>
+          <NavLink href="/evidence" icon={<FileText strokeWidth={1.6} />}>
+            Evidence
+          </NavLink>
         </nav>
 
         {showInternal && (
@@ -62,7 +65,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <p className="mt-7 px-3 text-[11px] font-medium tracking-[0.04em] text-fg-muted uppercase">Coming soon</p>
         <ul className="mt-2 flex flex-col gap-1" aria-label="Coming soon">
           {[
-            { label: "Evidence", icon: FileText },
             { label: "Stores", icon: Store },
             { label: "Settings", icon: Settings },
           ].map(({ label, icon: Icon }) => (
@@ -126,6 +128,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </NavLink>
             <NavLink href="/disputes" variant="tab" badge={needsResponse}>
               Disputes
+            </NavLink>
+            <NavLink href="/evidence" variant="tab">
+              Evidence
             </NavLink>
             {showInternal && (
               <NavLink href="/evals" variant="tab">
