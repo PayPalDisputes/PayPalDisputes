@@ -8,7 +8,7 @@ import { cache } from "react";
 
 export type Session = { kind: "seller"; sellerId: string; name: string } | { kind: "demo" };
 
-const COOKIE = "kaleshi_session";
+const COOKIE = "sira_session";
 const MAX_AGE = 7 * 24 * 60 * 60; // seconds
 
 function key() {

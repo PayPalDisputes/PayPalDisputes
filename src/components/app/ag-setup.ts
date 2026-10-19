@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * One place for AG Grid + AG Charts (both Community, free): module registration and Kaleshi theming.
+ * One place for AG Grid + AG Charts (both Community, free): module registration and Sira theming.
  * Import from here instead of the AG packages so registration always happens first.
  */
 import { AllCommunityModule as GridCommunity, ModuleRegistry as GridModules, themeQuartz } from "ag-grid-community";

@@ -9,7 +9,7 @@ import { getHomeDataCached } from "@/lib/dashboard";
 
 /**
  * Seller workspace shell, laid out like the PayPal business dashboard sellers already know
- * (sidebar, top bar, content) but in Kaleshi's own branding.
+ * (sidebar, top bar, content) but in Sira's own branding.
  */
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   await connection(); // counts come from live Supabase rows
@@ -29,7 +29,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     <div className="flex min-h-full flex-1 bg-canvas text-fg [color-scheme:light]">
       {/* Sidebar (desktop) */}
       <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line bg-subtle px-4 pt-6 pb-5 lg:flex">
-        <Link href="/dashboard" className="px-3" aria-label="Kaleshi dashboard home">
+        <Link href="/dashboard" className="px-3" aria-label="Sira dashboard home">
           <Logo />
         </Link>
         <Button href="/disputes?view=approval" size="md" className="mt-7 w-full">
@@ -45,6 +45,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </NavLink>
           <NavLink href="/disputes" icon={<Inbox strokeWidth={1.6} />} badge={needsResponse}>
             Disputes
+          </NavLink>
+          <NavLink href="/evidence" icon={<FileText strokeWidth={1.6} />}>
+            Evidence
           </NavLink>
         </nav>
 
@@ -62,7 +65,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <p className="mt-7 px-3 text-[11px] font-medium tracking-[0.04em] text-fg-muted uppercase">Coming soon</p>
         <ul className="mt-2 flex flex-col gap-1" aria-label="Coming soon">
           {[
-            { label: "Evidence", icon: FileText },
             { label: "Stores", icon: Store },
             { label: "Settings", icon: Settings },
           ].map(({ label, icon: Icon }) => (
@@ -76,7 +78,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <div className="mt-auto space-y-3 px-1">
           <ModeBadge mode={mode} />
           <Link href="/" className="block px-2 text-[12.5px] text-fg-muted hover:text-fg">
-            ← kaleshi.com
+            ← sira.com
           </Link>
         </div>
       </aside>
@@ -85,7 +87,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         {/* Top bar */}
         <header className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur-md">
           <div className="flex h-16 items-center gap-4 px-5 md:px-8">
-            <Link href="/dashboard" className="lg:hidden" aria-label="Kaleshi dashboard home">
+            <Link href="/dashboard" className="lg:hidden" aria-label="Sira dashboard home">
               <Logo />
             </Link>
             <div className="ml-auto flex items-center gap-3">
@@ -126,6 +128,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </NavLink>
             <NavLink href="/disputes" variant="tab" badge={needsResponse}>
               Disputes
+            </NavLink>
+            <NavLink href="/evidence" variant="tab">
+              Evidence
             </NavLink>
             {showInternal && (
               <NavLink href="/evals" variant="tab">

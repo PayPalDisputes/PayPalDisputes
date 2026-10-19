@@ -2,7 +2,7 @@ import { canAccessDispute } from "@/lib/auth";
 import { evidencePackFor, evidencePackName } from "@/lib/evidence-pack";
 
 /**
- * Preview of the PDF evidence pack Kaleshi attaches when a seller approves "fight".
+ * Preview of the PDF evidence pack Sira attaches when a seller approves "fight".
  * Built on request from the stored dispute and never saved. Only for a signed-in session that may
  * see the dispute, since it includes the buyer's shipping address.
  */

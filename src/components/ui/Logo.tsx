@@ -13,15 +13,11 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-/** Mark + Devanagari wordmark. Screen readers get the Latin name. */
 export function Logo({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <LogoMark />
-      <span lang="hi" aria-hidden className="font-[family-name:var(--font-devanagari)] text-[22px] leading-none text-fg">
-        {site.wordmark}
-      </span>
-      <span className="sr-only">{site.name}</span>
+      <span className="text-[17px] font-semibold tracking-[-0.02em] text-fg">{site.name}</span>
     </span>
   );
 }

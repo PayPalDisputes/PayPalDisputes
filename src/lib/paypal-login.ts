@@ -13,7 +13,7 @@ const SCOPES = "openid email profile https://uri.paypal.com/services/paypalattri
 
 export const callbackPath = "/api/auth/paypal/callback";
 /** Cookie holding the random state between the login redirect and the callback. */
-export const STATE_COOKIE = "kaleshi_login_state";
+export const STATE_COOKIE = "sira_login_state";
 
 export function authorizeUrl(redirectUri: string, state: string) {
   const params = new URLSearchParams({
@@ -56,7 +56,7 @@ export async function merchantIdFromCode(code: string): Promise<string | null> {
   return null;
 }
 
-/** The Kaleshi seller for a PayPal merchant id, if one exists. */
+/** The Sira seller for a PayPal merchant id, if one exists. */
 export async function sellerForMerchant(merchantId: string): Promise<{ id: string; name: string } | null> {
   const { data, error } = await supabaseAdmin().from("sellers").select("id, name").eq("paypal_merchant_id", merchantId).maybeSingle();
   if (error) throw error;

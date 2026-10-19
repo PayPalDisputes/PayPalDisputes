@@ -115,7 +115,7 @@ export function EvalGrid({ rows, runLabel }: { rows: EvalRow[]; runLabel: string
         <span className="text-[12.5px] text-fg-muted">{runLabel}</span>
         <button
           type="button"
-          onClick={() => gridRef.current?.api.exportDataAsCsv({ fileName: "kaleshi-eval-latest.csv" })}
+          onClick={() => gridRef.current?.api.exportDataAsCsv({ fileName: "sira-eval-latest.csv" })}
           className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-canvas px-3.5 text-[13px] font-medium text-fg-heading transition-colors hover:bg-muted"
         >
           <Download aria-hidden strokeWidth={1.75} className="size-3.5" />
