@@ -2,6 +2,7 @@ import type { computeUrgency } from "@/lib/agent";
 import type { Decision } from "@/lib/dashboard";
 import type { ActionsMode } from "@/lib/respond";
 import { DRAFT_LABELS, EvidencePackLink, formatAmount, LevelBadge, RECOMMENDATION, RecommendationBadge } from "@/app/_components/dispute-ui";
+import { ChatPanel } from "./chat-panel";
 import { ReviewForm } from "./review";
 
 
@@ -170,6 +171,7 @@ export function AssessmentReport({
             )}
             {decision.status === "failed" && <SentActions actions={decision.actions} />}
             <ReviewForm
+              key={a.drafts.map((d) => d.text).join("|")}
               decisionId={decision.id}
               disputeId={disputeId}
               drafts={a.drafts}
@@ -195,6 +197,10 @@ export function AssessmentReport({
           </>
         )}
       </Section>
+
+      <div className="mt-5">
+        <ChatPanel disputeId={disputeId} />
+      </div>
 
       <p className="mt-5 text-xs text-zinc-400">
         {STATUS_LABELS[decision.status] ?? decision.status} · assessed {assessedAt}

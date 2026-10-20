@@ -13,6 +13,7 @@
     "seed:orders": "tsx --env-file=.env.local scripts/seed-orders.ts",
     "eval:seed": "tsx --env-file=.env.local scripts/eval-seed.ts",
     "eval": "tsx --env-file=.env.local scripts/eval.ts",
+    "eval:chat": "tsx --conditions=react-server --env-file=.env.local scripts/eval-chat.ts",
     "assess": "tsx --env-file=.env.local scripts/assess.ts",
     "tracking:push": "tsx --env-file=.env.local scripts/push-tracking.ts",
     "demo:orders": "tsx --env-file=.env.local scripts/demo-orders.ts"

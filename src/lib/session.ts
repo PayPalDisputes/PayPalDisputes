@@ -6,7 +6,8 @@ import { cache } from "react";
 // Stateless sessions in a signed cookie (Next.js authentication guide). The cookie holds only
 // which seller this is (or that it's the demo), never PayPal tokens or personal details.
 
-export type Session = { kind: "seller"; sellerId: string; name: string } | { kind: "demo" };
+/** demoId is random per demo sign-in, so each demo visitor gets their own private chat history. */
+export type Session = { kind: "seller"; sellerId: string; name: string } | { kind: "demo"; demoId: string };
 
 const COOKIE = "sira_session";
 const MAX_AGE = 7 * 24 * 60 * 60; // seconds
@@ -42,7 +43,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, key(), { algorithms: ["HS256"] });
-    if (payload.kind === "demo") return { kind: "demo" };
+    if (payload.kind === "demo") return { kind: "demo", demoId: typeof payload.demoId === "string" ? payload.demoId : "shared" };
     if (payload.kind === "seller" && typeof payload.sellerId === "string") {
       return { kind: "seller", sellerId: payload.sellerId, name: String(payload.name ?? "") };
     }
