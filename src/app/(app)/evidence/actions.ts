@@ -62,9 +62,9 @@ export async function reassess(disputeId: string): Promise<{ ok: true; recommend
   try {
     const outcome = await assessDispute(disputeId, { force: true });
     refresh();
-    return outcome.status === "assessed"
-      ? { ok: true, recommendation: outcome.recommendation }
-      : { ok: false, error: outcome.reason };
+    if (outcome.status === "assessed") return { ok: true, recommendation: outcome.recommendation };
+    if (outcome.status === "auto_refunded") return { ok: true, recommendation: "refund" };
+    return { ok: false, error: outcome.reason };
   } catch (err) {
     console.error("[evidence] reassess failed", err);
     return { ok: false, error: "The agent couldn't finish. Try again in a minute." };

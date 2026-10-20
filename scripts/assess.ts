@@ -27,7 +27,9 @@ async function main() {
     console.log(
       outcome.status === "assessed"
         ? `✓ ${id}: ${outcome.recommendation} (decision ${outcome.decisionId})`
-        : `- ${id}: skipped, ${outcome.reason}`,
+        : outcome.status === "auto_refunded"
+          ? `✓ ${id}: auto-refunded by the seller's rule${outcome.sent ? " (sent to PayPal)" : " (demo mode: not sent)"}`
+          : `- ${id}: skipped, ${outcome.reason}`,
     );
   }
 }
