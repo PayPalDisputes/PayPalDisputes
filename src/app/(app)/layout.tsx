@@ -49,6 +49,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           <NavLink href="/evidence" icon={<FileText strokeWidth={1.6} />}>
             Evidence
           </NavLink>
+          <NavLink href="/settings" icon={<Settings strokeWidth={1.6} />}>
+            Settings
+          </NavLink>
         </nav>
 
         {showInternal && (
@@ -66,7 +69,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <ul className="mt-2 flex flex-col gap-1" aria-label="Coming soon">
           {[
             { label: "Stores", icon: Store },
-            { label: "Settings", icon: Settings },
           ].map(({ label, icon: Icon }) => (
             <li key={label} className="flex h-10 cursor-default items-center gap-3 px-3 text-[14px] text-fg-muted/70">
               <Icon strokeWidth={1.6} className="size-[18px]" />
@@ -131,6 +133,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </NavLink>
             <NavLink href="/evidence" variant="tab">
               Evidence
+            </NavLink>
+            <NavLink href="/settings" variant="tab">
+              Settings
             </NavLink>
             {showInternal && (
               <NavLink href="/evals" variant="tab">

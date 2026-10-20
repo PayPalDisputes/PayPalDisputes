@@ -86,6 +86,15 @@ export function AssessmentReport({
           The dispute has changed since this report. A new one will replace it shortly.
         </p>
       )}
+      {a.rule === "auto_refund" && (
+        <p className="mb-4 rounded-md bg-sky-50 px-3 py-2 text-sky-800 dark:bg-sky-950 dark:text-sky-300">
+          Handled by your auto-refund rule. Change it in{" "}
+          <a href="/settings" className="font-medium underline">
+            Settings
+          </a>
+          .
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <RecommendationBadge recommendation={a.recommendation} settleAmount={a.settle_amount} currency={currency} />
