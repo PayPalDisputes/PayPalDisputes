@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { ArrowRight, ChevronDown, Clock3, ExternalLink, FileCheck2, Inbox, ListTree, MessageSquareWarning } from "lucide-react";
-import { DeadlineChart, ReasonChart, RecommendationChart, type Bucket } from "@/components/app/Charts";
+import { DeadlineChart, OutcomeChart, ReasonChart, RecommendationChart, type Bucket, type OutcomeBar } from "@/components/app/Charts";
+import { OutcomesGrid } from "@/components/app/OutcomesGrid";
+import { getOutcomes, type OutcomeRow, type OutcomeSummary } from "@/lib/outcomes";
 import { RollingNumber } from "@/components/motion/RollingNumber";
 import { Badge, DecisionBadge } from "@/components/ui/primitives";
 import { formatAmount, reasonLabel, StatusBadge } from "@/app/_components/dispute-ui";
@@ -31,15 +33,16 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
   const session = await requireSession();
   const { seller } = await searchParams;
   const sellerId = session.kind === "seller" ? session.sellerId : typeof seller === "string" ? seller : undefined;
-  const { disputes, sellers: allSellers } = await getHomeDataCached(sellerId);
+  const [{ disputes, sellers: allSellers }, outcomes] = await Promise.all([getHomeDataCached(sellerId), getOutcomes(sellerId)]);
   const sellers = session.kind === "seller" ? allSellers.filter((s) => s.id === session.sellerId) : allSellers;
   const store = sellers.find((s) => s.id === sellerId);
 
   const open = disputes.filter(isOpen);
   const respond = disputes.filter(needsResponse);
   const approvals = disputes.filter(awaitingApproval);
-  const won = disputes.filter((d) => d.outcome === "RESOLVED_SELLER_FAVOUR").length;
-  const lost = disputes.filter((d) => d.outcome === "RESOLVED_BUYER_FAVOUR").length;
+  // Same rules as the Results section (src/lib/outcomes.ts): a buyer cancelling counts as a win.
+  const won = outcomes.summary.won;
+  const lost = outcomes.summary.lost;
 
   // Amount at risk = what buyers are claiming on open disputes, per currency (no conversion).
   const totals = new Map<string, number>();
@@ -163,6 +166,9 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
           <StatCard label="Lost" value={lost} hint="Resolved for the buyer" />
         </div>
       </section>
+
+      {/* Results */}
+      <ResultsSection rows={outcomes.rows} summary={outcomes.summary} storeName={store?.name} />
 
       {/* Insights */}
       <section aria-labelledby="insights" className="mt-12">
@@ -351,6 +357,88 @@ function RecentTable({ disputes }: { disputes: HomeDispute[] }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/** Outcome tracking: how resolved disputes ended, and whether following Sira's advice paid off. */
+function ResultsSection({ rows, summary, storeName }: { rows: OutcomeRow[]; summary: OutcomeSummary; storeName?: string }) {
+  const kept = summary.kept[0];
+  const bars: OutcomeBar[] = (
+    [
+      { label: "Fought", match: (r: OutcomeRow) => r.did === "fight" },
+      { label: "Offered to settle", match: (r: OutcomeRow) => r.did === "settle" },
+      { label: "Refunded", match: (r: OutcomeRow) => r.did === "refund" },
+      { label: "No response", match: (r: OutcomeRow) => r.did === null },
+    ] as const
+  )
+    .map(({ label, match }) => {
+      const group = rows.filter(match);
+      return {
+        label,
+        won: group.filter((r) => r.result === "won").length,
+        settled: group.filter((r) => r.result === "settled").length,
+        lost: group.filter((r) => r.result === "lost").length,
+      };
+    })
+    .filter((b) => b.won + b.settled + b.lost > 0);
+  const response =
+    summary.avgResponseHours === null
+      ? "—"
+      : summary.avgResponseHours < 1
+        ? `${Math.max(1, Math.round(summary.avgResponseHours * 60))} min`
+        : summary.avgResponseHours < 48
+          ? `${summary.avgResponseHours.toFixed(1)} h`
+          : `${(summary.avgResponseHours / 24).toFixed(1)} days`;
+
+  return (
+    <section aria-labelledby="results" className="mt-12">
+      <h2 id="results" className="text-[15px] font-semibold text-fg">
+        Results
+      </h2>
+      <p className="mt-0.5 text-[12.5px] text-fg-muted">Resolved disputes{storeName ? ` · ${storeName}` : ""}</p>
+      {summary.resolved === 0 ? (
+        <p className="mt-4 rounded-2xl border border-dashed border-line bg-canvas px-5 py-8 text-center text-[13.5px] text-fg-muted">
+          Results appear here as disputes close: what you kept, and whether following Sira&apos;s advice paid off.
+        </p>
+      ) : (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <ResultCard
+              label="Money kept"
+              value={kept ? formatAmount(kept.amount, kept.currency) : "—"}
+              hint={summary.kept.length > 1 ? `plus ${summary.kept.slice(1).map((k) => formatAmount(k.amount, k.currency)).join(", ")}` : `on ${summary.resolved} resolved dispute${summary.resolved === 1 ? "" : "s"}`}
+            />
+            <ResultCard
+              label="Sira's call held up"
+              value={summary.followed ? `${summary.heldUp} of ${summary.followed}` : "—"}
+              hint="When you followed its advice"
+            />
+            <ResultCard
+              label="Won when you fought"
+              value={summary.fought ? `${summary.foughtWon} of ${summary.fought}` : "—"}
+              hint={summary.autoRefunded ? `${summary.autoRefunded} auto-refunded by your rule` : "Evidence submitted to PayPal"}
+            />
+            <ResultCard label="Time to respond" value={response} hint="Average, from dispute opened" />
+          </div>
+          <div className="mt-3 grid gap-3 lg:grid-cols-3">
+            <OutcomeChart bars={bars} />
+            <div className="lg:col-span-2">
+              <OutcomesGrid rows={rows} />
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function ResultCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="block rounded-2xl border border-line bg-canvas p-5">
+      <span className="text-[13px] font-medium text-fg-heading">{label}</span>
+      <span className="mt-3 block font-serif text-[32px] leading-none text-fg tabular-nums">{value}</span>
+      {hint && <span className="mt-2 block text-[12px] text-fg-muted">{hint}</span>}
     </div>
   );
 }

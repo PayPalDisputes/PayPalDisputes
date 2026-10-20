@@ -99,6 +99,21 @@ async function buildRequest(
   }
 }
 
+/** Polls the dispute until PayPal finishes processing the last action (leaves UNDER_REVIEW), up to ~12s. */
+async function waitUntilSettled(disputeId: string): Promise<Dispute | null> {
+  let latest: Dispute | null = null;
+  for (let i = 0; i < 8; i++) {
+    await new Promise((r) => setTimeout(r, 1500));
+    try {
+      latest = await getDispute<Dispute>(disputeId);
+    } catch {
+      continue;
+    }
+    if ((latest as { status?: string }).status !== "UNDER_REVIEW") return latest;
+  }
+  return latest;
+}
+
 /** Short, seller-facing reason from a PayPal error body. */
 function paypalReason(status: number, body: unknown) {
   const b = body as { message?: string; details?: { description?: string }[] } | null;
@@ -163,7 +178,15 @@ export async function approveDecision(
     if (disputeError) throw disputeError;
     dispute = data.raw as Dispute;
   }
-  const allowed = new Set((dispute.links ?? []).filter((l) => l.method === "POST").map((l) => l.rel));
+  let allowed = new Set((dispute.links ?? []).filter((l) => l.method === "POST").map((l) => l.rel));
+
+  // On a retry, skip steps that already reached PayPal so the buyer doesn't get the same message twice.
+  const alreadySent = new Set<string>();
+  if (mode === "live") {
+    const { data: done, error: doneError } = await db.from("actions").select("action_type").eq("decision_id", decision.id).eq("success", true);
+    if (doneError) throw doneError;
+    for (const a of done) alreadySent.add(a.action_type);
+  }
 
   if (mode === "live") {
     const { error: approveError } = await db
@@ -175,7 +198,11 @@ export async function approveDecision(
 
   const steps: StepResult[] = [];
   const ordered = [...drafts].sort((a, b) => SEND_ORDER.indexOf(a.action) - SEND_ORDER.indexOf(b.action));
-  for (const draft of ordered) {
+  for (const [index, draft] of ordered.entries()) {
+    if (alreadySent.has(draft.action)) {
+      steps.push({ action: draft.action, ok: true, message: "Already sent earlier." });
+      continue;
+    }
     if (!allowed.has(draft.action)) {
       steps.push({ action: draft.action, ok: false, message: "PayPal doesn't allow this on the dispute right now." });
       continue;
@@ -209,6 +236,13 @@ export async function approveDecision(
       success: res.ok,
     });
     if (logError) console.error(`[respond] failed to log ${draft.action} for ${decision.dispute_id}`, logError);
+
+    // PayPal briefly puts the dispute "under review" after each action and rejects the next one
+    // until it settles (ACTION_NOT_ALLOWED_IN_CURRENT_DISPUTE_STATE), so wait, then re-read what's allowed.
+    if (res.ok && index < ordered.length - 1) {
+      const settled = await waitUntilSettled(decision.dispute_id);
+      if (settled) allowed = new Set((settled.links ?? []).filter((l) => l.method === "POST").map((l) => l.rel));
+    }
   }
 
   const ok = steps.length > 0 && steps.every((s) => s.ok);
