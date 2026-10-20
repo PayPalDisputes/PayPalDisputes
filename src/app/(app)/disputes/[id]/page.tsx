@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { computeUrgency } from "@/lib/agent";
 import { canAccessDispute, requireSession, sessionMode } from "@/lib/auth";
 import { getDisputeDetail, type OrderEvidence, type PayPalDisputeDetail } from "@/lib/dashboard";
+import { getDisputeOutcome, type OutcomeRow } from "@/lib/outcomes";
 import { Deadline, formatAmount, humanize, reasonLabel, StatusBadge } from "@/app/_components/dispute-ui";
 import { AssessmentReport } from "./assessment";
 import { BuyerHistoryCard } from "./buyer-history";
@@ -185,7 +186,7 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
   const { id } = await params;
   const session = await requireSession();
   if (!(await canAccessDispute(id))) notFound();
-  const dispute = await getDisputeDetail(id);
+  const [dispute, outcome] = await Promise.all([getDisputeDetail(id), getDisputeOutcome(id)]);
   if (!dispute) notFound();
 
   const { raw } = dispute;
@@ -251,6 +252,12 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
         </div>
 
         <div className="space-y-6">
+          {outcome && (
+            <Card title="Outcome">
+              <OutcomeSummaryCard outcome={outcome} />
+            </Card>
+          )}
+
           <Card title="Transaction">
             <dl>
               <Field label="Item">{item?.item_description ?? item?.item_name ?? "—"}</Field>
@@ -298,6 +305,39 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+const RESULT_TEXT: Record<OutcomeRow["result"], { label: string; className: string }> = {
+  won: { label: "Won", className: "text-emerald-700 dark:text-emerald-400" },
+  settled: { label: "Settled", className: "text-amber-700 dark:text-amber-400" },
+  lost: { label: "Resolved for the buyer", className: "text-red-600 dark:text-red-400" },
+  other: { label: "Closed", className: "text-zinc-600 dark:text-zinc-400" },
+};
+const CHOICE_TEXT = { fight: "Fight", settle: "Settle", refund: "Refund" } as const;
+
+/** How the dispute ended, what was kept, and how that lined up with Sira's advice. */
+function OutcomeSummaryCard({ outcome: o }: { outcome: OutcomeRow }) {
+  const r = RESULT_TEXT[o.result];
+  const advice = o.autoRefunded
+    ? "Handled by your auto-refund rule."
+    : o.advised && o.did
+      ? o.advised === o.did
+        ? `Sira advised ${CHOICE_TEXT[o.advised]}, and you followed it.`
+        : `Sira advised ${CHOICE_TEXT[o.advised]}; you chose ${CHOICE_TEXT[o.did]}.`
+      : o.advised
+        ? `Sira advised ${CHOICE_TEXT[o.advised]}; no response was sent.`
+        : null;
+  return (
+    <div className="text-sm">
+      <p className={`text-base font-semibold ${r.className}`}>{r.label}</p>
+      <dl className="mt-2">
+        <Field label="You kept">{formatAmount(o.kept, o.currency)}</Field>
+        {o.refunded > 0 && <Field label="Refunded to buyer">{formatAmount(o.refunded, o.currency)}</Field>}
+        <Field label="Resolved">{formatDateTime(o.resolvedAt ?? undefined)}</Field>
+      </dl>
+      {advice && <p className="mt-2 text-zinc-600 dark:text-zinc-400">{advice}</p>}
     </div>
   );
 }

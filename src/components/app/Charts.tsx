@@ -248,3 +248,57 @@ export function EvalLatencyChart({ versions }: { versions: VersionStat[] }) {
     </ChartCard>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* Outcomes                                                            */
+/* ------------------------------------------------------------------ */
+
+export type OutcomeBar = { label: string; won: number; settled: number; lost: number };
+
+/** Resolved disputes by what the seller did, split by how they ended (stacked; labels in the data table too). */
+export function OutcomeChart({ bars }: { bars: OutcomeBar[] }) {
+  const total = bars.reduce((s, b) => s + b.won + b.settled + b.lost, 0);
+  const series = [
+    { yKey: "won", yName: "Won", fill: COLORS.refund },
+    { yKey: "settled", yName: "Settled", fill: COLORS.settle },
+    { yKey: "lost", yName: "Lost", fill: COLORS.urgent },
+  ] as const;
+  return (
+    <ChartCard
+      title="How disputes ended"
+      description="Resolved disputes by what you did, and how PayPal closed them."
+      table={bars.map((b) => ({ label: b.label, value: `${b.won} won · ${b.settled} settled · ${b.lost} lost` }))}
+    >
+      {total === 0 ? (
+        <Empty>No resolved disputes yet.</Empty>
+      ) : (
+        <div className="h-[200px]">
+          <AgCharts
+            options={
+              {
+                ...baseChart(),
+                data: bars,
+                series: series.map((s) => ({
+                  type: "bar",
+                  direction: "horizontal",
+                  xKey: "label",
+                  yKey: s.yKey,
+                  yName: s.yName,
+                  stacked: true,
+                  fill: s.fill,
+                  cornerRadius: 3,
+                })),
+                legend: { enabled: true, position: "bottom", item: { label: { color: COLORS.text, fontSize: 12 } } },
+                axes: {
+                  x: { type: "category", position: "left", line: { enabled: false }, label: { color: COLORS.text, fontSize: 12 }, paddingInner: 0.45 },
+                  y: { type: "number", position: "bottom", min: 0, interval: { step: 1 }, label: { color: COLORS.muted, fontSize: 11 } },
+                },
+              } as AgCartesianChartOptions
+            }
+            style={{ height: "100%" }}
+          />
+        </div>
+      )}
+    </ChartCard>
+  );
+}
