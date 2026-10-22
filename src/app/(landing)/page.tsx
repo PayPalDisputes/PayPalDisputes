@@ -76,6 +76,14 @@ export default function LandingPage() {
             <PrimaryButton href={hero.primary.href}>{hero.primary.label}</PrimaryButton>
             <SecondaryButton href={hero.secondary.href}>{hero.secondary.label}</SecondaryButton>
           </div>
+          {/* Where the data comes from. Text only: Sira isn't affiliated with PayPal (see the footer). */}
+          <p className="mt-10 flex max-w-md items-center gap-3 border-t border-[#141312]/[0.08] pt-5">
+            <span className="font-mono text-[10.5px] tracking-[0.12em] text-[#8a867f] uppercase">{hero.builtOn.label}</span>
+            <span className="text-[15px] tracking-[-0.01em]">
+              <span className="font-medium text-[#003087]">{hero.builtOn.name}</span>{" "}
+              <span className="text-[#55524d]">{hero.builtOn.product}</span>
+            </span>
+          </p>
         </div>
       </section>
 
