@@ -2,11 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
-import { CELL, INK, PITCH, SIGNAL, cellRandom, noise3, runCanvas } from "./pixel";
+import { CELL, INK, PITCH, SIGNAL, cellRandom, heatColor, noise3, runCanvas } from "./pixel";
 
 /**
  * "Scattered to ordered": dots spread wide and faint on the left gather into one tight, dark
- * line on the right, flowing slowly left to right. Used for the process and evidence sections.
+ * line on the right, flowing slowly left to right. The cursor leaves a fading trail of dark dots.
  */
 export function PixelFlow({ className, seed = 0 }: { className?: string; seed?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -14,7 +14,7 @@ export function PixelFlow({ className, seed = 0 }: { className?: string; seed?: 
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
-    return runCanvas(canvas, (ctx, width, height, t) => {
+    return runCanvas(canvas, (ctx, width, height, t, heat) => {
       ctx.clearRect(0, 0, width, height);
       const cols = Math.floor(width / PITCH);
       const rows = Math.floor(height / PITCH);
@@ -29,6 +29,12 @@ export function PixelFlow({ className, seed = 0 }: { className?: string; seed?: 
         const sx = x - shift; // sample position that moves with the stream
 
         for (let y = 0; y < rows; y++) {
+          const hot = heatColor(heat(x, y));
+          if (hot) {
+            ctx.fillStyle = hot;
+            ctx.fillRect(x * PITCH + 1, y * PITCH + 1, CELL, CELL);
+            continue;
+          }
           const d = Math.abs(y - mid) / Math.max(spread, 0.6);
           if (d > 1.6) continue;
           const wobble = noise3(sx * 0.18, y * 0.25, t * 0.15 + seed) * 0.5;
