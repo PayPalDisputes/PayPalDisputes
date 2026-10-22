@@ -165,16 +165,6 @@ body {
 }
 
 /* ---- Diagonal hatch (gutter strips, CTA band) ---- */
-/* Landing page: the faint 12px grid (same pitch as the dot canvases) only appears behind the
-   dot bands, fading out at the top and bottom so text always sits on a plain background. */
-@utility dot-grid {
-  background-image:
-    linear-gradient(to right, rgba(20, 19, 18, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(20, 19, 18, 0.05) 1px, transparent 1px);
-  background-size: 12px 12px;
-  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
-}
-
 @utility bg-hatch {
   background-image: repeating-linear-gradient(
     -45deg,

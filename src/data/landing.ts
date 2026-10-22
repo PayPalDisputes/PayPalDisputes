@@ -4,86 +4,104 @@ import { hero as home } from "@/data/home";
 export const landing = {
   hero: {
     title: ["Your disputes,", "settled."],
-    kicker: ["An AI dispute desk", "for PayPal sellers"],
-    body: "Sira reads every PayPal dispute, recommends whether to fight, refund or settle, and drafts the response. Nothing is sent until you approve it.",
+    body: "An AI dispute desk for PayPal sellers. It reads every case, recommends what to do, and drafts the response for you to approve.",
+    primary: { label: "Open dashboard", href: "/dashboard" },
+    secondary: { label: "View pricing", href: "/pricing" },
   },
 
-  intro: "Every claim read in full. Every deadline tracked. Every response checked by you before PayPal sees it.",
-
-  stats: home.stats.map((s) => ({ value: `${s.prefix}${s.value}${s.suffix}`, label: s.label })),
-  statsNote: "Time and accuracy measured on our 14-case evaluation set (prompt v5).",
-
-  editorial: [
-    {
-      id: "deadlines",
-      eyebrow: "The problem",
-      title: "Every dispute has a deadline.",
-      body: [
-        "PayPal gives sellers a fixed window to respond, and the window shrinks as a case moves from inquiry to claim to chargeback. Miss it and the case closes in the buyer's favour, whatever the facts were.",
-        "Most of the work is reading: the claim, the buyer's messages, the order, the tracking. Sira does that reading for every open case and sorts the queue by whichever deadline comes first.",
-      ],
-    },
-    {
-      id: "approval",
-      eyebrow: "The rule",
-      title: "The agent drafts. You decide.",
-      body: [
-        "Deadlines and Seller Protection are worked out by rules, not guessed by a model. The model reads the case and explains its recommendation in plain language, with the evidence it relied on.",
-        "Nothing reaches PayPal until a person approves it. Every draft can be edited or rejected, and every assessment is versioned so you can see what changed.",
-      ],
-      columns: [
-        {
-          label: "Good at",
-          items: ["Reading long buyer threads", "Matching tracking to the order", "Spotting missing proof", "Drafting a clear, polite reply"],
-        },
-        {
-          label: "Never does",
-          items: ["Send without your approval", "Guess a deadline", "Invent evidence", "Refund on its own"],
-        },
-      ],
-    },
-  ],
-
-  process: {
-    id: "process",
-    eyebrow: "How it works",
-    title: "Read. Check. Draft. Approve.",
-    steps: [
-      { title: "Read", body: "New disputes sync from PayPal every fifteen minutes, with the full claim and message history." },
-      { title: "Check", body: "Tracking, delivery address and item type are checked against the claim and Seller Protection." },
-      { title: "Draft", body: "A recommendation with reasons, plus the evidence note, buyer message or offer to send." },
-      { title: "Approve", body: "You edit, approve or reject. Approved responses go to PayPal; the outcome is tracked." },
+  /** Every reason code PayPal uses. Shown as the proof strip under the hero. */
+  reasons: {
+    label: "Covers all ten PayPal dispute reasons",
+    items: [
+      "Item not received",
+      "Not as described",
+      "Unauthorized",
+      "Duplicate transaction",
+      "Credit not processed",
+      "Incorrect amount",
+      "Paid by other means",
+      "Canceled recurring billing",
+      "Problem with remittance",
+      "Other",
     ],
   },
 
-  stages: {
-    id: "stages",
-    eyebrow: "Coverage",
-    title: "Every stage of a dispute.",
-    items: [
+  /** What it does, one card each. */
+  jobs: [
+    {
+      icon: "scale",
+      title: "Decide every case",
+      body: "Fight, refund or settle, with the reasoning and the Seller Protection check behind each call.",
+      href: "/disputes",
+    },
+    {
+      icon: "pen",
+      title: "Draft the response",
+      body: "Evidence notes, buyer messages and offers written from your order data, ready to edit.",
+      href: "/disputes",
+    },
+    {
+      icon: "timer",
+      title: "Stay ahead of deadlines",
+      body: "Cases sorted by PayPal's response date, with chargebacks and claims flagged first.",
+      href: "/dashboard",
+    },
+  ] as const,
+
+  numbers: {
+    title: "Measured, not promised.",
+    body: "Every prompt change is scored against the same set of real dispute scenarios.",
+    stats: home.stats.map((s) => ({ value: `${s.prefix}${s.value}${s.suffix}`, label: s.label })),
+    note: "Time and accuracy measured on our 14-case evaluation set (prompt v5).",
+  },
+
+  how: {
+    lead: "Sira",
+    title: "drafts every response. You decide what gets sent.",
+    cta: { label: "Open dashboard", href: "/dashboard" },
+    steps: [
       {
-        code: "S1",
-        title: "Inquiry",
-        body: "The buyer has opened a dispute but not escalated. Often resolved with a message and tracking.",
+        id: "read",
+        title: "Reads every case",
+        body: "New disputes sync from PayPal every fifteen minutes, with the full claim and message history, sorted by deadline.",
       },
       {
-        code: "S2",
-        title: "Claim",
-        body: "Escalated to PayPal for review. Evidence matters most here, and the deadline is firm.",
+        id: "check",
+        title: "Checks the evidence",
+        body: "Tracking, delivery and ship-to address are matched against the claim. Missing proof is called out before you respond.",
       },
       {
-        code: "S3",
-        title: "Chargeback",
-        body: "Raised through the buyer's card issuer. Flagged first in the queue, with the strictest window.",
+        id: "draft",
+        title: "Drafts the response",
+        body: "A recommendation with plain-language reasons, plus the evidence note, buyer message or partial refund offer.",
+      },
+      {
+        id: "approve",
+        title: "Waits for your approval",
+        body: "Nothing reaches PayPal until you approve it. Edit or reject any draft; the outcome is tracked either way.",
+      },
+    ],
+  },
+
+  rules: {
+    title: "Clear about what it will and won't do.",
+    body: "Deadlines and Seller Protection come from rules, not guesses. The model reads and writes; a person decides.",
+    columns: [
+      {
+        label: "Good at",
+        items: ["Reading long buyer threads", "Matching tracking to the order", "Spotting missing proof", "Drafting a clear, polite reply"],
+      },
+      {
+        label: "Never does",
+        items: ["Send without your approval", "Guess a deadline", "Invent evidence", "Refund on its own"],
       },
     ],
   },
 
   cta: {
-    marquee: "SETTLED IN SECONDS",
-    title: "Open your queue.",
+    title: "Start with your open disputes.",
     body: "Try it in demo mode without touching PayPal, or connect a sandbox account.",
     primary: { label: "Open dashboard", href: "/dashboard" },
-    secondary: { label: "View pricing", href: "/pricing" },
+    secondary: { label: "Sign in", href: "/signin" },
   },
 };
