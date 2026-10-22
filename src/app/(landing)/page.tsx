@@ -3,10 +3,8 @@ import Link from "next/link";
 import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
 import { ActivityTicker } from "@/components/landing/ActivityTicker";
 import { BandDots } from "@/components/landing/BandDots";
-import { HeroField } from "@/components/landing/HeroField";
 import { HeroStage } from "@/components/landing/HeroStage";
-import { ScrambleText } from "@/components/landing/ScrambleText";
-import { diagrams } from "@/components/landing/Diagrams";
+import { Process } from "@/components/landing/Process";
 import { landing } from "@/data/landing";
 import { site } from "@/data/site";
 import { cn } from "@/lib/cn";
@@ -57,45 +55,32 @@ export default function LandingPage() {
 
   return (
     <>
-      {/* Hero: left-aligned copy over the line field, which keeps clear of [data-hero-copy] */}
-      <section className="relative isolate overflow-hidden">
-        <HeroField className="-z-10" />
-        <div className={cn(wrap, "pt-20 pb-14 md:pt-32 md:pb-20")}>
-          <div data-hero-copy className="max-w-[38rem]">
-            <p className="hero-in flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">
-              {hero.stat.label}
-              <span className="rounded-md border border-[#141312]/[0.08] bg-white px-1.5 py-0.5 text-[12px] tracking-normal text-[#141312] normal-case">
-                <ScrambleText text={hero.stat.value} delay={500} />
+      {/* Hero: still, left-aligned copy */}
+      <section className={cn(wrap, "pt-20 pb-14 md:pt-32 md:pb-20")}>
+        <div className="max-w-[38rem]">
+          <p className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">
+            {hero.stat.label}
+            <span className="rounded-md border border-[#141312]/[0.08] bg-white px-1.5 py-0.5 text-[12px] tracking-normal text-[#141312] normal-case tabular-nums">
+              {hero.stat.value}
+            </span>
+          </p>
+          <h1 className="mt-6 text-[clamp(2.75rem,6.4vw,5.25rem)] leading-[1.0] font-normal tracking-[-0.045em]">
+            {hero.title.map((l) => (
+              <span key={l} className="block">
+                {l}
               </span>
-            </p>
-            <h1 className="mt-6 text-[clamp(2.75rem,6.4vw,5.25rem)] leading-[1.0] font-normal tracking-[-0.045em]">
-              {hero.title.map((l, i) => (
-                <span key={l} className="rise-line">
-                  <span style={{ "--d": `${120 + i * 110}ms` } as React.CSSProperties}>
-                    {i === hero.title.length - 1 ? (
-                      <span data-hero-launch className="scan-word">
-                        {l}
-                      </span>
-                    ) : (
-                      l
-                    )}
-                  </span>
-                </span>
-              ))}
-            </h1>
-            <p className="hero-in mt-6 max-w-lg text-[18px] leading-relaxed text-[#77736c]" style={{ "--d": "420ms" } as React.CSSProperties}>
-              {hero.body}
-            </p>
-            <div data-hero-cta className="hero-in mt-9 flex flex-wrap gap-3" style={{ "--d": "540ms" } as React.CSSProperties}>
-              <PrimaryButton href={hero.primary.href}>{hero.primary.label}</PrimaryButton>
-              <SecondaryButton href={hero.secondary.href}>{hero.secondary.label}</SecondaryButton>
-            </div>
+            ))}
+          </h1>
+          <p className="mt-6 max-w-lg text-[18px] leading-relaxed text-[#77736c]">{hero.body}</p>
+          <div className="mt-9 flex flex-wrap gap-3">
+            <PrimaryButton href={hero.primary.href}>{hero.primary.label}</PrimaryButton>
+            <SecondaryButton href={hero.secondary.href}>{hero.secondary.label}</SecondaryButton>
           </div>
         </div>
       </section>
 
       {/* Product stage: one example dispute played through, then what Sira keeps doing */}
-      <section className={cn(wrap, "hero-in pb-10")} style={{ "--d": "700ms" } as React.CSSProperties}>
+      <section className={cn(wrap, "pb-10")}>
         <HeroStage />
         <ActivityTicker label={activity.label} items={activity.items} className="mt-5" />
       </section>
@@ -153,7 +138,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it works: statement + action, then one illustrated card per step */}
+      {/* How it works: statement + action, then the process told by scrolling */}
       <section id="how" className={cn(wrap, "py-28")}>
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <h2 className={cn(h2, "max-w-2xl text-[#9a968e]")}>
@@ -163,17 +148,8 @@ export default function LandingPage() {
             <SecondaryButton href={how.cta.href}>{how.cta.label}</SecondaryButton>
           </div>
         </div>
-        <div className="mt-12 grid gap-x-6 gap-y-14 md:grid-cols-2">
-          {how.steps.map((s) => {
-            const Diagram = diagrams[s.id as keyof typeof diagrams];
-            return (
-              <article key={s.id}>
-                <Diagram />
-                <h3 className="mt-5 text-[16px] font-medium">{s.title}</h3>
-                <p className="mt-1.5 max-w-md text-[14px] leading-relaxed text-[#77736c]">{s.body}</p>
-              </article>
-            );
-          })}
+        <div className="mt-16">
+          <Process steps={how.steps} />
         </div>
       </section>
 

@@ -4,17 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Minus, MousePointer2 } from "lucide-react";
 import { useReducedMotion } from "@/components/motion/Reveal";
 import { cn } from "@/lib/cn";
-import { HANDOFF_EVENT } from "./HeroField";
 import { SpringDots } from "./SpringDots";
 
 /**
  * The product stage under the hero, after ramp.com: a rounded panel of spring dots with a looping
  * demo of one (fictional) dispute moving through Sira. A case arrives, the evidence checks tick
  * in, the recommendation appears, a cursor approves the draft, and it's sent to PayPal.
- * The first loop waits for the hero's streak to hand the case over (`sira:handoff`): a blue line
- * drops from the panel's top edge onto the case card as it lands. If no handoff comes (no WebGL,
- * or the page was scrolled first), it starts on its own. Plays only while on screen; with reduced
- * motion it shows the finished state.
+ * Plays only while on screen; with reduced motion it shows the finished state.
  */
 
 /** When each step starts, in ms from the start of a loop. */
@@ -55,26 +51,6 @@ export function HeroStage() {
   const ref = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(-1);
   const [onScreen, setOnScreen] = useState(false);
-  const [go, setGo] = useState(false);
-  const [drop, setDrop] = useState<{ x: number; h: number } | null>(null);
-  const caseRef = useRef<HTMLDivElement>(null);
-
-  // Wait for the hero to hand the case over, or start anyway after a moment on screen.
-  useEffect(() => {
-    if (go) return;
-    const onHandoff = () => {
-      const panel = ref.current?.getBoundingClientRect();
-      const card = caseRef.current?.getBoundingClientRect();
-      if (panel && card) setDrop({ x: card.left + card.width / 2 - panel.left, h: card.top - panel.top });
-      setGo(true);
-    };
-    window.addEventListener(HANDOFF_EVENT, onHandoff);
-    const fallback = onScreen ? window.setTimeout(() => setGo(true), 3500) : 0;
-    return () => {
-      window.removeEventListener(HANDOFF_EVENT, onHandoff);
-      clearTimeout(fallback);
-    };
-  }, [go, onScreen]);
 
   useEffect(() => {
     const el = ref.current;
@@ -85,7 +61,7 @@ export function HeroStage() {
   }, []);
 
   useEffect(() => {
-    if (reduced || !onScreen || !go) return;
+    if (reduced || !onScreen) return;
     const timers: number[] = [];
     const run = () => {
       TIMELINE.forEach((at, i) => timers.push(window.setTimeout(() => setStep(i), at)));
@@ -94,7 +70,7 @@ export function HeroStage() {
     };
     run();
     return () => timers.forEach(clearTimeout);
-  }, [reduced, onScreen, go]);
+  }, [reduced, onScreen]);
 
   const s = reduced ? DONE : step;
   const sent = s >= 8;
@@ -103,19 +79,11 @@ export function HeroStage() {
     <div ref={ref} className="relative isolate overflow-hidden rounded-3xl border border-[#141312]/[0.07] bg-[#f6f6f3]">
       <SpringDots className="-z-10 [mask-image:radial-gradient(ellipse_at_center,#000_40%,transparent_85%)]" />
 
-      {drop && !reduced && (
-        <span
-          aria-hidden
-          className="drop-line absolute top-0 w-[3px] rounded-b-full bg-[#0070E0]"
-          style={{ left: drop.x, height: drop.h }}
-        />
-      )}
-
       <p className="absolute top-5 left-6 font-mono text-[10.5px] tracking-[0.12em] text-[#77736c] uppercase">Example dispute</p>
 
       <div className="relative mx-auto flex max-w-[780px] flex-col gap-6 px-5 pt-16 pb-10 md:block md:h-[440px] md:px-0 md:pt-0 md:pb-0">
         {/* The case */}
-        <div ref={caseRef} data-handoff-target className={cn("relative md:absolute md:top-[72px] md:right-0 md:w-[330px]", enter(s >= 1))}>
+        <div className={cn("relative md:absolute md:top-[72px] md:right-0 md:w-[330px]", enter(s >= 1))}>
           <CropMarks />
           <div className="rounded-xl border border-[#141312]/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(20,19,18,0.04),0_12px_32px_-12px_rgba(20,19,18,0.12)]">
             <div className="flex items-center justify-between">
