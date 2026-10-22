@@ -4,12 +4,12 @@ import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 
 /**
- * Background dots in PayPal blues, after base.org. Two layouts:
- * - "hero": long drifting streaks plus small diamond-shaped "crystals", kept clear of the centre
- *   (where the headline sits) and of the page edges.
- * - "band": columns of dots near the left and right edges that shimmer downward.
- * The mouse lights up a soft patch of dots, nudges them aside, and leaves a short fading trail.
- * Decorative only (aria-hidden), paused offscreen, and a still frame for reduced motion.
+ * Background dots in PayPal blues, after base.org. Quiet by default: the hero shows at most a few
+ * short-lived shapes at a time (thin streaks that can bend from horizontal to vertical, faceted
+ * crystals, bands of ticks), always clear of the headline. The band shows slow dot columns at its
+ * sides. Over either, the mouse gets a "lens" of vertical bars that glides after it.
+ * Decorative only (aria-hidden), paused offscreen; with reduced motion only the band's columns
+ * show, still, and the cursor lens is off.
  */
 
 function hash(x: number, y: number, z: number) {
@@ -21,6 +21,7 @@ function hash(x: number, y: number, z: number) {
 const fade = (t: number) => t * t * (3 - 2 * t);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 /** 3D value noise in [0, 1]. */
 function noise(x: number, y: number, z: number) {
@@ -36,113 +37,194 @@ function noise(x: number, y: number, z: number) {
 
 /** PayPal blues, faint to strong. */
 const BLUES = ["143, 195, 238", "0, 156, 222", "0, 112, 224", "0, 48, 135"];
-const color = (v: number, alpha: number) => {
-  const tone = v > 0.62 ? 3 : v > 0.4 ? 2 : v > 0.18 ? 1 : 0;
-  return `rgba(${BLUES[tone]}, ${alpha.toFixed(3)})`;
+const blue = (v: number, alpha: number) => {
+  const tone = v > 0.75 ? 3 : v > 0.5 ? 2 : v > 0.25 ? 1 : 0;
+  return `rgba(${BLUES[tone]}, ${clamp01(alpha).toFixed(3)})`;
 };
 
-const CURSOR_RADIUS = 130; // px
-const TRAIL_HALF_LIFE = 0.25; // seconds
-
-type Grid = { cols: number; rows: number; pitch: number };
-/** `glow(i)` is the cursor's light on cell i in [0, 1]; `push` returns the cell's offset in px. */
-type Cursor = { glow: (i: number) => number; push: (i: number, px: number, py: number) => [number, number] };
-type Draw = (ctx: CanvasRenderingContext2D, w: number, h: number, t: number, grid: Grid, cursor: Cursor) => void;
+const PITCH = 7; // px between cells in the hero
 
 /* ------------------------------------------------------------------ */
-/* Hero: streaks + crystals                                            */
+/* Hero actors: each lives a few seconds, then is replaced             */
 /* ------------------------------------------------------------------ */
 
-/** Diamond clusters that drift slowly up and to the right, wrapping round. Seeded so they're stable. */
-const CRYSTALS = Array.from({ length: 16 }, (_, i) => ({
-  x: hash(i, 1, 41),
-  y: hash(i, 2, 41),
-  r: 2 + Math.floor(hash(i, 3, 41) * 4), // radius in cells
-  speed: 0.6 + hash(i, 4, 41) * 0.8, // cells per second
-  phase: hash(i, 5, 41) * 10,
-}));
+/** How visible a point may be: 0 behind the headline, 1 in open space. */
+type Mask = (px: number, py: number) => number;
+type Actor = {
+  /** Spawn point in cells, used to keep shapes apart. */
+  x: number;
+  y: number;
+  done: (t: number) => boolean;
+  draw: (ctx: CanvasRenderingContext2D, t: number, mask: Mask) => void;
+};
 
-let crystalBuf = new Float32Array(0);
+/** Short vertical tick, the basic mark (Base uses the same). */
+function tick(ctx: CanvasRenderingContext2D, cx: number, cy: number, style: string) {
+  ctx.fillStyle = style;
+  ctx.fillRect(Math.round(cx * PITCH), Math.round(cy * PITCH - 1), 2, 5);
+}
+function square(ctx: CanvasRenderingContext2D, cx: number, cy: number, style: string) {
+  ctx.fillStyle = style;
+  ctx.fillRect(Math.round(cx * PITCH), Math.round(cy * PITCH), 3, 3);
+}
 
-const drawHero: Draw = (ctx, w, h, t, { cols, rows, pitch }, cursor) => {
-  const size = 4;
+/**
+ * A thin streak that travels straight, then (usually) bends through a quarter circle into a
+ * vertical run. Drawn as a one-cell-wide trail that fades from navy at the head to pale at the tail.
+ */
+function streak(t: number, x: number, y: number): Actor {
+  const dir = Math.random() < 0.5 ? 1 : -1;
+  const down = Math.random() < 0.6 ? 1 : -1;
+  const bends = Math.random() < 0.7;
+  const L1 = rand(10, 22); // straight run, cells
+  const r = rand(3, 6); // bend radius, cells
+  const L2 = bends ? rand(8, 18) : 0; // vertical run, cells
+  const arc = bends ? (Math.PI / 2) * r : 0;
+  const total = L1 + arc + L2;
+  const speed = rand(14, 22); // cells per second
+  const tail = rand(10, 18); // trail length, cells
 
-  // Stamp crystals into a buffer: filled diamonds with a lattice inside, so they read as crystals.
-  if (crystalBuf.length !== cols * rows) crystalBuf = new Float32Array(cols * rows);
-  crystalBuf.fill(0);
-  for (const c of CRYSTALS) {
-    const cx = Math.floor((c.x * cols + t * c.speed) % (cols + 20)) - 10;
-    const cy = Math.floor((((c.y * rows - t * c.speed * 0.35) % rows) + rows) % rows);
-    const pulse = 0.75 + 0.25 * Math.sin(t * 1.6 + c.phase);
-    for (let dy = -c.r; dy <= c.r; dy++) {
-      for (let dx = -c.r; dx <= c.r; dx++) {
-        const m = Math.abs(dx) + Math.abs(dy);
-        if (m > c.r) continue;
-        const x = cx + dx;
-        const y = cy + dy;
-        if (x < 0 || y < 0 || x >= cols || y >= rows) continue;
-        const lattice = (dx + dy) % 2 === 0 ? 1 : 0.45;
-        crystalBuf[y * cols + x] = Math.max(crystalBuf[y * cols + x], (1 - (m / (c.r + 1)) * 0.6) * lattice * pulse);
+  // Position along the path at distance s.
+  const at = (s: number): [number, number] => {
+    if (s <= L1 || !bends) return [x + dir * s, y];
+    if (s <= L1 + arc) {
+      const a = (s - L1) / r; // angle turned so far
+      return [x + dir * (L1 + Math.sin(a) * r), y + down * (1 - Math.cos(a)) * r];
+    }
+    return [x + dir * (L1 + r), y + down * (r + (s - L1 - arc))];
+  };
+
+  return {
+    x,
+    y,
+    done: (now) => (now - t) * speed - tail > total,
+    draw: (ctx, now, mask) => {
+      const head = (now - t) * speed;
+      const seen = new Set<number>();
+      for (let k = 0; k <= tail; k += 0.5) {
+        const s = head - k;
+        if (s < 0 || s > total) continue;
+        const [cx, cy] = at(s);
+        const gx = Math.round(cx), gy = Math.round(cy);
+        const key = gx * 10000 + gy;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const v = 1 - k / tail;
+        const a = (0.25 + 0.75 * v) * mask(gx * PITCH, gy * PITCH);
+        if (a < 0.05) continue;
+        tick(ctx, gx, gy, blue(v, a));
       }
+    },
+  };
+}
+
+/**
+ * A faceted cluster: roughly a diamond, stretched and roughened by noise so no two match, with a
+ * few cells knocked out. Grows outward from its centre, glints, then dissolves cell by cell.
+ */
+function crystal(t: number, x: number, y: number): Actor {
+  const R = rand(4, 8);
+  const ax = rand(0.6, 1.4), ay = rand(0.6, 1.4);
+  const seed = Math.floor(Math.random() * 1e6);
+  const life = rand(3.5, 5);
+  const cells: { dx: number; dy: number; d: number; out: number }[] = [];
+  const span = Math.ceil(R * 1.6);
+  for (let dy = -span; dy <= span; dy++) {
+    for (let dx = -span; dx <= span; dx++) {
+      const facet = Math.abs(dx) * ax + Math.abs(dy) * ay + (noise(dx * 0.5, dy * 0.5, seed) - 0.5) * 3;
+      if (facet > R || hash(dx, dy, seed) < 0.18) continue;
+      cells.push({ dx, dy, d: facet / R, out: rand(0.55, 1) });
     }
   }
+  return {
+    x,
+    y,
+    done: (now) => now - t > life,
+    draw: (ctx, now, mask) => {
+      const age = now - t;
+      for (const c of cells) {
+        const grow = clamp01((age - c.d * 0.7) / 0.25);
+        const dissolve = clamp01((life * c.out - age) / 0.3);
+        const glint = 0.85 + 0.15 * Math.sin(age * 5 + c.dx * 1.3 + c.dy);
+        const a = grow * dissolve * glint * mask((x + c.dx) * PITCH, (y + c.dy) * PITCH);
+        if (a < 0.05) continue;
+        square(ctx, x + c.dx, y + c.dy, blue(1 - c.d * 0.8, a));
+      }
+    },
+  };
+}
 
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      const i = y * cols + x;
-      const px = x * pitch + pitch / 2;
-      const py = y * pitch + pitch / 2;
+/** A loose band of ticks, a few rows deep, revealed left to right then fading. */
+function ticks(t: number, x: number, y: number): Actor {
+  const w = Math.floor(rand(10, 20));
+  const h = Math.floor(rand(3, 5));
+  const seed = Math.floor(Math.random() * 1e6);
+  const life = rand(3, 4.5);
+  return {
+    x,
+    y,
+    done: (now) => now - t > life,
+    draw: (ctx, now, mask) => {
+      const age = now - t;
+      const env = clamp01(Math.min(age / 0.3, (life - age) / 1));
+      for (let j = 0; j < h; j++) {
+        for (let i = 0; i < w; i++) {
+          if (hash(i, j, seed) < 0.35) continue;
+          const reveal = clamp01((age * 14 - i) / 3);
+          const v = hash(i, j, seed + 1);
+          const a = env * reveal * (0.35 + 0.65 * v) * mask((x + i) * PITCH, (y + j) * PITCH);
+          if (a < 0.05) continue;
+          tick(ctx, x + i, y + j * 1.4, blue(v, a));
+        }
+      }
+    },
+  };
+}
 
-      // Long thin streaks along a shallow diagonal, flowing right.
-      const u = x * 0.88 + y * 0.47;
-      const v = -x * 0.47 + y * 0.88;
-      const s = noise(u * 0.022 - t * 0.16, v * 0.24, t * 0.08);
-      const streak = clamp01((s - 0.72) / 0.18);
+const KINDS = [streak, streak, crystal, crystal, ticks];
+const MAX_ACTORS = 3;
 
-      let a = Math.max(streak, crystalBuf[i]);
-      if (a > 0 && hash(x, y, 7) > 0.88) a *= 0.35; // break up solid runs
+/* ------------------------------------------------------------------ */
+/* Cursor lens                                                         */
+/* ------------------------------------------------------------------ */
 
-      // Keep the headline clear: an elliptical hole in the middle, plus soft page edges.
-      const d = Math.hypot((px - w / 2) / (w * 0.3), (py - h * 0.5) / (h * 0.4));
-      const mask = clamp01((d - 0.8) / 0.5) * clamp01(Math.min(px, w - px) / 80) * clamp01(Math.min(py, h - py) / 60);
-      a *= mask;
+const LENS_CORE = 36; // px radius of the solid bars
+const LENS_FRINGE = 56; // px radius of the thin lines around them
 
-      // The cursor lights dots up even near the text, but more gently there.
-      const g = cursor.glow(i) * (0.45 + 0.55 * mask);
-      const alpha = Math.max(a > 0.05 ? 0.4 + 0.6 * a : 0, g * 0.95);
-      if (alpha < 0.08) continue;
-
-      const [ox, oy] = cursor.push(i, px, py);
-      ctx.fillStyle = color(Math.max(a, g * 0.9), alpha);
-      ctx.fillRect(Math.round(px + ox - size / 2), Math.round(py + oy - size / 2), size, size);
-    }
+/** A disc of vertical bars: solid blue in the core, thin pale lines around it. */
+function drawLens(ctx: CanvasRenderingContext2D, x: number, y: number, alpha: number) {
+  if (alpha < 0.02) return;
+  for (let dx = -LENS_FRINGE; dx <= LENS_FRINGE; dx += 5) {
+    const fringe = Math.sqrt(Math.max(0, LENS_FRINGE ** 2 - dx * dx)) * 0.8;
+    ctx.fillStyle = `rgba(${BLUES[1]}, ${(0.35 * alpha).toFixed(3)})`;
+    ctx.fillRect(Math.round(x + dx), Math.round(y - fringe), 1, Math.round(fringe * 2));
+    if (Math.abs(dx) >= LENS_CORE) continue;
+    const half = Math.round(Math.sqrt(LENS_CORE ** 2 - dx * dx) / 3) * 3; // stepped edge
+    ctx.fillStyle = `rgba(${BLUES[2]}, ${alpha.toFixed(3)})`;
+    ctx.fillRect(Math.round(x + dx - 2), Math.round(y - half), 4, half * 2);
   }
-};
+}
 
 /* ------------------------------------------------------------------ */
-/* Band: side columns                                                  */
+/* Band columns                                                        */
 /* ------------------------------------------------------------------ */
 
-const drawBand: Draw = (ctx, w, h, t, { cols, rows, pitch }, cursor) => {
+function drawBand(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
+  const pitch = 9;
   const size = 3;
-  for (let x = 0; x < cols; x++) {
-    const px = x * pitch + pitch / 2;
+  for (let px = pitch / 2; px < w; px += pitch) {
     const side = Math.min(px, w - px) / w; // 0 at an edge, 0.5 in the middle
-    const g0 = Math.exp(-(((side - 0.09) / 0.05) ** 2));
-    for (let y = 0; y < rows; y++) {
-      const i = y * cols + x;
-      const py = y * pitch + pitch / 2;
-      const shimmer = noise(x * 0.35, y * 0.12 - t * 1.1, t * 0.3);
-      const a = g0 * Math.sin((Math.PI * py) / h) * (0.15 + 0.85 * shimmer ** 2);
-      const g = cursor.glow(i);
-      const alpha = Math.min(1, Math.max(a * 1.4, g * 0.9));
-      if (alpha < 0.06) continue;
-      const [ox, oy] = cursor.push(i, px, py);
-      ctx.fillStyle = color(Math.max(a * 1.1, g * 0.9), alpha);
-      ctx.fillRect(Math.round(px + ox - size / 2), Math.round(py + oy - size / 2), size, size);
+    const g = Math.exp(-(((side - 0.09) / 0.045) ** 2));
+    if (g < 0.05) continue;
+    for (let py = pitch / 2; py < h; py += pitch) {
+      const shimmer = noise(px * 0.04, py * 0.012 - t * 0.25, t * 0.08);
+      const a = g * Math.sin((Math.PI * py) / h) * (0.2 + 0.8 * shimmer ** 2);
+      if (a < 0.06) continue;
+      ctx.fillStyle = blue(a * 1.1, Math.min(1, a * 1.3));
+      ctx.fillRect(Math.round(px - size / 2), Math.round(py - size / 2), size, size);
     }
   }
-};
+}
 
 /* ------------------------------------------------------------------ */
 /* Canvas loop                                                         */
@@ -155,85 +237,79 @@ export function DotField({ variant, className }: { variant: "hero" | "band"; cla
     const canvas = ref.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-    const draw = variant === "hero" ? drawHero : drawBand;
-    const pitch = variant === "hero" ? 8 : 9;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const start = performance.now();
     let w = 0;
     let h = 0;
-    const grid: Grid = { cols: 0, rows: 0, pitch };
-    let trail = new Float32Array(0);
     let raf = 0;
     let last = 0;
     let visible = false;
-    // Pointer in viewport px; `smooth` eases towards it (canvas px) so the glow glides rather than jumps.
+    let actors: Actor[] = [];
+    let nextSpawn = 0.2;
+    // Pointer in viewport px. The lens glides towards it and fades in while the pointer is over us.
     let client: { x: number; y: number } | null = null;
-    let smooth: { x: number; y: number } | null = null;
+    let lens: { x: number; y: number } | null = null;
+    let lensAlpha = 0;
 
-    const cursor: Cursor = {
-      glow: (i) => trail[i] ?? 0,
-      push: (i, px, py) => {
-        const g = trail[i];
-        if (!smooth || !g) return [0, 0];
-        const dx = px - smooth.x;
-        const dy = py - smooth.y;
-        const d = Math.hypot(dx, dy) || 1;
-        const k = (g * 5) / d; // up to ~5px outward
-        return [dx * k, dy * k];
-      },
+    // Keep the headline clear: an elliptical hole in the middle, plus soft page edges.
+    const mask: Mask = (px, py) => {
+      const d = Math.hypot((px - w / 2) / Math.min(w * 0.3, 380), (py - h * 0.48) / (h * 0.3));
+      return clamp01((d - 0.9) / 0.25) * clamp01(Math.min(px, w - px) / 60) * clamp01(Math.min(py, h - py) / 40);
     };
 
-    const updateTrail = (dt: number) => {
-      const keep = 0.5 ** (dt / TRAIL_HALF_LIFE);
-      for (let i = 0; i < trail.length; i++) trail[i] = trail[i] < 0.01 ? 0 : trail[i] * keep;
-      if (!client) {
-        smooth = null;
+    const spawn = (t: number) => {
+      for (let tries = 0; tries < 20; tries++) {
+        const x = Math.round(rand(4, w / PITCH - 4));
+        const y = Math.round(rand(4, h / PITCH - 4));
+        if (mask(x * PITCH, y * PITCH) < 0.9) continue;
+        if (actors.some((a) => Math.hypot(a.x - x, a.y - y) < 22)) continue; // don't crowd
+        actors.push(KINDS[Math.floor(Math.random() * KINDS.length)](t, x, y));
         return;
-      }
-      const rect = canvas.getBoundingClientRect();
-      const target = { x: client.x - rect.left, y: client.y - rect.top };
-      smooth = smooth ? { x: lerp(smooth.x, target.x, 0.35), y: lerp(smooth.y, target.y, 0.35) } : target;
-      const r = Math.ceil(CURSOR_RADIUS / pitch);
-      const gx = Math.floor(smooth.x / pitch);
-      const gy = Math.floor(smooth.y / pitch);
-      for (let y = Math.max(0, gy - r); y <= Math.min(grid.rows - 1, gy + r); y++) {
-        for (let x = Math.max(0, gx - r); x <= Math.min(grid.cols - 1, gx + r); x++) {
-          const d = Math.hypot(x * pitch + pitch / 2 - smooth.x, y * pitch + pitch / 2 - smooth.y) / CURSOR_RADIUS;
-          if (d >= 1) continue;
-          // Dithered edge so the lit patch looks like scattered dots, not a disc.
-          const v = (1 - d) ** 1.5 * (hash(x, y, 13) > d * 0.9 ? 1 : 0.25);
-          const i = y * grid.cols + x;
-          trail[i] = Math.max(trail[i], v);
-        }
       }
     };
 
     const frame = (now: number) => {
+      const t = (now - start) / 1000;
       ctx.clearRect(0, 0, w, h);
-      draw(ctx, w, h, reduced ? 0 : (now - start) / 1000, grid, cursor);
+
+      if (variant === "band") drawBand(ctx, w, h, reduced ? 0 : t);
+      else if (!reduced) {
+        actors = actors.filter((a) => !a.done(t));
+        if (t >= nextSpawn && actors.length < MAX_ACTORS) {
+          spawn(t);
+          nextSpawn = t + rand(0.6, 1.4);
+        }
+        for (const a of actors) a.draw(ctx, t, mask);
+      }
+
+      if (reduced) return;
+      const rect = canvas.getBoundingClientRect();
+      const target = client ? { x: client.x - rect.left, y: client.y - rect.top } : null;
+      const inside = !!target && target.x >= 0 && target.y >= 0 && target.x <= w && target.y <= h;
+      if (inside && target) lens = lens ? { x: lerp(lens.x, target.x, 0.14), y: lerp(lens.y, target.y, 0.14) } : target;
+      lensAlpha = lerp(lensAlpha, inside ? 1 : 0, 0.12);
+      if (lens) drawLens(ctx, lens.x, lens.y, lensAlpha);
+      if (lensAlpha < 0.02 && !inside) lens = null;
     };
+
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = rect.width;
       h = rect.height;
-      grid.cols = Math.ceil(w / pitch);
-      grid.rows = Math.ceil(h / pitch);
-      trail = new Float32Array(grid.cols * grid.rows);
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       frame(performance.now());
     };
-    const tick = (now: number) => {
+    const loop = (now: number) => {
       raf = 0;
       if (!visible) return;
-      if (now - last >= 1000 / 40) {
-        updateTrail(last ? Math.min((now - last) / 1000, 0.1) : 0);
+      if (now - last >= 1000 / 45) {
         last = now;
         frame(now);
       }
-      raf = requestAnimationFrame(tick);
+      raf = requestAnimationFrame(loop);
     };
 
     const onMove = (e: PointerEvent) => {
@@ -247,10 +323,7 @@ export function DotField({ variant, className }: { variant: "hero" | "band"; cla
     ro.observe(canvas);
     const io = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      if (visible && !raf && !reduced) {
-        last = 0;
-        raf = requestAnimationFrame(tick);
-      }
+      if (visible && !raf && !reduced) raf = requestAnimationFrame(loop);
     });
     io.observe(canvas);
     if (!reduced) {
