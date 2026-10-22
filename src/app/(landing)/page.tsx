@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
+import { DotField } from "@/components/landing/DotField";
 import { diagrams } from "@/components/landing/Diagrams";
 import { landing } from "@/data/landing";
 import { site } from "@/data/site";
@@ -53,18 +54,21 @@ export default function LandingPage() {
   return (
     <>
       {/* Hero: one statement, one line of support, two actions */}
-      <section className={cn(wrap, "flex flex-col items-center pt-24 pb-20 text-center md:pt-36 md:pb-28")}>
-        <h1 className="text-[clamp(2.75rem,7vw,5.25rem)] leading-[1.02] font-normal tracking-[-0.045em]">
-          {hero.title.map((l) => (
-            <span key={l} className="block">
-              {l}
-            </span>
-          ))}
-        </h1>
-        <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-[#77736c]">{hero.body}</p>
-        <div className="mt-9 flex flex-wrap justify-center gap-3">
-          <PrimaryButton href={hero.primary.href}>{hero.primary.label}</PrimaryButton>
-          <SecondaryButton href={hero.secondary.href}>{hero.secondary.label}</SecondaryButton>
+      <section className="relative isolate">
+        <DotField variant="hero" className="-z-10" />
+        <div className={cn(wrap, "flex flex-col items-center pt-24 pb-20 text-center md:pt-36 md:pb-28")}>
+          <h1 className="text-[clamp(2.75rem,7vw,5.25rem)] leading-[1.02] font-normal tracking-[-0.045em]">
+            {hero.title.map((l) => (
+              <span key={l} className="block">
+                {l}
+              </span>
+            ))}
+          </h1>
+          <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-[#77736c]">{hero.body}</p>
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
+            <PrimaryButton href={hero.primary.href}>{hero.primary.label}</PrimaryButton>
+            <SecondaryButton href={hero.secondary.href}>{hero.secondary.label}</SecondaryButton>
+          </div>
         </div>
       </section>
 
@@ -104,7 +108,8 @@ export default function LandingPage() {
       </section>
 
       {/* Numbers band */}
-      <section className="bg-[#f7f7f5] py-24">
+      <section className="relative isolate bg-[#f7f7f5] py-24">
+        <DotField variant="band" className="-z-10" />
         <div className={cn(wrap, "text-center")}>
           <h2 className={h2}>{numbers.title}</h2>
           <p className="mt-3 text-[15px] text-[#77736c]">{numbers.body}</p>
