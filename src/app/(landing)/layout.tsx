@@ -3,19 +3,19 @@ import { LogoMark } from "@/components/ui/Logo";
 import { footer, site } from "@/data/site";
 
 /**
- * Shell for the landing page: plain chrome over a faint 12px grid, the same pitch as the dot
- * canvases, so the animated dots sit exactly on the page's grid.
+ * Shell for the landing page: plain off-white with minimal chrome. The dot grid only appears
+ * behind the animated bands (see `dot-grid`), never behind text.
  */
 export default function LandingLayout({ children }: LayoutProps<"/">) {
   return (
-    <div className="landing-grid flex min-h-full flex-1 flex-col text-[#141312] [color-scheme:light]">
+    <div className="flex min-h-full flex-1 flex-col bg-[#f3f2ee] text-[#141312] [color-scheme:light]">
       <a
         href="#main"
         className="sr-only z-[60] bg-[#141312] px-3 py-2 text-sm text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
         Skip to content
       </a>
-      <header className="flex items-center justify-between px-4 py-4 sm:px-6">
+      <header className="flex items-center justify-between px-5 py-5 sm:px-8 md:px-12">
         <Link href="/" className="inline-flex items-center gap-2" aria-label={`${site.name} home`}>
           <LogoMark className="size-5" />
           <span className="font-mono text-[13px] tracking-[0.14em] uppercase">{site.name}</span>
@@ -35,7 +35,7 @@ export default function LandingLayout({ children }: LayoutProps<"/">) {
       <main id="main" className="flex-1">
         {children}
       </main>
-      <footer className="border-t border-[#141312]/15 px-4 py-8 sm:px-6">
+      <footer className="mx-5 border-t border-[#141312]/10 py-8 sm:mx-8 md:mx-12">
         <div className="flex flex-col gap-6 font-mono text-[11px] tracking-[0.12em] text-[#6c6862] uppercase sm:flex-row sm:items-center sm:justify-between">
           <span>
             © {new Date().getFullYear()} {site.name}

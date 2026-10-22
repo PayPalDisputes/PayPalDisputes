@@ -56,19 +56,6 @@ export const landing = {
     ],
   },
 
-  evidence: {
-    id: "evidence",
-    eyebrow: "Evidence",
-    title: "Proof, matched to the claim.",
-    body: "Order data you already have, lined up against what the buyer says happened. Gaps are called out before you respond, not after PayPal decides.",
-    parts: [
-      { label: "Tracking", body: "Carrier and number matched to the order." },
-      { label: "Delivery", body: "Shipped and delivered dates, with signature." },
-      { label: "Address", body: "Ship-to compared with the PayPal transaction." },
-      { label: "Notes", body: "Anything else a reviewer should know." },
-    ],
-  },
-
   stages: {
     id: "stages",
     eyebrow: "Coverage",

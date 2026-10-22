@@ -35,7 +35,7 @@ export function PixelField({ className }: { className?: string }) {
           const diag = (x - y * 1.6) / cols;
           const v = 0.55 * fbm(x * 0.035 - drift, y * 0.05, t * 0.04) + 0.45 * (0.5 + 0.5 * Math.sin(diag * 7.5 - t * 0.12));
           if (v < 0.36) continue;
-          if (cellRandom(x, y, Math.floor(t * 0.5)) < 0.12) continue; // a little texture
+          if (cellRandom(x, y, 7) > Math.min(1, (y + 1) / (rows * 0.35))) continue; // dithered fade-in from the top
 
           let color: string;
           if (v > 0.86 && cellRandom(x, y, 9) < 0.03) color = SIGNAL;
