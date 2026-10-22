@@ -1,21 +1,18 @@
 import { Check, Minus } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { PlayFrame as Frame } from "./PlayFrame";
 
 /**
- * Small line drawings for the "how it works" cards: each one sketches the real step (fictional
- * example data) in thin monochrome lines. Decorative: the card's text says the same thing.
+ * Small drawings for the "how it works" cards: each one sketches the real step (fictional example
+ * data) and acts it out when scrolled into view. Decorative: the card's text says the same thing.
  */
 
 const line = "border border-[#141312]/[0.12]";
-const bar = (w: string, tone = "bg-[#141312]/[0.08]") => <span className={cn("block h-1.5 rounded-full", tone)} style={{ width: w }} />;
-
-function Frame({ children }: { children: React.ReactNode }) {
-  return (
-    <div aria-hidden className="flex h-56 items-center justify-center rounded-xl bg-[#f7f7f5] px-6 sm:h-64">
-      {children}
-    </div>
-  );
-}
+/** Delay for the nth beat of an illustration. */
+const at = (ms: number) => ({ "--d": `${ms}ms` }) as React.CSSProperties;
+const bar = (w: string, ms: number) => (
+  <span className="play-bar block h-1.5 rounded-full bg-[#141312]/[0.08]" style={{ width: w, ...at(ms) }} />
+);
 
 export function ReadDiagram() {
   const rows = [
@@ -30,17 +27,18 @@ export function ReadDiagram() {
           <span className={cn(line, "rounded-full bg-white px-2.5 py-1 text-[11px]")}>PayPal</span>
           <span className="font-mono text-[9px] tracking-[0.1em] text-[#9a968e] uppercase">15 min</span>
         </div>
-        <span className="hidden h-px flex-1 border-t border-dashed border-[#141312]/25 sm:block" />
-        <div className={cn(line, "w-full sm:w-[64%] divide-y divide-[#141312]/[0.08] rounded-lg bg-white")}>
-          {rows.map((r) => (
-            <div key={r.reason} className="flex items-center gap-2 px-3 py-2.5 text-[11px]">
+        <span className="play-bar hidden h-px flex-1 border-t border-dashed border-[#141312]/25 sm:block" style={at(100)} />
+        <div className={cn(line, "w-full divide-y divide-[#141312]/[0.08] rounded-lg bg-white sm:w-[64%]")}>
+          {rows.map((r, i) => (
+            <div key={r.reason} className="play-item flex items-center gap-2 px-3 py-2.5 text-[11px]" style={at(450 + i * 220)}>
               <span className="flex-1 truncate">{r.reason}</span>
               <span className="text-[#77736c] tabular-nums">{r.amount}</span>
               <span
                 className={cn(
                   "w-7 rounded px-1 py-0.5 text-center font-mono text-[9.5px]",
-                  r.urgent ? "bg-[#141312] text-white" : "bg-[#141312]/[0.06] text-[#55524d]",
+                  r.urgent ? "play-press bg-[#0070E0] text-white" : "bg-[#141312]/[0.06] text-[#55524d]",
                 )}
+                style={r.urgent ? at(1400) : undefined}
               >
                 {r.days}
               </span>
@@ -64,18 +62,22 @@ export function CheckDiagram() {
       <div className={cn(line, "w-full max-w-[17rem] rounded-lg bg-white p-4")}>
         <p className="font-mono text-[9.5px] tracking-[0.12em] text-[#9a968e] uppercase">Evidence</p>
         <ul className="mt-3 space-y-2.5 text-[11.5px]">
-          {items.map((it) => (
-            <li key={it.label} className="flex items-center gap-2.5">
+          {items.map((it, i) => (
+            <li key={it.label} className="play-item flex items-center gap-2.5" style={at(300 + i * 380)}>
               <span
                 className={cn(
                   "grid size-4 place-items-center rounded-full",
-                  it.ok ? "bg-[#141312] text-white" : "border border-dashed border-[#141312]/40 text-[#77736c]",
+                  it.ok ? "bg-[#0070E0] text-white" : "border border-dashed border-[#141312]/40 text-[#77736c]",
                 )}
               >
                 {it.ok ? <Check className="size-2.5" strokeWidth={3} /> : <Minus className="size-2.5" strokeWidth={3} />}
               </span>
               <span className={it.ok ? "" : "text-[#77736c]"}>{it.label}</span>
-              {!it.ok && <span className="ml-auto font-mono text-[9.5px] tracking-[0.08em] text-[#b4552f] uppercase">Missing</span>}
+              {!it.ok && (
+                <span className="play-item ml-auto font-mono text-[9.5px] tracking-[0.08em] text-[#b4552f] uppercase" style={at(300 + i * 380 + 350)}>
+                  Missing
+                </span>
+              )}
             </li>
           ))}
         </ul>
@@ -90,24 +92,29 @@ export function DraftDiagram() {
       <div className="grid w-full max-w-sm grid-cols-[0.9fr_1.1fr] gap-3">
         <div className={cn(line, "rounded-lg bg-white p-3.5")}>
           <p className="font-mono text-[9.5px] tracking-[0.12em] text-[#9a968e] uppercase">Recommendation</p>
-          <p className="mt-2 text-[20px] tracking-[-0.02em]">Fight</p>
+          <p className="play-item mt-2 text-[20px] tracking-[-0.02em]" style={at(250)}>
+            Fight
+          </p>
           <div className="mt-3 space-y-1.5">
-            {bar("90%")}
-            {bar("75%")}
-            {bar("82%")}
+            {bar("90%", 500)}
+            {bar("75%", 650)}
+            {bar("82%", 800)}
           </div>
         </div>
         <div className={cn(line, "rounded-lg bg-white p-3.5")}>
           <p className="font-mono text-[9.5px] tracking-[0.12em] text-[#9a968e] uppercase">Draft to PayPal</p>
           <div className="mt-3 space-y-1.5">
-            {bar("100%")}
-            {bar("92%")}
-            {bar("96%")}
-            {bar("60%")}
+            {bar("100%", 1000)}
+            {bar("92%", 1200)}
+            {bar("96%", 1400)}
+            {bar("60%", 1600)}
           </div>
           <div className="mt-3 flex gap-1.5">
-            <span className={cn(line, "rounded px-1.5 py-0.5 text-[9.5px] text-[#55524d]")}>tracking.pdf</span>
-            <span className={cn(line, "rounded px-1.5 py-0.5 text-[9.5px] text-[#55524d]")}>invoice.pdf</span>
+            {["tracking.pdf", "invoice.pdf"].map((f, i) => (
+              <span key={f} className={cn(line, "play-item rounded px-1.5 py-0.5 text-[9.5px] text-[#55524d]")} style={at(1900 + i * 180)}>
+                {f}
+              </span>
+            ))}
           </div>
         </div>
       </div>
@@ -119,17 +126,25 @@ export function ApproveDiagram() {
   return (
     <Frame>
       <div className={cn(line, "w-full max-w-[17rem] rounded-lg bg-white p-4")}>
-        <div className="flex items-center gap-2 text-[11px] text-[#55524d]">
-          <span className="size-1.5 rounded-full bg-[#b4552f]" />
-          Waiting for your approval
+        <div className="relative h-4 text-[11px] text-[#55524d]">
+          <span className="play-swap-out absolute inset-0 flex items-center gap-2" style={at(1700)}>
+            <span className="size-1.5 rounded-full bg-[#b4552f]" />
+            Waiting for your approval
+          </span>
+          <span className="play-swap-in absolute inset-0 flex items-center gap-2" style={at(1800)}>
+            <span className="size-1.5 rounded-full bg-[#0070E0]" />
+            Sent to PayPal
+          </span>
         </div>
         <div className="mt-3 space-y-1.5">
-          {bar("100%")}
-          {bar("88%")}
-          {bar("70%")}
+          {bar("100%", 200)}
+          {bar("88%", 350)}
+          {bar("70%", 500)}
         </div>
         <div className="mt-4 flex gap-1.5 text-[11px]">
-          <span className="rounded-full bg-[#141312] px-3 py-1.5 text-white">Approve</span>
+          <span className="play-press rounded-full bg-[#141312] px-3 py-1.5 text-white" style={at(1300)}>
+            Approve
+          </span>
           <span className={cn(line, "rounded-full px-3 py-1.5")}>Edit</span>
           <span className="rounded-full px-3 py-1.5 text-[#77736c]">Reject</span>
         </div>

@@ -9,6 +9,23 @@ export const landing = {
     secondary: { label: "View pricing", href: "/pricing" },
   },
 
+  /** The ticker under the product stage: kinds of work Sira does on a case (illustrative, not live counts). */
+  activity: {
+    label: "How a case moves",
+    items: [
+      { action: "Synced", detail: "New claim from PayPal" },
+      { action: "Flagged", detail: "Chargeback, 3 days left" },
+      { action: "Matched", detail: "USPS tracking to order" },
+      { action: "Checked", detail: "Seller Protection" },
+      { action: "Spotted", detail: "Missing delivery signature" },
+      { action: "Drafted", detail: "Evidence note" },
+      { action: "Suggested", detail: "Partial refund offer" },
+      { action: "Waiting", detail: "Your approval" },
+      { action: "Sent", detail: "Response to PayPal" },
+      { action: "Tracked", detail: "Case outcome" },
+    ],
+  },
+
   /** Every reason code PayPal uses. Shown as the proof strip under the hero. */
   reasons: {
     label: "Covers all ten PayPal dispute reasons",

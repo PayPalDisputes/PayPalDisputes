@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
+import { ActivityTicker } from "@/components/landing/ActivityTicker";
 import { DotField } from "@/components/landing/DotField";
+import { HeroStage } from "@/components/landing/HeroStage";
 import { diagrams } from "@/components/landing/Diagrams";
 import { landing } from "@/data/landing";
 import { site } from "@/data/site";
@@ -49,7 +51,7 @@ function SecondaryButton({ href, children, inverted }: { href: string; children:
 }
 
 export default function LandingPage() {
-  const { hero, reasons, jobs, numbers, how, rules, cta } = landing;
+  const { hero, activity, reasons, jobs, numbers, how, rules, cta } = landing;
 
   return (
     <>
@@ -72,8 +74,14 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Product stage: one example dispute played through, then what Sira keeps doing */}
+      <section className={cn(wrap, "pb-10")}>
+        <HeroStage />
+        <ActivityTicker label={activity.label} items={activity.items} className="mt-5" />
+      </section>
+
       {/* Proof strip: what's covered, in place of a logo wall */}
-      <section className={cn(wrap, "pb-20")}>
+      <section className={cn(wrap, "pt-12 pb-20")}>
         <p className="text-center text-[13px] text-[#9a968e]">{reasons.label}</p>
         <ul className="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-2">
           {reasons.items.map((r) => (
