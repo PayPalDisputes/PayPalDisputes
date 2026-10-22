@@ -261,8 +261,8 @@ body {
   to { transform: none; }
 }
 @keyframes mk-hero-in {
-  from { opacity: 0; transform: translate3d(0, 10px, 0); filter: blur(4px); }
-  to { opacity: 1; transform: none; filter: none; }
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to { opacity: 1; transform: none; }
 }
 .rise-line {
   display: block;
@@ -275,6 +275,52 @@ body {
 }
 .hero-in {
   animation: mk-hero-in 900ms cubic-bezier(0.19, 1, 0.22, 1) var(--d, 0ms) both;
+}
+
+/* "settled." gets one scan once the headline has landed: a blue bar sweeps across, leaving a faint wash. */
+@keyframes mk-scan-bar {
+  0% { left: 0; opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+@keyframes mk-scan-wash {
+  0% { transform: scaleX(0); opacity: 1; }
+  80% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+.scan-word {
+  position: relative;
+  display: inline-block;
+}
+.scan-word::before {
+  content: "";
+  position: absolute;
+  inset: 10% 0 6%;
+  background: linear-gradient(90deg, rgba(0, 112, 224, 0), rgba(0, 112, 224, 0.07));
+  transform-origin: left;
+  animation: mk-scan-wash 900ms cubic-bezier(0.65, 0, 0.35, 1) 1050ms both;
+  pointer-events: none;
+}
+.scan-word::after {
+  content: "";
+  position: absolute;
+  top: 8%;
+  bottom: 4%;
+  width: 2px;
+  background: #0070e0;
+  animation: mk-scan-bar 900ms cubic-bezier(0.65, 0, 0.35, 1) 1050ms both;
+  pointer-events: none;
+}
+/* The handoff line dropping into the product stage. */
+@keyframes mk-drop {
+  0% { transform: translateX(-50%) scaleY(0); opacity: 1; }
+  55% { transform: translateX(-50%) scaleY(1); opacity: 1; }
+  100% { transform: translateX(-50%) scaleY(1); opacity: 0; }
+}
+.drop-line {
+  transform-origin: top;
+  animation: mk-drop 900ms cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
 /* Landing illustrations that act themselves out while [data-play="on"] (see PlayFrame).
@@ -350,5 +396,10 @@ body {
   .rise-line > span,
   .hero-in {
     animation: none;
+  }
+  .scan-word::before,
+  .scan-word::after,
+  .drop-line {
+    display: none;
   }
 }

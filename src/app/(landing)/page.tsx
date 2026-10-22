@@ -71,14 +71,22 @@ export default function LandingPage() {
             <h1 className="mt-6 text-[clamp(2.75rem,6.4vw,5.25rem)] leading-[1.0] font-normal tracking-[-0.045em]">
               {hero.title.map((l, i) => (
                 <span key={l} className="rise-line">
-                  <span style={{ "--d": `${120 + i * 110}ms` } as React.CSSProperties}>{l}</span>
+                  <span style={{ "--d": `${120 + i * 110}ms` } as React.CSSProperties}>
+                    {i === hero.title.length - 1 ? (
+                      <span data-hero-launch className="scan-word">
+                        {l}
+                      </span>
+                    ) : (
+                      l
+                    )}
+                  </span>
                 </span>
               ))}
             </h1>
             <p className="hero-in mt-6 max-w-lg text-[18px] leading-relaxed text-[#77736c]" style={{ "--d": "420ms" } as React.CSSProperties}>
               {hero.body}
             </p>
-            <div className="hero-in mt-9 flex flex-wrap gap-3" style={{ "--d": "540ms" } as React.CSSProperties}>
+            <div data-hero-cta className="hero-in mt-9 flex flex-wrap gap-3" style={{ "--d": "540ms" } as React.CSSProperties}>
               <PrimaryButton href={hero.primary.href}>{hero.primary.label}</PrimaryButton>
               <SecondaryButton href={hero.secondary.href}>{hero.secondary.label}</SecondaryButton>
             </div>
