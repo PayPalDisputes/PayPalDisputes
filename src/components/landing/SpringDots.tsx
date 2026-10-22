@@ -144,8 +144,7 @@ export function SpringDots({ color = "0, 48, 135", opacity = 0.28, className }: 
           }
           const b = Math.min(ALPHA_BUCKETS - 1, Math.floor(a * ALPHA_BUCKETS));
           const x = hx + off[i * 2], y = hy + off[i * 2 + 1];
-          buckets[b].moveTo(x + 1, y);
-          buckets[b].arc(x, y, 1, 0, Math.PI * 2);
+          buckets[b].rect(x - 1, y - 1, 2, 2);
         }
       }
       buckets.forEach((p, b) => {
