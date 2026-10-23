@@ -57,11 +57,12 @@ export default function LandingPage() {
   return (
     <>
       {/* Hero: white copy on PayPal blue, over a field of soft white spring dots */}
-      <section className="relative isolate overflow-hidden bg-[#0062CC] text-white">
+      <section id="hero" className="relative isolate overflow-hidden bg-[#0062CC] text-white">
         <SpringDots color="255, 255, 255" opacity={0.5} className="-z-10" />
         {/* A faint top-to-bottom shade so the dots sit back from the type */}
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(0,48,135,0)_0%,rgba(0,48,135,0.28)_100%)]" />
-        <div className={cn(wrap, "pt-20 pb-20 md:pt-32 md:pb-28")}>
+        {/* Top padding includes the 64px nav, which floats over this section */}
+        <div className={cn(wrap, "pt-36 pb-20 md:pt-48 md:pb-28")}>
           <div className="max-w-[40rem]">
             <p className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-white/70 uppercase">
               {hero.stat.label}
