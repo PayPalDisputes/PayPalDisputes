@@ -61,7 +61,7 @@ export default function LandingPage() {
       <section id="hero" className="relative isolate overflow-hidden bg-white">
         <SpringDots color="0, 112, 224" opacity={0.32} className="-z-10" />
         {/* Top padding includes the 64px nav, which floats over this section */}
-        <div className={cn(wrap, "grid items-center gap-12 pt-36 pb-20 md:pt-44 md:pb-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-10")}>
+        <div className={cn(wrap, "grid items-center gap-12 pt-36 pb-20 md:pt-44 md:pb-24 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16")}>
           <div className="max-w-[40rem]">
             <p className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">
               {hero.stat.label}
@@ -71,7 +71,7 @@ export default function LandingPage() {
             </p>
             <h1 className="mt-6 text-[clamp(2.75rem,5.6vw,4.75rem)] leading-[1.0] font-normal tracking-[-0.045em]">
               {hero.title.map((l) => (
-                <span key={l} className="block">
+                <span key={l} className="block lg:whitespace-nowrap">
                   {l}
                 </span>
               ))}

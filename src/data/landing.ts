@@ -3,7 +3,7 @@ import { hero as home } from "@/data/home";
 
 export const landing = {
   hero: {
-    title: ["Your disputes,", "settled."],
+    title: ["Your disputes,", "settled in seconds"],
     body: "An AI dispute desk for PayPal sellers. It reads every case, recommends what to do, and drafts the response for you to approve.",
     primary: { label: "Open dashboard", href: "/dashboard" },
     secondary: { label: "View pricing", href: "/pricing" },
