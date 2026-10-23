@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Bell, FileText, FlaskConical, House, Inbox, Settings, Store } from "lucide-react";
+import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, Settings, Store } from "lucide-react";
 import { NavLink } from "@/components/app/NavLink";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
@@ -48,6 +48,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </NavLink>
           <NavLink href="/evidence" icon={<FileText strokeWidth={1.6} />}>
             Evidence
+          </NavLink>
+          <NavLink href="/insights" icon={<ChartNoAxesColumn strokeWidth={1.6} />}>
+            Insights
           </NavLink>
           <NavLink href="/settings" icon={<Settings strokeWidth={1.6} />}>
             Settings
@@ -123,8 +126,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               </form>
             </div>
           </div>
-          {/* Section tabs (mobile / tablet) */}
-          <nav aria-label="Workspace" className="flex gap-6 border-t border-line px-5 md:px-8 lg:hidden">
+          {/* Section tabs (mobile / tablet); scrolls sideways when they don't all fit */}
+          <nav aria-label="Workspace" className="flex gap-6 overflow-x-auto border-t border-line px-5 whitespace-nowrap [scrollbar-width:none] md:px-8 lg:hidden [&>*]:shrink-0">
             <NavLink href="/dashboard" exact variant="tab">
               Home
             </NavLink>
@@ -133,6 +136,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </NavLink>
             <NavLink href="/evidence" variant="tab">
               Evidence
+            </NavLink>
+            <NavLink href="/insights" variant="tab">
+              Insights
             </NavLink>
             <NavLink href="/settings" variant="tab">
               Settings
