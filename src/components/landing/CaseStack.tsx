@@ -50,6 +50,8 @@ const THEMES: Record<"light" | "blue", Theme> = {
 const STAGES = ["New dispute", "Evidence attached", "Response filed", "Settled"];
 const REASONS = ["ITEM NOT RECEIVED", "NOT AS DESCRIBED", "UNAUTHORIZED", "DUPLICATE CHARGE", "CREDIT NOT PROCESSED"];
 const CYCLE = 5200; // ms
+const SLOTS = 6; // files in the box; more slots make the stack taller, not wider
+const LAST = SLOTS - 1;
 const COS30 = Math.cos(Math.PI / 6);
 const C = 1.22; // half-size of the box, world units
 const THREADS: [number, number][] = [[-0.4, 0.2], [0.1, -0.2], [0.4, 0.4], [-0.1, 0.6]];
@@ -64,9 +66,9 @@ function hexRgb(h: string) {
   const n = parseInt(h.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
-/** Dot colour for a fractional slot position: RGB blend between the neighbouring stage colours. */
+/** Dot colour for a fractional slot position: the four stage colours are spread over all the slots and blended in RGB. */
 function stageColor(stages: string[], p: number) {
-  const q = clamp(p, 0, 3);
+  const q = clamp((p / LAST) * 3, 0, 3);
   const i = Math.min(2, Math.floor(q));
   const a = hexRgb(stages[i]), b = hexRgb(stages[i + 1]);
   const f = q - i;
@@ -108,7 +110,7 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
     let W = 0, H = 0, dpr = 1, narrow = false;
     let S = 0, L = 0, ox = 0, oy = 0, th = 3, zTop = 0, zBot = 0;
     let ax = 0; // timeline axis x
-    const slotZ = (p: number) => (3 - p) * L;
+    const slotZ = (p: number) => (LAST - p) * L;
     const labels = STAGES.map((s) => s.toUpperCase());
     const labelSize = () => (narrow ? 9 : 11);
     const labelGap = () => (narrow ? 12 : 22); // axis to label text
@@ -125,7 +127,7 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
       S = cubeW / (4 * C * COS30);
       L = S * 0.56;
       ox = cubeW / 2 + 2;
-      zTop = 4 * L - 0.15 * L;
+      zTop = SLOTS * L - 0.15 * L;
       zBot = -0.35 * L;
       oy = S * 0.35 + 2 * C * 0.5 * S + zTop;
       H = Math.ceil(oy + 2 * C * 0.5 * S + 0.45 * L + 8);
@@ -143,7 +145,7 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
     ];
 
     // State: start mid-flow so the first frame is full
-    let files: File[] = [-1, 0, 1, 2, 3].map(makeFile);
+    let files: File[] = Array.from({ length: SLOTS + 1 }, (_, i) => makeFile(i - 1));
     let cycleStart = performance.now();
     let lastT = 0;
     let thudAt = -1e9;
@@ -151,10 +153,10 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
     const drawPlate = (f: File, p: number) => {
       let z = slotZ(p), dx = 0, alpha = 1;
       if (p < 0) alpha = 1 + p;
-      else if (p > 3) {
-        z = slotZ(3) - (p - 3) * 0.25 * L;
-        dx = (p - 3) * 1.9;
-        alpha = 1 - (p - 3);
+      else if (p > LAST) {
+        z = slotZ(LAST) - (p - LAST) * 0.25 * L;
+        dx = (p - LAST) * 1.9;
+        alpha = 1 - (p - LAST);
       }
       if (alpha <= 0) return;
       ctx.save();
@@ -243,7 +245,7 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (const [x, y] of THREADS) {
-        const a = proj(x, y, slotZ(0)), b = proj(x, y, slotZ(3));
+        const a = proj(x, y, slotZ(0)), b = proj(x, y, slotZ(LAST));
         ctx.moveTo(a[0], a[1]);
         ctx.lineTo(b[0], b[1]);
       }
@@ -254,7 +256,7 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
     const drawTimeline = (pos: number, hlAlpha: number) => {
       const boxRight = ox + 2 * C * COS30 * S;
       const y0 = oy - slotZ(0) - S;
-      const y1 = oy - slotZ(3) + S + th;
+      const y1 = oy - slotZ(LAST) + S + th;
       const tick = narrow ? 6 : 12;
       const size = labelSize();
       const lx = ax + labelGap();
@@ -317,7 +319,7 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
           t -= 1;
           lastT = 0;
           files.forEach((f) => f.base++);
-          files = files.filter((f) => f.base <= 3);
+          files = files.filter((f) => f.base <= LAST);
           files.push(makeFile(-1));
         }
         if (lastT < 0.38 && t >= 0.38) thudAt = now;
