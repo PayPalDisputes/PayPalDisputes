@@ -28,7 +28,7 @@ type Theme = {
 
 const THEMES: Record<"light" | "blue", Theme> = {
   light: {
-    bg: "#f5f7fa",
+    bg: "#ffffff", // plate fill matches the page behind it (the brief used #f5f7fa on a #f5f7fa page)
     muted: "#8a94a6",
     plate: "#c2c9d6",
     cube: "#8fb6ec",

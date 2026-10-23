@@ -57,17 +57,15 @@ export default function LandingPage() {
 
   return (
     <>
-      {/* Hero: white copy on PayPal blue, over a field of soft white spring dots */}
-      <section id="hero" className="relative isolate overflow-hidden bg-[#0062CC] text-white">
-        <SpringDots color="255, 255, 255" opacity={0.5} className="-z-10" />
-        {/* A faint top-to-bottom shade so the dots sit back from the type */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(0,48,135,0)_0%,rgba(0,48,135,0.28)_100%)]" />
+      {/* Hero: white, over a field of soft blue spring dots, with the case stack on the right */}
+      <section id="hero" className="relative isolate overflow-hidden bg-white">
+        <SpringDots color="0, 112, 224" opacity={0.32} className="-z-10" />
         {/* Top padding includes the 64px nav, which floats over this section */}
         <div className={cn(wrap, "grid items-center gap-12 pt-36 pb-20 md:pt-44 md:pb-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-10")}>
           <div className="max-w-[40rem]">
-            <p className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-white/70 uppercase">
+            <p className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">
               {hero.stat.label}
-              <span className="rounded-md border border-white/25 bg-white/10 px-1.5 py-0.5 text-[12px] tracking-normal text-white normal-case tabular-nums">
+              <span className="rounded-md border border-[#141312]/[0.08] bg-white px-1.5 py-0.5 text-[12px] tracking-normal text-[#141312] normal-case tabular-nums">
                 {hero.stat.value}
               </span>
             </p>
@@ -78,25 +76,21 @@ export default function LandingPage() {
                 </span>
               ))}
             </h1>
-            <p className="mt-6 max-w-lg text-[18px] leading-relaxed text-white/80">{hero.body}</p>
+            <p className="mt-6 max-w-lg text-[18px] leading-relaxed text-[#77736c]">{hero.body}</p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <PrimaryButton href={hero.primary.href} inverted>
-                {hero.primary.label}
-              </PrimaryButton>
-              <SecondaryButton href={hero.secondary.href} inverted>
-                {hero.secondary.label}
-              </SecondaryButton>
+              <PrimaryButton href={hero.primary.href}>{hero.primary.label}</PrimaryButton>
+              <SecondaryButton href={hero.secondary.href}>{hero.secondary.label}</SecondaryButton>
             </div>
             {/* Where the data comes from. Text only: Sira isn't affiliated with PayPal (see the footer). */}
-            <p className="mt-10 flex max-w-md items-center gap-3 border-t border-white/20 pt-5">
-              <span className="font-mono text-[10.5px] tracking-[0.12em] text-white/60 uppercase">{hero.builtOn.label}</span>
+            <p className="mt-10 flex max-w-md items-center gap-3 border-t border-[#141312]/[0.08] pt-5">
+              <span className="font-mono text-[10.5px] tracking-[0.12em] text-[#8a867f] uppercase">{hero.builtOn.label}</span>
               <span className="text-[15px] tracking-[-0.01em]">
-                <span className="font-semibold text-white">{hero.builtOn.name}</span>{" "}
-                <span className="text-white/75">{hero.builtOn.product}</span>
+                <span className="font-medium text-[#003087]">{hero.builtOn.name}</span>{" "}
+                <span className="text-[#55524d]">{hero.builtOn.product}</span>
               </span>
             </p>
           </div>
-          <CaseStack theme="blue" />
+          <CaseStack theme="light" />
         </div>
       </section>
 
