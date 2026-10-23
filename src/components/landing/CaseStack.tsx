@@ -107,12 +107,21 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
     // Layout (recomputed on resize)
     let W = 0, H = 0, dpr = 1, narrow = false;
     let S = 0, L = 0, ox = 0, oy = 0, th = 3, zTop = 0, zBot = 0;
+    let ax = 0; // timeline axis x
     const slotZ = (p: number) => (3 - p) * L;
+    const labels = STAGES.map((s) => s.toUpperCase());
+    const labelSize = () => (narrow ? 9 : 11);
+    const labelGap = () => (narrow ? 12 : 22); // axis to label text
 
     const layout = () => {
       W = wrap.clientWidth;
       narrow = W < 640;
-      const cubeW = W * (narrow ? 0.6 : 0.58);
+      // The timeline sits flush right: its longest label (plus the highlight's padding) ends at W.
+      ctx.font = `500 ${labelSize()}px ${font}`;
+      const longest = Math.max(...labels.map((l) => ctx.measureText(l).width));
+      ax = W - (labelGap() + longest + 6);
+      // The box fills everything to the left of it, up to a short leader line.
+      const cubeW = Math.max(W * 0.5, ax - (narrow ? 18 : 40) - 2);
       S = cubeW / (4 * C * COS30);
       L = S * 0.56;
       ox = cubeW / 2 + 2;
@@ -244,12 +253,11 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
 
     const drawTimeline = (pos: number, hlAlpha: number) => {
       const boxRight = ox + 2 * C * COS30 * S;
-      const ax = boxRight + (W - boxRight) * (narrow ? 0.18 : 0.3);
       const y0 = oy - slotZ(0) - S;
       const y1 = oy - slotZ(3) + S + th;
       const tick = narrow ? 6 : 12;
-      const size = narrow ? 9 : 11;
-      const lx = ax + (narrow ? 12 : 22);
+      const size = labelSize();
+      const lx = ax + labelGap();
       const labelY = (i: number) => y0 + ((y1 - y0) * i) / 3;
       const midY = oy - (zTop + zBot) / 2;
 
@@ -274,7 +282,6 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
 
       ctx.font = `500 ${size}px ${font}`;
       ctx.textBaseline = "middle";
-      const labels = STAGES.map((s) => s.toUpperCase());
       const widths = labels.map((l) => ctx.measureText(l).width);
       ctx.fillStyle = T.muted;
       labels.forEach((l, i) => ctx.fillText(l, lx, labelY(i)));
@@ -362,7 +369,11 @@ export function CaseStack({ theme = "blue", className }: { theme?: "light" | "bl
     });
     io.observe(wrap);
     layout();
-    document.fonts?.ready.then(() => frame(performance.now()));
+    // Label widths depend on the font, so lay out again once it has loaded.
+    document.fonts?.ready.then(() => {
+      layout();
+      frame(performance.now());
+    });
     if (reduced) frame(performance.now());
     else raf = requestAnimationFrame(loop);
 
