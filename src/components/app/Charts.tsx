@@ -50,12 +50,21 @@ export function ChartCard({
   );
 }
 
-function Empty({ children }: { children: React.ReactNode }) {
+export function Empty({ children }: { children: React.ReactNode }) {
   return <p className="flex h-[200px] items-center justify-center text-center text-[13px] text-fg-muted">{children}</p>;
 }
 
+/** "Item not received" → "Item not\nreceived": splits a long label at the space nearest its middle. */
+export function twoLines(text: string, max = 12) {
+  if (text.length <= max || !text.includes(" ")) return text;
+  const mid = text.length / 2;
+  let at = -1;
+  for (let i = text.indexOf(" "); i !== -1; i = text.indexOf(" ", i + 1)) if (at === -1 || Math.abs(i - mid) < Math.abs(at - mid)) at = i;
+  return `${text.slice(0, at)}\n${text.slice(at + 1)}`;
+}
+
 /** Common bar styling: thin rounded bars, recessive axes, integer ticks. */
-function barChart(
+export function barChart(
   data: { label: string; value: number; urgent?: boolean; color?: string }[],
   opts: { horizontal?: boolean; yName: string; format?: (v: number) => string },
 ): AgCartesianChartOptions {
@@ -84,7 +93,8 @@ function barChart(
         type: "category",
         position: opts.horizontal ? "left" : "bottom",
         line: { enabled: false },
-        label: { color: COLORS.text, fontSize: 12 },
+        // Narrow cards can't fit long category names beside the bars; break them onto two lines.
+        label: { color: COLORS.text, fontSize: 12, formatter: opts.horizontal ? ({ value }: { value: string }) => twoLines(String(value)) : undefined },
         paddingInner: 0.45,
         paddingOuter: 0.2,
       },
