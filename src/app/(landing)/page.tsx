@@ -5,6 +5,7 @@ import { ActivityTicker } from "@/components/landing/ActivityTicker";
 import { BandDots } from "@/components/landing/BandDots";
 import { HeroStage } from "@/components/landing/HeroStage";
 import { Process } from "@/components/landing/Process";
+import { SpringDots } from "@/components/landing/SpringDots";
 import { landing } from "@/data/landing";
 import { site } from "@/data/site";
 import { cn } from "@/lib/cn";
@@ -55,40 +56,49 @@ export default function LandingPage() {
 
   return (
     <>
-      {/* Hero: still, left-aligned copy */}
-      <section className={cn(wrap, "pt-20 pb-14 md:pt-32 md:pb-20")}>
-        <div className="max-w-[38rem]">
-          <p className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">
-            {hero.stat.label}
-            <span className="rounded-md border border-[#141312]/[0.08] bg-white px-1.5 py-0.5 text-[12px] tracking-normal text-[#141312] normal-case tabular-nums">
-              {hero.stat.value}
-            </span>
-          </p>
-          <h1 className="mt-6 text-[clamp(2.75rem,6.4vw,5.25rem)] leading-[1.0] font-normal tracking-[-0.045em]">
-            {hero.title.map((l) => (
-              <span key={l} className="block">
-                {l}
+      {/* Hero: white copy on PayPal blue, over a field of soft white spring dots */}
+      <section className="relative isolate overflow-hidden bg-[#0062CC] text-white">
+        <SpringDots color="255, 255, 255" opacity={0.5} className="-z-10" />
+        {/* A faint top-to-bottom shade so the dots sit back from the type */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(0,48,135,0)_0%,rgba(0,48,135,0.28)_100%)]" />
+        <div className={cn(wrap, "pt-20 pb-20 md:pt-32 md:pb-28")}>
+          <div className="max-w-[40rem]">
+            <p className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-white/70 uppercase">
+              {hero.stat.label}
+              <span className="rounded-md border border-white/25 bg-white/10 px-1.5 py-0.5 text-[12px] tracking-normal text-white normal-case tabular-nums">
+                {hero.stat.value}
               </span>
-            ))}
-          </h1>
-          <p className="mt-6 max-w-lg text-[18px] leading-relaxed text-[#77736c]">{hero.body}</p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <PrimaryButton href={hero.primary.href}>{hero.primary.label}</PrimaryButton>
-            <SecondaryButton href={hero.secondary.href}>{hero.secondary.label}</SecondaryButton>
+            </p>
+            <h1 className="mt-6 text-[clamp(2.75rem,6.4vw,5.25rem)] leading-[1.0] font-normal tracking-[-0.045em]">
+              {hero.title.map((l) => (
+                <span key={l} className="block">
+                  {l}
+                </span>
+              ))}
+            </h1>
+            <p className="mt-6 max-w-lg text-[18px] leading-relaxed text-white/80">{hero.body}</p>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <PrimaryButton href={hero.primary.href} inverted>
+                {hero.primary.label}
+              </PrimaryButton>
+              <SecondaryButton href={hero.secondary.href} inverted>
+                {hero.secondary.label}
+              </SecondaryButton>
+            </div>
+            {/* Where the data comes from. Text only: Sira isn't affiliated with PayPal (see the footer). */}
+            <p className="mt-10 flex max-w-md items-center gap-3 border-t border-white/20 pt-5">
+              <span className="font-mono text-[10.5px] tracking-[0.12em] text-white/60 uppercase">{hero.builtOn.label}</span>
+              <span className="text-[15px] tracking-[-0.01em]">
+                <span className="font-semibold text-white">{hero.builtOn.name}</span>{" "}
+                <span className="text-white/75">{hero.builtOn.product}</span>
+              </span>
+            </p>
           </div>
-          {/* Where the data comes from. Text only: Sira isn't affiliated with PayPal (see the footer). */}
-          <p className="mt-10 flex max-w-md items-center gap-3 border-t border-[#141312]/[0.08] pt-5">
-            <span className="font-mono text-[10.5px] tracking-[0.12em] text-[#8a867f] uppercase">{hero.builtOn.label}</span>
-            <span className="text-[15px] tracking-[-0.01em]">
-              <span className="font-medium text-[#003087]">{hero.builtOn.name}</span>{" "}
-              <span className="text-[#55524d]">{hero.builtOn.product}</span>
-            </span>
-          </p>
         </div>
       </section>
 
       {/* Product stage: one example dispute played through, then what Sira keeps doing */}
-      <section className={cn(wrap, "pb-10")}>
+      <section className={cn(wrap, "pt-14 pb-10")}>
         <HeroStage />
         <ActivityTicker label={activity.label} items={activity.items} className="mt-5" />
       </section>
