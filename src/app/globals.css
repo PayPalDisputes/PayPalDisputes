@@ -255,6 +255,101 @@ body {
   animation: mk-progress var(--progress-duration, 6s) linear both;
 }
 
+/* Landing illustrations that act themselves out while [data-play="on"] (see Process, ProcessScenes).
+   Each beat waits for its --d delay going in, and leaves together when the loop resets. */
+.play-item {
+  opacity: 0;
+  transform: translate3d(0, 6px, 0);
+  transition: opacity 450ms var(--mk-ease), transform 450ms var(--mk-ease);
+}
+[data-play="on"] .play-item {
+  opacity: 1;
+  transform: none;
+  transition-delay: var(--d, 0ms);
+}
+.play-bar {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 650ms var(--mk-ease);
+}
+[data-play="on"] .play-bar {
+  transform: scaleX(1);
+  transition-delay: var(--d, 0ms);
+}
+.play-swap-out { transition: opacity 300ms ease; }
+[data-play="on"] .play-swap-out { opacity: 0; transition-delay: var(--d, 0ms); }
+.play-swap-in { opacity: 0; transition: opacity 300ms ease; }
+[data-play="on"] .play-swap-in { opacity: 1; transition-delay: var(--d, 0ms); }
+@keyframes mk-press {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(0.9); }
+}
+[data-play="on"] .play-press { animation: mk-press 320ms var(--mk-ease) var(--d, 0ms) both; }
+
+/* Moves from (--fx, --fy) to (--tx, --ty). */
+.play-move {
+  transform: translate3d(var(--fx, 0), var(--fy, 0), 0);
+  transition: transform 700ms var(--mk-ease);
+}
+[data-play="on"] .play-move {
+  transform: translate3d(var(--tx, 0), var(--ty, 0), 0);
+  transition-delay: var(--d, 0ms);
+}
+.play-bar-y {
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 1100ms var(--mk-ease);
+}
+[data-play="on"] .play-bar-y {
+  transform: scaleY(1);
+  transition-delay: var(--d, 0ms);
+}
+/* A highlighter pen across a phrase. */
+.play-mark {
+  background-image: linear-gradient(rgba(0, 112, 224, 0.16), rgba(0, 112, 224, 0.16));
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  border-radius: 3px;
+  transition: background-size 600ms var(--mk-ease);
+}
+[data-play="on"] .play-mark {
+  background-size: 100% 100%;
+  transition-delay: var(--d, 0ms);
+}
+/* A packet travelling along a wire. */
+@keyframes mk-travel {
+  0% { left: 0; opacity: 0; }
+  15%, 85% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+.play-travel { opacity: 0; }
+[data-play="on"] .play-travel { animation: mk-travel 900ms var(--mk-ease) var(--d, 0ms) both; }
+@keyframes mk-flash {
+  from { background-color: rgba(0, 112, 224, 0.12); }
+  to { background-color: transparent; }
+}
+[data-play="on"] .play-flash { animation: mk-flash 1800ms ease-out var(--d, 0ms) both; }
+/* Selection ring, and dimming for what wasn't chosen. */
+.play-ring {
+  box-shadow: 0 0 0 0 rgba(0, 112, 224, 0);
+  border: 1.5px solid transparent;
+  transition: border-color 400ms ease, box-shadow 400ms ease;
+}
+[data-play="on"] .play-ring {
+  border-color: #0070e0;
+  box-shadow: 0 0 0 4px rgba(0, 112, 224, 0.12);
+  transition-delay: var(--d, 0ms);
+}
+.play-dim { transition: opacity 400ms ease; }
+[data-play="on"] .play-dim { opacity: 0.45; transition-delay: var(--d, 0ms); }
+
+/* Faint 12px dot grid (PayPal navy), for illustration frames. */
+.dot-bg {
+  background-image: radial-gradient(circle, rgba(0, 48, 135, 0.12) 1px, transparent 1.4px);
+  background-size: 12px 12px;
+  background-position: 6px 6px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
@@ -273,5 +368,34 @@ body {
   }
   .rolling-strip {
     transition: none;
+  }
+  .play-item,
+  .play-bar,
+  .play-swap-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .play-swap-out {
+    opacity: 0;
+  }
+  .play-press {
+    animation: none !important;
+  }
+  .play-move {
+    transform: translate3d(var(--tx, 0), var(--ty, 0), 0);
+    transition: none;
+  }
+  .play-bar-y {
+    transform: none;
+    transition: none;
+  }
+  .play-mark {
+    background-size: 100% 100%;
+    transition: none;
+  }
+  .play-travel,
+  .play-flash {
+    animation: none !important;
   }
 }
