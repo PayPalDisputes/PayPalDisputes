@@ -9,11 +9,21 @@ import { cn } from "@/lib/cn";
 
 /**
  * The landing page's nav. It floats over the blue hero (`#hero`) with no bar of its own, in white,
- * so the two read as one section; once the hero has scrolled out from under it, it turns into a
- * white bar with dark text for the rest of the page.
+ * so the two read as one section. As soon as the page scrolls it gets a translucent blue backing (so
+ * the hero copy doesn't run into it), and once the hero has scrolled out from under it, it turns
+ * into a white bar with dark text for the rest of the page.
  */
 export function LandingHeader() {
   const [overHero, setOverHero] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Once the page moves, the hero's copy can slide under the nav, so it needs a backing.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const hero = document.getElementById("hero");
@@ -30,7 +40,11 @@ export function LandingHeader() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-40 border-b transition-[background-color,border-color] duration-300",
-        overHero ? "border-transparent bg-transparent" : "border-[#141312]/[0.06] bg-white/90 backdrop-blur",
+        overHero
+          ? scrolled
+            ? "border-white/10 bg-[#0062CC]/85 backdrop-blur"
+            : "border-transparent bg-transparent"
+          : "border-[#141312]/[0.06] bg-white/90 backdrop-blur",
       )}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">

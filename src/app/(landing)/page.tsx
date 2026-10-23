@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
 import { ActivityTicker } from "@/components/landing/ActivityTicker";
 import { BandDots } from "@/components/landing/BandDots";
+import { CaseStack } from "@/components/landing/CaseStack";
 import { HeroStage } from "@/components/landing/HeroStage";
 import { Process } from "@/components/landing/Process";
 import { SpringDots } from "@/components/landing/SpringDots";
@@ -62,7 +63,7 @@ export default function LandingPage() {
         {/* A faint top-to-bottom shade so the dots sit back from the type */}
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(0,48,135,0)_0%,rgba(0,48,135,0.28)_100%)]" />
         {/* Top padding includes the 64px nav, which floats over this section */}
-        <div className={cn(wrap, "pt-36 pb-20 md:pt-48 md:pb-28")}>
+        <div className={cn(wrap, "grid items-center gap-12 pt-36 pb-20 md:pt-44 md:pb-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-10")}>
           <div className="max-w-[40rem]">
             <p className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-white/70 uppercase">
               {hero.stat.label}
@@ -70,7 +71,7 @@ export default function LandingPage() {
                 {hero.stat.value}
               </span>
             </p>
-            <h1 className="mt-6 text-[clamp(2.75rem,6.4vw,5.25rem)] leading-[1.0] font-normal tracking-[-0.045em]">
+            <h1 className="mt-6 text-[clamp(2.75rem,5.6vw,4.75rem)] leading-[1.0] font-normal tracking-[-0.045em]">
               {hero.title.map((l) => (
                 <span key={l} className="block">
                   {l}
@@ -95,6 +96,7 @@ export default function LandingPage() {
               </span>
             </p>
           </div>
+          <CaseStack theme="blue" />
         </div>
       </section>
 
