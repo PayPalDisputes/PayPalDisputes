@@ -26,7 +26,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const showInternal = process.env.SHOW_INTERNAL_TOOLS === "true";
 
   return (
-    <div className="flex min-h-full flex-1 bg-canvas text-fg [color-scheme:light]">
+    <div className="theme-app flex min-h-full flex-1 bg-canvas text-fg [color-scheme:light]">
       {/* Sidebar (desktop) */}
       <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line bg-subtle px-4 pt-6 pb-5 lg:flex">
         <Link href="/dashboard" className="px-3" aria-label="Sira dashboard home">
@@ -115,7 +115,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               <span
                 title={accountName}
                 aria-label={`Signed in as ${accountName}`}
-                className="inline-flex size-9 items-center justify-center rounded-full bg-[#e8dccf] text-[12px] font-semibold text-fg-heading"
+                className="inline-flex size-9 items-center justify-center rounded-full bg-brand-bg text-[12px] font-semibold text-brand-navy"
               >
                 {initials}
               </span>

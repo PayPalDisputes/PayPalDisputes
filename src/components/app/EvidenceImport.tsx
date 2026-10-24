@@ -255,7 +255,7 @@ export function EvidenceImport({ existing, onClose }: { existing: EvidenceRow[];
     <section aria-label="Import evidence from CSV" className="mb-4 rounded-2xl border border-line bg-subtle p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-[15px] font-semibold text-fg">Import tracking from a CSV</h2>
+          <h2 className="t-section">Import tracking from a CSV</h2>
           <p className="mt-1 max-w-[620px] text-[13px] leading-5 text-fg-body">
             Export orders from Shopify, ShipStation or a spreadsheet. We match rows by <strong className="font-medium">PayPal transaction ID</strong> or{" "}
             <strong className="font-medium">order number</strong>, and read columns like Tracking number, Carrier, Status, Shipped and Delivered. Nothing
@@ -309,7 +309,7 @@ export function EvidenceImport({ existing, onClose }: { existing: EvidenceRow[];
                   setFileName(null);
                 })
               }
-              className="inline-flex h-10 items-center rounded-full bg-fg px-5 text-[13.5px] font-medium text-white hover:bg-[#37322f] disabled:opacity-50"
+              className="inline-flex h-10 items-center rounded-full bg-fg px-5 text-[13.5px] font-medium text-white hover:bg-fg/85 disabled:opacity-50"
             >
               {saving ? "Saving…" : `Save ${good.length} ready row${good.length === 1 ? "" : "s"}`}
             </button>

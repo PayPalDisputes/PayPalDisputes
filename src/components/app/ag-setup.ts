@@ -12,26 +12,26 @@ ChartModules.registerModules(ChartsCommunity);
 
 const FONT = "var(--font-geist-sans), system-ui, sans-serif";
 
-/** Data grid styled with the app's tokens: cream header, brown ink, hairline rows, no column lines. */
+/** Data grid styled with the app's tokens: cool white, slate ink, hairline rows, no column lines. */
 export const gridTheme = themeQuartz.withParams({
   browserColorScheme: "light",
   fontFamily: FONT,
   fontSize: 13.5,
   headerFontSize: 12.5,
   headerFontWeight: 500,
-  backgroundColor: "#fdfcfb",
-  foregroundColor: "#2a2522",
-  headerTextColor: "#605a57",
-  headerBackgroundColor: "#f7f5f3",
-  borderColor: "rgba(55, 50, 47, 0.12)",
-  rowBorder: { color: "rgba(55, 50, 47, 0.07)" },
+  backgroundColor: "#ffffff",
+  foregroundColor: "#0f1419",
+  headerTextColor: "#7c8595",
+  headerBackgroundColor: "#f6f8fb",
+  borderColor: "rgba(15, 23, 42, 0.1)",
+  rowBorder: { color: "rgba(15, 23, 42, 0.06)" },
   columnBorder: false,
   wrapperBorder: true,
   wrapperBorderRadius: 16,
-  accentColor: "#37322f",
-  rowHoverColor: "rgba(247, 245, 243, 0.8)",
-  selectedRowBackgroundColor: "rgba(55, 50, 47, 0.05)",
-  oddRowBackgroundColor: "#fdfcfb",
+  accentColor: "#0070e0",
+  rowHoverColor: "rgba(0, 112, 224, 0.035)",
+  selectedRowBackgroundColor: "rgba(0, 112, 224, 0.06)",
+  oddRowBackgroundColor: "#ffffff",
   spacing: 7,
   cellHorizontalPadding: 18,
   headerHeight: 44,
@@ -44,15 +44,15 @@ export const gridTheme = themeQuartz.withParams({
  * Recommendation colours follow the entity, never its rank.
  */
 export const COLORS = {
-  ink: "#4a4340", // single-series bars
+  ink: "#003087", // single-series bars (PayPal navy)
   urgent: "#b4372f", // status: due within 3 days (always paired with a text label)
   fight: "#3a5fa8",
   settle: "#d0703f",
   refund: "#1a9a7a",
-  text: "#37322f",
-  muted: "#8f8681",
-  grid: "rgba(55, 50, 47, 0.08)",
-  surface: "#fdfcfb",
+  text: "#141a22",
+  muted: "#7c8595",
+  grid: "rgba(15, 23, 42, 0.07)",
+  surface: "#ffffff",
 } as const;
 
 /** Charts draw on a canvas, which can't read CSS variables, so resolve the real Geist family name. */
@@ -78,7 +78,7 @@ export function baseChart(): Partial<AgChartOptions> {
         gridLineColor: COLORS.grid,
         backgroundColor: "transparent",
         chartBackgroundColor: "transparent",
-        tooltipBackgroundColor: "#2a2522",
+        tooltipBackgroundColor: "#0f1419",
         tooltipTextColor: "#ffffff",
         tooltipSubtleTextColor: "rgba(255,255,255,0.7)",
         tooltipBorderRadius: 8,

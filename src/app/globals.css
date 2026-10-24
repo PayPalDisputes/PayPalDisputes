@@ -36,6 +36,71 @@
   --mk-shadow-card: 0 1px 2px rgba(28, 25, 20, 0.04), 0 8px 30px rgba(28, 25, 20, 0.04);
   --mk-shadow-float: 0 1px 2px rgba(28, 25, 20, 0.06), 0 12px 40px -8px rgba(28, 25, 20, 0.12);
   --mk-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Primary button ink (overridden by .theme-app) */
+  --mk-btn-from: #4a4340;
+  --mk-btn-to: #2a2522;
+  --mk-btn-hover-from: #554e4a;
+  --mk-btn-hover-to: #37322f;
+  --mk-btn-edge: rgba(55, 50, 47, 0.14);
+
+  /* PayPal brand + dispute stages, shared with the landing page's case stack */
+  --mk-brand: #0070e0;       /* PayPal blue: selection, links, highlights */
+  --mk-brand-navy: #003087;
+  --mk-brand-bg: #eaf3fe;
+  --mk-stage-new: #003087;   /* New dispute */
+  --mk-stage-evidence: #0070e0; /* Evidence attached */
+  --mk-stage-filed: #009cde; /* Response filed */
+  --mk-stage-settled: #b4c3d8; /* Settled */
+}
+
+/*
+ * The seller dashboard's palette: cool white, slate ink and PayPal blue, matching the landing page.
+ * Scoped to the app shell so the marketing pages keep their own palette until they're redone.
+ */
+.theme-app {
+  --mk-bg: #ffffff;
+  --mk-bg-subtle: #f6f8fb;
+  --mk-bg-muted: #eef2f7;
+  --mk-bg-inset: #e3e9f1;
+
+  --mk-fg: #0f1419;
+  --mk-fg-heading: #141a22;
+  --mk-fg-body: #4b5565;
+  --mk-fg-muted: #7c8595;
+
+  --mk-line: rgba(15, 23, 42, 0.1);
+  --mk-line-subtle: rgba(15, 23, 42, 0.06);
+  --mk-line-strong: rgba(15, 23, 42, 0.18);
+
+  --mk-accent: #0070e0;
+
+  --mk-ok: #1f7a4d;
+  --mk-ok-bg: #e9f6ef;
+  --mk-warn: #a15c00;
+  --mk-warn-bg: #fdf3e2;
+  --mk-bad: #c0362c;
+  --mk-bad-bg: #fdecea;
+  --mk-info: #0062cc;
+  --mk-info-bg: #eaf3fe;
+
+  --mk-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 30px rgba(15, 23, 42, 0.04);
+  --mk-shadow-float: 0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 40px -8px rgba(15, 23, 42, 0.14);
+
+  --mk-btn-from: #1f2630;
+  --mk-btn-to: #0f1419;
+  --mk-btn-hover-from: #2b3440;
+  --mk-btn-hover-to: #1a212b;
+  --mk-btn-edge: rgba(15, 23, 42, 0.14);
+}
+
+/* Data-grid column headers read as labels: small mono caps, like the landing page's eyebrows */
+.theme-app .ag-header-cell-text {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 @theme inline {
@@ -65,6 +130,13 @@
   --color-bad-bg: var(--mk-bad-bg);
   --color-info: var(--mk-info);
   --color-info-bg: var(--mk-info-bg);
+  --color-brand: var(--mk-brand);
+  --color-brand-navy: var(--mk-brand-navy);
+  --color-brand-bg: var(--mk-brand-bg);
+  --color-stage-new: var(--mk-stage-new);
+  --color-stage-evidence: var(--mk-stage-evidence);
+  --color-stage-filed: var(--mk-stage-filed);
+  --color-stage-settled: var(--mk-stage-settled);
 
   --shadow-card: var(--mk-shadow-card);
   --shadow-float: var(--mk-shadow-float);
@@ -398,4 +470,23 @@ body {
   .play-flash {
     animation: none !important;
   }
+}
+
+/* Section label inside the app: small mono caps, like the landing page's eyebrows */
+@utility t-section {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mk-fg-muted);
+}
+
+/* Large figures (money, counts): the landing headline's tight sans, never serif */
+@utility t-figure {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
 }

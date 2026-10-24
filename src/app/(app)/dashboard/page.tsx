@@ -78,7 +78,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
 
       {/* Headline number */}
       <section aria-labelledby="at-risk" className="mt-8">
-        <p className="flex items-baseline gap-2 font-serif text-[56px] leading-none text-fg md:text-[76px]">
+        <p className="flex items-baseline gap-2 t-figure text-[56px] leading-none text-fg md:text-[76px]">
           <RollingNumber value={digits} prefix={symbol} delay={150} stagger={120} />
           <span className="font-sans text-[18px] font-medium text-fg-heading md:text-[20px]">{headCurrency}</span>
         </p>
@@ -137,7 +137,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
 
       {/* Quick access */}
       <section aria-labelledby="quick-access" className="mt-12">
-        <h2 id="quick-access" className="text-[15px] font-semibold text-fg">
+        <h2 id="quick-access" className="t-section">
           Quick access
         </h2>
         <ul className="mt-5 grid grid-cols-3 gap-y-6 sm:grid-cols-5 md:flex md:gap-10">
@@ -153,7 +153,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
       <section aria-labelledby="performance" className="mt-12">
         <div className="flex items-end justify-between">
           <div>
-            <h2 id="performance" className="text-[15px] font-semibold text-fg">
+            <h2 id="performance" className="t-section">
               Dispute performance
             </h2>
             <p className="mt-0.5 text-[12.5px] text-fg-muted">All time{store ? ` · ${store.name}` : ""}</p>
@@ -172,7 +172,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
 
       {/* Insights */}
       <section aria-labelledby="insights" className="mt-12">
-        <h2 id="insights" className="text-[15px] font-semibold text-fg">
+        <h2 id="insights" className="t-section">
           Insights
         </h2>
         <p className="mt-0.5 text-[12.5px] text-fg-muted">Open disputes right now{store ? ` · ${store.name}` : ""}</p>
@@ -186,7 +186,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
       {/* Recent disputes */}
       <section aria-labelledby="recent" className="mt-12">
         <div className="flex items-end justify-between">
-          <h2 id="recent" className="text-[15px] font-semibold text-fg">
+          <h2 id="recent" className="t-section">
             Recent disputes
           </h2>
           <Link href="/disputes" className="inline-flex items-center gap-1 text-[13px] font-medium text-fg underline-offset-4 hover:underline">
@@ -290,7 +290,7 @@ function StatCard({ label, value, hint, href }: { label: string; value: number; 
   const inner = (
     <>
       <span className="text-[13px] font-medium text-fg-heading">{label}</span>
-      <span className="mt-3 block font-serif text-[40px] leading-none text-fg tabular-nums">{value}</span>
+      <span className="mt-3 block t-figure text-[40px] leading-none text-fg tabular-nums">{value}</span>
       {hint && <span className="mt-2 block text-[12px] text-fg-muted">{hint}</span>}
     </>
   );
@@ -393,7 +393,7 @@ function ResultsSection({ rows, summary, storeName }: { rows: OutcomeRow[]; summ
 
   return (
     <section aria-labelledby="results" className="mt-12">
-      <h2 id="results" className="text-[15px] font-semibold text-fg">
+      <h2 id="results" className="t-section">
         Results
       </h2>
       <p className="mt-0.5 text-[12.5px] text-fg-muted">Resolved disputes{storeName ? ` · ${storeName}` : ""}</p>
@@ -437,7 +437,7 @@ function ResultCard({ label, value, hint }: { label: string; value: string; hint
   return (
     <div className="block rounded-2xl border border-line bg-canvas p-5">
       <span className="text-[13px] font-medium text-fg-heading">{label}</span>
-      <span className="mt-3 block font-serif text-[32px] leading-none text-fg tabular-nums">{value}</span>
+      <span className="mt-3 block t-figure text-[32px] leading-none text-fg tabular-nums">{value}</span>
       {hint && <span className="mt-2 block text-[12px] text-fg-muted">{hint}</span>}
     </div>
   );
