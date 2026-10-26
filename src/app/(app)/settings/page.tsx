@@ -22,7 +22,7 @@ export default async function SettingsPage() {
       <h1 className="text-[24px] font-semibold tracking-[-0.01em] text-fg">Settings</h1>
 
       <section className="mt-8 rounded-2xl border border-line bg-canvas p-5">
-        <h2 className="text-[15px] font-semibold text-fg">Connected PayPal account</h2>
+        <h2 className="t-section">Connected PayPal account</h2>
         {seller ? (
           <dl className="mt-3 space-y-1.5 text-[14px]">
             <div className="flex justify-between gap-4">
@@ -46,7 +46,7 @@ export default async function SettingsPage() {
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-1 text-[15px] font-semibold text-fg">Dispute policies</h2>
+        <h2 className="mb-1 t-section">Dispute policies</h2>
         <p className="mb-6 text-[13.5px] text-fg-body">
           {isSeller ? "Sira follows these for every dispute it assesses." : "Shown with their defaults. The demo account can't change them."}
         </p>

@@ -10,9 +10,9 @@ const base =
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-[linear-gradient(180deg,#4a4340_0%,#2a2522_100%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_1px_2px_rgba(42,37,34,0.35),0_0_0_1px_#2a2522] hover:bg-[linear-gradient(180deg,#554e4a_0%,#37322f_100%)]",
+    "bg-[linear-gradient(180deg,var(--mk-btn-from)_0%,var(--mk-btn-to)_100%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_1px_2px_rgba(0,0,0,0.3),0_0_0_1px_var(--mk-btn-to)] hover:bg-[linear-gradient(180deg,var(--mk-btn-hover-from)_0%,var(--mk-btn-hover-to)_100%)]",
   secondary:
-    "bg-canvas text-fg shadow-[0_1px_2px_rgba(55,50,47,0.08),0_0_0_1px_rgba(55,50,47,0.14)] hover:bg-muted",
+    "bg-canvas text-fg shadow-[0_1px_2px_rgba(0,0,0,0.06),0_0_0_1px_var(--mk-btn-edge)] hover:bg-muted",
   ghost: "text-fg-body hover:bg-muted hover:text-fg",
 };
 

@@ -47,7 +47,7 @@ export function NavLink({
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-fg",
-        active ? "bg-canvas font-medium text-fg shadow-[0_1px_2px_rgba(55,50,47,0.08),0_0_0_1px_rgba(55,50,47,0.08)]" : "text-fg-body hover:bg-canvas/60 hover:text-fg",
+        active ? "bg-canvas font-medium text-fg shadow-[0_1px_2px_var(--mk-line-subtle),0_0_0_1px_var(--mk-line)]" : "text-fg-body hover:bg-canvas/60 hover:text-fg",
       )}
     >
       <span className={cn("[&>svg]:size-[18px]", active ? "text-fg" : "text-fg-muted")}>{icon}</span>

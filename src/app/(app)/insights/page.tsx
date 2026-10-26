@@ -31,7 +31,7 @@ export default async function InsightsPage() {
 
       {/* Impact */}
       <section aria-labelledby="impact" className="mt-8">
-        <h2 id="impact" className="text-[15px] font-semibold text-fg">
+        <h2 id="impact" className="t-section">
           What Sira has saved you
         </h2>
         <p className="mt-0.5 text-[12.5px] text-fg-muted">All time</p>
@@ -72,7 +72,7 @@ export default async function InsightsPage() {
 
       {/* Tips */}
       <section aria-labelledby="prevent" className="mt-12">
-        <h2 id="prevent" className="text-[15px] font-semibold text-fg">
+        <h2 id="prevent" className="t-section">
           How to prevent the next one
         </h2>
         <p className="mt-0.5 text-[12.5px] text-fg-muted">Worked out from your own disputes, orders and outcomes</p>
@@ -91,7 +91,7 @@ export default async function InsightsPage() {
 
       {/* Patterns */}
       <section aria-labelledby="patterns" className="mt-12">
-        <h2 id="patterns" className="text-[15px] font-semibold text-fg">
+        <h2 id="patterns" className="t-section">
           Why you get disputes
         </h2>
         <p className="mt-0.5 text-[12.5px] text-fg-muted">
@@ -107,7 +107,7 @@ export default async function InsightsPage() {
 
       {/* Products */}
       <section aria-labelledby="products" className="mt-12">
-        <h2 id="products" className="text-[15px] font-semibold text-fg">
+        <h2 id="products" className="t-section">
           Products that get disputed
         </h2>
         <p className="mt-0.5 mb-4 text-[12.5px] text-fg-muted">Sort or filter any column. Low delivery proof means tracking would have helped.</p>
@@ -149,7 +149,7 @@ function ImpactCard({
   const inner = (
     <>
       <span className={`text-[13px] font-medium ${highlight ? "text-white/80" : bad ? "text-bad" : "text-fg-heading"}`}>{label}</span>
-      <span className={`mt-3 block font-serif text-[32px] leading-none tabular-nums ${highlight ? "text-white" : bad ? "text-bad" : "text-fg"}`}>{value}</span>
+      <span className={`mt-3 block t-figure text-[32px] leading-none tabular-nums ${highlight ? "text-white" : bad ? "text-bad" : "text-fg"}`}>{value}</span>
       <span className={`mt-2 block text-[12px] leading-4 ${highlight ? "text-white/70" : "text-fg-muted"}`}>{hint}</span>
     </>
   );

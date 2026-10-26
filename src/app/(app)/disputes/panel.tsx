@@ -62,14 +62,14 @@ export function DisputePanel({
         </header>
 
         <section>
-          <h3 className="mb-2 text-[12px] font-medium tracking-[0.04em] text-fg-muted uppercase">Buyer&apos;s claim</h3>
+          <h3 className="mb-2 t-section">Buyer&apos;s claim</h3>
           <blockquote className="rounded-xl border border-line bg-subtle px-4 py-3 text-[14px] leading-[22px] text-fg-heading">
             {claim ?? <span className="text-fg-muted">The buyer didn&apos;t leave a message.</span>}
           </blockquote>
         </section>
 
         <section>
-          <h3 className="mb-2 text-[12px] font-medium tracking-[0.04em] text-fg-muted uppercase">Recommendation</h3>
+          <h3 className="mb-2 t-section">Recommendation</h3>
           <div className="rounded-xl border border-line p-4">
             <AssessmentReport
               disputeId={dispute.id}

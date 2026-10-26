@@ -163,7 +163,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
         <button
           type="button"
           onClick={() => setImporting((v) => !v)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-fg px-4 text-[13px] font-medium text-white hover:bg-[#37322f]"
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-fg px-4 text-[13px] font-medium text-white hover:bg-fg/85"
         >
           <Upload aria-hidden strokeWidth={1.75} className="size-3.5" />
           Import CSV
@@ -206,7 +206,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
         stopEditingWhenCellsLoseFocus
         tooltipShowDelay={300}
         onCellValueChanged={onCellValueChanged}
-        overlayNoRowsTemplate='<span style="color:#8f8681">No open disputes need evidence right now.</span>'
+        overlayNoRowsTemplate='<span style="color:var(--mk-fg-muted)">No open disputes need evidence right now.</span>'
       />
 
       <div aria-live="polite" className="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2">

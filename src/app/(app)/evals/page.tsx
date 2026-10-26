@@ -46,7 +46,7 @@ export default async function EvalsPage() {
           </section>
 
           <section aria-labelledby="cases" className="mt-12">
-            <h2 id="cases" className="mb-4 text-[15px] font-semibold text-fg">
+            <h2 id="cases" className="mb-4 t-section">
               Latest run, case by case
             </h2>
             <EvalGrid rows={latest} runLabel={`Prompt ${newest.version} · ${latest.length} cases`} />
@@ -61,7 +61,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
   return (
     <div className="rounded-2xl border border-line bg-canvas p-5">
       <p className="text-[13px] font-medium text-fg-heading">{label}</p>
-      <p className="mt-3 font-serif text-[36px] leading-none text-fg tabular-nums">{value}</p>
+      <p className="mt-3 t-figure text-[36px] leading-none text-fg tabular-nums">{value}</p>
       {hint && <p className="mt-2 text-[12px] text-fg-muted">{hint}</p>}
     </div>
   );

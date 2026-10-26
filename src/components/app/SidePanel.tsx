@@ -61,7 +61,7 @@ export function SidePanel({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="animate-slide-in-right relative flex h-full w-full max-w-[600px] flex-col bg-canvas shadow-[-24px_0_60px_-30px_rgba(42,37,34,0.45)] outline-none"
+        className="animate-slide-in-right relative flex h-full w-full max-w-[600px] flex-col bg-canvas shadow-[-24px_0_60px_-30px_rgba(15,23,42,0.4)] outline-none"
       >
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-line px-4">
           <button
@@ -86,7 +86,7 @@ export function SidePanel({
                 href={nextHref}
                 replace
                 scroll={false}
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-fg px-3.5 text-[13px] font-medium whitespace-nowrap text-white transition-colors hover:bg-[#37322f]"
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-fg px-3.5 text-[13px] font-medium whitespace-nowrap text-white transition-colors hover:bg-fg/85"
               >
                 <span className="hidden sm:inline">{nextLabel ?? "Next"}</span>
                 <span className="sm:hidden">Next</span>
