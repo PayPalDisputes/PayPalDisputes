@@ -4,11 +4,11 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { CellValueChangedEvent, ColDef, ICellRendererParams } from "ag-grid-community";
 import { Redo2, RefreshCw, Undo2, Upload } from "lucide-react";
-import { formatAmount, reasonLabel } from "@/app/_components/dispute-ui";
+import { reasonLabel } from "@/app/_components/dispute-ui";
 import { reassess, saveEvidence } from "@/app/(app)/evidence/actions";
 import { CARRIERS, SHIPPING_STATUSES, type EvidenceField, type EvidenceRow } from "@/lib/evidence-shared";
 import { cn } from "@/lib/cn";
-import { Badge, DecisionBadge } from "../ui/primitives";
+import { Amount } from "./bits";
 import { gridTheme } from "./ag-setup";
 import { EvidenceImport } from "./EvidenceImport";
 
@@ -31,11 +31,11 @@ function DisputeCell({ data: d }: Cell) {
   return (
     <span className="flex min-w-0 flex-col gap-1 leading-none">
       <span className="flex items-center gap-1.5">
-        <span className="truncate font-medium text-fg">{d.buyerName ?? "Unknown buyer"}</span>
-        {d.simulated && <Badge>Demo data</Badge>}
+        <span className="truncate text-fg">{d.buyerName ?? "Unknown buyer"}</span>
+        {d.simulated && <span className="text-[12px] text-fg-muted">· demo data</span>}
       </span>
-      <span className="truncate text-[12px] text-fg-muted">
-        {reasonLabel(d.reason)} · {formatAmount(d.amount, d.currency)}
+      <span className="truncate text-[12.5px] text-fg-muted">
+        {reasonLabel(d.reason)} · <Amount amount={d.amount} currency={d.currency} />
       </span>
     </span>
   );
@@ -86,7 +86,10 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
         field: "trackingNumber",
         minWidth: 180,
         cellClass: "font-mono text-[12.5px]",
-        cellClassRules: { "bg-warn-bg": (p) => !p.value && !!p.data && NEEDS_TRACKING.has(p.data.reason ?? "") },
+        // Missing tracking reads as an empty field to fill in (dashed), not a warning colour.
+        cellClassRules: { "evidence-missing": (p) => !p.value && !!p.data && NEEDS_TRACKING.has(p.data.reason ?? "") },
+        cellRenderer: ({ value, data }: Cell) =>
+          value ? value : data && NEEDS_TRACKING.has(data.reason ?? "") ? <span className="font-sans text-[13px] text-fg-muted">Add tracking number</span> : null,
         tooltipValueGetter: (p) => (!p.value && p.data && NEEDS_TRACKING.has(p.data.reason ?? "") ? "Add tracking: it's the strongest proof for this kind of claim." : undefined),
       },
       {
@@ -103,7 +106,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
       { headerName: "To PayPal address", field: "shipToMatchesPayPal", cellDataType: "boolean", cellEditor: "agCheckboxCellEditor", minWidth: 150 },
       { headerName: "Notes", field: "notes", cellEditor: "agLargeTextCellEditor", cellEditorPopup: true, cellEditorParams: { maxLength: 1000 }, minWidth: 200, flex: 1 },
       {
-        headerName: "Agent",
+        headerName: "Sira's call",
         colId: "agent",
         pinned: "right",
         editable: false,
@@ -112,13 +115,17 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
         cellRenderer: ({ data: d }: Cell) =>
           d ? (
             <span className="flex items-center gap-2">
-              {d.recommendation ? <DecisionBadge decision={d.recommendation} /> : <span className="text-[12px] text-fg-muted">Not assessed</span>}
+              {d.recommendation ? (
+                <span className="text-fg-body">{{ fight: "Fight", settle: "Settle", refund: "Refund" }[d.recommendation]}</span>
+              ) : (
+                <span className="text-[12.5px] text-fg-muted">Not assessed</span>
+              )}
               {(d.evidenceChangedSinceReport || !d.recommendation) && d.status === "WAITING_FOR_SELLER_RESPONSE" && (
                 <button
                   type="button"
                   onClick={() => recheck(d)}
                   disabled={checking === d.disputeId}
-                  className="inline-flex h-7 items-center gap-1 rounded-full border border-line-strong bg-canvas px-2.5 text-[12px] font-medium text-fg-heading hover:bg-muted disabled:opacity-60"
+                  className="inline-flex h-7 items-center gap-1 rounded-full bg-muted px-2.5 text-[12.5px] text-fg hover:bg-inset disabled:opacity-60"
                 >
                   <RefreshCw aria-hidden strokeWidth={1.75} className={cn("size-3", checking === d.disputeId && "animate-spin-slow")} />
                   {checking === d.disputeId ? "Checking…" : "Re-check"}
@@ -163,7 +170,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
         <button
           type="button"
           onClick={() => setImporting((v) => !v)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-fg px-4 text-[13px] font-medium text-white hover:bg-fg/85"
+          className="inline-flex h-[38px] items-center gap-1.5 rounded-full bg-accent px-4 text-[14px] font-medium text-white hover:bg-[#0062c4]"
         >
           <Upload aria-hidden strokeWidth={1.75} className="size-3.5" />
           Import CSV

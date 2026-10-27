@@ -3,7 +3,7 @@
 import { AgCharts } from "ag-charts-react";
 import type { AgCartesianChartOptions } from "ag-charts-community";
 import { cn } from "@/lib/cn";
-import { baseChart, COLORS } from "./ag-setup";
+import { baseChart, BLUES, COLORS } from "./ag-setup";
 
 /* ------------------------------------------------------------------ */
 /* Card shell: title, one-line explainer, chart, and a data table      */
@@ -24,8 +24,8 @@ export function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className={cn("flex flex-col rounded-2xl border border-line bg-canvas p-5", className)}>
-      <h3 className="text-[14px] font-semibold text-fg">{title}</h3>
+    <section className={cn("flex flex-col rounded-xl border border-line bg-canvas p-6", className)}>
+      <h3 className="text-[14px] font-[480] text-fg">{title}</h3>
       <p className="mt-0.5 text-[12.5px] leading-[18px] text-fg-muted">{description}</p>
       <div className="mt-3 flex-1">{children}</div>
       <details className="group mt-2 text-[12px]">
@@ -269,8 +269,8 @@ export type OutcomeBar = { label: string; won: number; settled: number; lost: nu
 export function OutcomeChart({ bars }: { bars: OutcomeBar[] }) {
   const total = bars.reduce((s, b) => s + b.won + b.settled + b.lost, 0);
   const series = [
-    { yKey: "won", yName: "Won", fill: COLORS.refund },
-    { yKey: "settled", yName: "Settled", fill: COLORS.settle },
+    { yKey: "won", yName: "Won", fill: BLUES[0] },
+    { yKey: "settled", yName: "Settled", fill: BLUES[2] },
     { yKey: "lost", yName: "Lost", fill: COLORS.urgent },
   ] as const;
   return (
@@ -287,6 +287,8 @@ export function OutcomeChart({ bars }: { bars: OutcomeBar[] }) {
             options={
               {
                 ...baseChart(),
+                // Room on the left so one-word labels like "Refunded" aren't clipped in a narrow card.
+                padding: { top: 8, right: 8, bottom: 8, left: 18 },
                 data: bars,
                 series: series.map((s) => ({
                   type: "bar",
@@ -300,7 +302,7 @@ export function OutcomeChart({ bars }: { bars: OutcomeBar[] }) {
                 })),
                 legend: { enabled: true, position: "bottom", item: { label: { color: COLORS.text, fontSize: 12 } } },
                 axes: {
-                  x: { type: "category", position: "left", line: { enabled: false }, label: { color: COLORS.text, fontSize: 12 }, paddingInner: 0.45 },
+                  x: { type: "category", position: "left", line: { enabled: false }, label: { color: COLORS.text, fontSize: 12, formatter: ({ value }: { value: string }) => twoLines(String(value)) }, paddingInner: 0.45 },
                   y: { type: "number", position: "bottom", min: 0, interval: { step: 1 }, label: { color: COLORS.muted, fontSize: 11 } },
                 },
               } as AgCartesianChartOptions

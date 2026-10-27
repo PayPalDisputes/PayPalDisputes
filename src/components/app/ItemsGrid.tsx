@@ -3,7 +3,6 @@
 import { useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { Download } from "lucide-react";
 import type { ItemRow } from "@/lib/insights";
 import { formatAmount, reasonLabel } from "@/app/_components/dispute-ui";
 import { gridTheme } from "./ag-setup";
@@ -74,9 +73,8 @@ export function ItemsGrid({ rows }: { rows: ItemRow[] }) {
               processCellCallback: (p) => (p.column.getColId() === "deliveredShare" ? `${Math.round((p.value ?? 0) * 100)}%` : p.value),
             })
           }
-          className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-canvas px-3.5 text-[13px] font-medium text-fg-heading transition-colors hover:bg-muted"
+          className="ml-auto text-[13.5px] text-fg-body hover:text-fg"
         >
-          <Download aria-hidden strokeWidth={1.75} className="size-4" />
           Export CSV
         </button>
       </div>

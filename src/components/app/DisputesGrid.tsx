@@ -5,120 +5,88 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { Download, Search } from "lucide-react";
-import { Deadline, formatAmount, humanize, reasonLabel, StatusBadge } from "@/app/_components/dispute-ui";
+import { Search } from "lucide-react";
+import { formatAmount, reasonLabel } from "@/app/_components/dispute-ui";
 import type { HomeDispute } from "@/lib/dashboard";
+import { callLabel, dueLabel, stageLabel, stageStep } from "@/lib/dispute-stage";
 import { cn } from "@/lib/cn";
-import { Badge, DecisionBadge } from "../ui/primitives";
+import { Amount, ProgressLine } from "./bits";
 import { gridTheme } from "./ag-setup";
 
-const REPORT_STATUS: Record<string, string> = {
+const REPORT_NOTE: Record<string, string> = {
   submitted: "Sent to PayPal",
   approved: "Sending…",
   rejected: "You rejected it",
   failed: "Sending failed",
 };
-const RISK_TONE = { high: "bad", medium: "warn", low: "ok" } as const;
-const RECOMMENDATION_LABEL = { fight: "Fight", refund: "Refund", settle: "Settle" } as const;
 
 type Cell = ICellRendererParams<HomeDispute>;
-
-/** The AI's call on a dispute: recommendation (+ settle amount and risk while it awaits review), or what happened to it. */
-function AiCell({ data: d }: Cell) {
-  if (!d) return null;
-  const r = d.report;
-  if (!r) {
-    return d.status === "WAITING_FOR_SELLER_RESPONSE" ? (
-      <span className="text-[12.5px] text-fg-muted">Assessing…</span>
-    ) : (
-      <span className="text-fg-muted">—</span>
-    );
-  }
-  const note = r.status !== "pending_review" ? REPORT_STATUS[r.status] : !r.current ? "Updating…" : null;
-  const awaiting = r.status === "pending_review" && r.current && d.status !== "RESOLVED";
-  return (
-    <span className="flex flex-col items-start gap-1 leading-none">
-      <span className="inline-flex flex-wrap items-center gap-1.5">
-        <DecisionBadge decision={r.recommendation} />
-        {r.recommendation === "settle" && r.settleAmount != null && (
-          <span className="text-[12.5px] text-fg-body tabular-nums">for {formatAmount(r.settleAmount, d.currency)}</span>
-        )}
-        {r.risk && awaiting && <Badge tone={RISK_TONE[r.risk]}>Risk: {r.risk}</Badge>}
-        {awaiting && <Badge tone="info">Needs approval</Badge>}
-      </span>
-      {note && <span className={cn("text-[12px]", r.status === "failed" ? "text-bad" : "text-fg-muted")}>{note}</span>}
-    </span>
-  );
-}
 
 function BuyerCell({ data: d }: Cell) {
   if (!d) return null;
   return (
-    <span className="flex min-w-0 flex-col gap-1 leading-none">
-      <span className="truncate font-medium text-fg">{d.buyerName ?? "Unknown buyer"}</span>
-      <span className="truncate font-mono text-[11.5px] text-fg-muted">
-        {d.id}
-        {d.sellerName ? ` · ${d.sellerName}` : d.merchantId ? ` · Unlinked (${d.merchantId})` : ""}
-      </span>
+    <span className="flex min-w-0 flex-col gap-[3px] leading-tight">
+      <span className="truncate text-fg">{d.buyerName ?? "Unknown buyer"}</span>
+      <span className="truncate text-[13px] text-fg-muted">{d.item ?? (d.sellerName ? d.sellerName : d.id)}</span>
     </span>
   );
 }
 
-function StatusCell({ data: d }: Cell) {
+function StageCell({ data: d }: Cell) {
   if (!d) return null;
   return (
-    <span className="flex flex-col items-start gap-1 leading-none">
-      <StatusBadge status={d.status} />
-      <span className="text-[12px] text-fg-muted">{humanize(d.stage)}</span>
+    <span className="flex flex-col gap-1.5 leading-tight">
+      <span className="text-fg-body">{stageLabel(d)}</span>
+      <ProgressLine step={stageStep(d)} />
     </span>
   );
 }
 
-/** Deadline text plus a thin bar that empties as the 20-day response window runs out. */
 function DeadlineCell({ data: d }: Cell) {
   if (!d) return null;
-  const waiting = d.status === "WAITING_FOR_SELLER_RESPONSE" && d.daysLeft !== null;
-  const share = waiting ? Math.max(0, Math.min(1, (d.daysLeft ?? 0) / 20)) : 0;
+  const label = d.status === "WAITING_FOR_SELLER_RESPONSE" ? dueLabel(d.daysLeft) : null;
+  if (!label) return <span className="text-fg-muted">—</span>;
+  return <span className={cn((d.daysLeft ?? 99) <= 0 ? "font-medium text-bad" : "text-fg-body")}>{label}</span>;
+}
+
+/** Sira's call in plain words, plus what happened to it once acted on. */
+function CallCell({ data: d }: Cell) {
+  if (!d) return null;
+  const r = d.report;
+  if (!r) return <span className="text-fg-muted">{d.status === "WAITING_FOR_SELLER_RESPONSE" ? "Assessing…" : "—"}</span>;
+  const note = r.status !== "pending_review" ? REPORT_NOTE[r.status] : !r.current ? "Updating…" : null;
   return (
-    <span className="flex w-full flex-col gap-1.5 leading-none">
-      <span className="text-[13px] whitespace-nowrap">
-        <Deadline dueAt={d.dueAt} daysLeft={d.daysLeft} status={d.status} />
-      </span>
-      {waiting && (
-        <span aria-hidden className="h-1 w-full max-w-[120px] overflow-hidden rounded-full bg-muted">
-          <span
-            className={cn("block h-full rounded-full", (d.daysLeft ?? 0) <= 3 ? "bg-bad" : (d.daysLeft ?? 0) <= 7 ? "bg-warn" : "bg-fg-heading/60")}
-            style={{ width: `${Math.max(share * 100, 4)}%` }}
-          />
-        </span>
-      )}
+    <span className="flex flex-col gap-[3px] leading-tight">
+      <span className="text-fg-body">{callLabel(r, d.currency)}</span>
+      {note && <span className={cn("text-[12.5px]", r.status === "failed" ? "text-bad" : "text-fg-muted")}>{note}</span>}
     </span>
   );
+}
+
+function AmountCell({ data: d }: Cell) {
+  if (!d) return null;
+  return <Amount amount={d.amount} currency={d.currency} className="text-fg" />;
 }
 
 /** Phone layout: one tappable card per dispute instead of a wide grid. */
-function DisputeCard({ d, urgent, href }: { d: HomeDispute; urgent: boolean; href: string }) {
+function DisputeCard({ d, href }: { d: HomeDispute; href: string }) {
   return (
-    <Link
-      href={href}
-      scroll={false}
-      className={cn(
-        "block rounded-2xl border bg-canvas p-4 transition-colors active:bg-subtle",
-        urgent ? "border-bad/40 bg-bad-bg/40" : "border-line",
-      )}
-    >
+    <Link href={href} scroll={false} className="block rounded-xl border border-line bg-canvas p-4 transition-colors active:bg-subtle">
       <span className="flex items-start justify-between gap-3">
         <span className="min-w-0">
-          <span className="block truncate text-[15px] font-medium text-fg">{d.buyerName ?? "Unknown buyer"}</span>
-          <span className="block text-[13px] text-fg-body">{reasonLabel(d.reason)}</span>
+          <span className="block truncate text-[15px] text-fg">{d.buyerName ?? "Unknown buyer"}</span>
+          <span className="block text-[13px] text-fg-muted">
+            {d.item ?? "Order"} · {reasonLabel(d.reason)}
+          </span>
         </span>
-        <span className="shrink-0 text-[15px] font-medium text-fg tabular-nums">{formatAmount(d.amount, d.currency)}</span>
+        <Amount amount={d.amount} currency={d.currency} className="shrink-0 text-[15px] text-fg" />
       </span>
-      <span className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <AiCell {...({ data: d } as Cell)} />
-        <span className="text-[12.5px]">
-          <Deadline dueAt={d.dueAt} daysLeft={d.daysLeft} status={d.status} />
+      <span className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[13px]">
+        <span className="flex flex-col gap-1.5">
+          <span className="text-fg-body">{stageLabel(d)}</span>
+          <ProgressLine step={stageStep(d)} />
         </span>
+        <span className="text-fg-body">{callLabel(d.report, d.currency) ?? ""}</span>
       </span>
     </Link>
   );
@@ -128,32 +96,28 @@ function DisputeCard({ d, urgent, href }: { d: HomeDispute; urgent: boolean; hre
 const deadlineComparator = (a: number | null, b: number | null) => (a ?? Infinity) - (b ?? Infinity);
 
 /**
- * Sortable, filterable disputes table (AG Grid Community). Click or press Enter on a row to open it
- * in the side panel.
- * Search matches buyer, dispute id, seller, reason, status and recommendation.
+ * Sortable, filterable disputes table (AG Grid Community) in the quiet Mock 2 style. Click or press
+ * Enter on a row to open it in the side panel. Search matches buyer, item, dispute id, reason and call.
  */
 export function DisputesGrid({
   rows,
   listHref,
   csvName = "disputes",
+  initialQuery = "",
 }: {
   rows: HomeDispute[];
   /** The current list URL; opening a dispute adds `open=<id>` to it so the side panel shows over the list. */
   listHref: string;
   csvName?: string;
+  /** Pre-filled search, e.g. from the top bar (`?q=`). */
+  initialQuery?: string;
 }) {
   const router = useRouter();
   const openHref = (id: string) => `${listHref}${listHref.includes("?") ? "&" : "?"}open=${encodeURIComponent(id)}`;
   const openDispute = (id: string) => router.push(openHref(id), { scroll: false });
   const gridRef = useRef<AgGridReact<HomeDispute>>(null);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [shown, setShown] = useState(rows.length);
-
-  // Overdue or due within 2 days stay pinned on top while scrolling. While searching they rejoin
-  // the list so the search covers everything.
-  const isUrgent = (d: HomeDispute) => d.status === "WAITING_FOR_SELLER_RESPONSE" && d.daysLeft !== null && d.daysLeft <= 2;
-  const pinned = query ? [] : rows.filter(isUrgent);
-  const body = query ? rows : rows.filter((d) => !isUrgent(d));
 
   const columnDefs = useMemo<ColDef<HomeDispute>[]>(
     () => [
@@ -161,12 +125,12 @@ export function DisputesGrid({
         headerName: "Buyer",
         colId: "buyer",
         valueGetter: (p) => p.data?.buyerName ?? "Unknown buyer",
-        getQuickFilterText: (p) => [p.data?.buyerName, p.data?.id, p.data?.sellerName].filter(Boolean).join(" "),
+        getQuickFilterText: (p) => [p.data?.buyerName, p.data?.item, p.data?.id, p.data?.sellerName].filter(Boolean).join(" "),
         cellRenderer: BuyerCell,
         filter: "agTextColumnFilter",
         pinned: "left",
-        minWidth: 210,
-        flex: 1.2,
+        minWidth: 200,
+        flex: 1.3,
       },
       {
         headerName: "Reason",
@@ -178,32 +142,32 @@ export function DisputesGrid({
         flex: 1,
       },
       {
-        headerName: "Status",
-        colId: "status",
-        valueGetter: (p) => (p.data?.status === "WAITING_FOR_SELLER_RESPONSE" ? "Needs response" : humanize(p.data?.status ?? null)),
-        cellRenderer: StatusCell,
+        headerName: "Where it stands",
+        colId: "stage",
+        valueGetter: (p) => (p.data ? stageLabel(p.data) : ""),
+        cellRenderer: StageCell,
         filter: "agTextColumnFilter",
-        minWidth: 160,
-        flex: 1,
+        minWidth: 190,
+        flex: 1.2,
       },
       {
-        headerName: "Recommendation",
-        colId: "recommendation",
-        valueGetter: (p) => (p.data?.report ? RECOMMENDATION_LABEL[p.data.report.recommendation] : ""),
-        cellRenderer: AiCell,
-        filter: "agTextColumnFilter",
-        minWidth: 220,
-        flex: 1.3,
-      },
-      {
-        headerName: "Respond by",
+        headerName: "Deadline",
         colId: "deadline",
         valueGetter: (p) => (p.data?.status === "WAITING_FOR_SELLER_RESPONSE" ? p.data.daysLeft : null),
         comparator: deadlineComparator,
         cellRenderer: DeadlineCell,
         filter: "agNumberColumnFilter",
         sort: "asc",
+        minWidth: 130,
+      },
+      {
+        headerName: "Sira's call",
+        colId: "call",
+        valueGetter: (p) => (p.data ? (callLabel(p.data.report, p.data.currency) ?? "") : ""),
+        cellRenderer: CallCell,
+        filter: "agTextColumnFilter",
         minWidth: 150,
+        flex: 1,
       },
       {
         headerName: "Amount",
@@ -211,8 +175,8 @@ export function DisputesGrid({
         field: "amount",
         type: "rightAligned",
         valueFormatter: (p) => formatAmount(p.value ?? null, p.data?.currency ?? null),
+        cellRenderer: AmountCell,
         filter: "agNumberColumnFilter",
-        cellClass: "font-medium tabular-nums",
         minWidth: 110,
       },
     ],
@@ -220,60 +184,64 @@ export function DisputesGrid({
   );
 
   const defaultColDef = useMemo<ColDef>(
-    () => ({ sortable: true, resizable: true, suppressHeaderMenuButton: false, cellStyle: { display: "flex", alignItems: "center" } }),
+    () => ({
+      sortable: true,
+      resizable: true,
+      cellStyle: (p) => ({ display: "flex", alignItems: "center", justifyContent: p.colDef.type === "rightAligned" ? "flex-end" : "flex-start" }),
+    }),
     [],
+  );
+
+  const q = query.toLowerCase();
+  const phoneRows = rows.filter(
+    (d) => !q || [d.buyerName, d.item, d.id, d.sellerName, reasonLabel(d.reason)].join(" ").toLowerCase().includes(q),
   );
 
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <label className="relative flex min-w-[220px] flex-1 items-center sm:max-w-[340px]">
+        <label className="flex h-9 min-w-[220px] flex-1 items-center gap-2 rounded-[10px] border border-line bg-canvas px-3 focus-within:border-line-strong sm:max-w-[320px]">
           <span className="sr-only">Search disputes</span>
-          <Search aria-hidden strokeWidth={1.75} className="pointer-events-none absolute left-3 size-4 text-fg-muted" />
+          <Search aria-hidden strokeWidth={1.8} className="size-[15px] text-fg-muted" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search buyer, dispute ID, reason…"
-            className="h-10 w-full rounded-full border border-line bg-canvas pr-4 pl-9 text-[13.5px] text-fg placeholder:text-fg-muted focus:border-line-strong focus:outline-none"
+            placeholder="Search buyer, item or dispute ID"
+            className="h-full flex-1 bg-transparent text-[13.5px] text-fg outline-none placeholder:text-fg-muted"
           />
         </label>
         <span className="text-[12.5px] text-fg-muted tabular-nums" aria-live="polite">
-          {shown + pinned.length} of {rows.length}
-          {pinned.length > 0 && <span className="ml-2 text-bad">· {pinned.length} due within 2 days, pinned on top</span>}
+          Showing {shown} of {rows.length}
         </span>
         <button
           type="button"
           onClick={() => gridRef.current?.api.exportDataAsCsv({ fileName: `${csvName}.csv` })}
-          className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-canvas px-3.5 text-[13px] font-medium text-fg-heading transition-colors hover:bg-muted"
+          className="ml-auto text-[13.5px] text-fg-body hover:text-fg"
         >
-          <Download aria-hidden strokeWidth={1.75} className="size-3.5" />
           Export CSV
         </button>
       </div>
 
       <ul className="space-y-2 md:hidden">
-        {[...pinned, ...body]
-          .filter((d) => !query || [d.buyerName, d.id, d.sellerName, reasonLabel(d.reason)].join(" ").toLowerCase().includes(query.toLowerCase()))
-          .map((d) => (
-            <li key={d.id}>
-              <DisputeCard d={d} urgent={isUrgent(d)} href={openHref(d.id)} />
-            </li>
-          ))}
+        {phoneRows.map((d) => (
+          <li key={d.id}>
+            <DisputeCard d={d} href={openHref(d.id)} />
+          </li>
+        ))}
       </ul>
 
       <div className="hidden md:block">
         <AgGridReact<HomeDispute>
           ref={gridRef}
           theme={gridTheme}
-          rowData={body}
-          pinnedTopRowData={pinned}
-          getRowClass={(p) => (p.node.rowPinned ? "bg-bad-bg/60" : undefined)}
+          rowData={rows}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           getRowId={(p) => p.data.id}
           quickFilterText={query}
           domLayout="autoHeight"
+          rowHeight={64}
           pagination={rows.length > 25}
           paginationPageSize={25}
           paginationPageSizeSelector={false}
@@ -284,7 +252,7 @@ export function DisputesGrid({
             if (key === "Enter" && e.data) openDispute(e.data.id);
           }}
           onModelUpdated={(e) => setShown(e.api.getDisplayedRowCount())}
-          overlayNoRowsTemplate='<span style="color:#8f8681">No disputes match.</span>'
+          overlayNoRowsTemplate='<span style="color:#70707d">No disputes match.</span>'
         />
       </div>
     </div>

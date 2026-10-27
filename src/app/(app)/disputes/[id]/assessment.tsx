@@ -1,10 +1,10 @@
 import type { computeUrgency } from "@/lib/agent";
 import type { Decision } from "@/lib/dashboard";
 import type { ActionsMode } from "@/lib/respond";
-import { DRAFT_LABELS, EvidencePackLink, formatAmount, LevelBadge, RECOMMENDATION, RecommendationBadge } from "@/app/_components/dispute-ui";
+import { DRAFT_LABELS, EvidencePackLink, formatAmount, RECOMMENDATION } from "@/app/_components/dispute-ui";
+import { cn } from "@/lib/cn";
 import { ChatPanel } from "./chat-panel";
 import { ReviewForm } from "./review";
-
 
 const STATUS_LABELS: Record<Decision["status"], string> = {
   pending_review: "Waiting for your review",
@@ -14,12 +14,46 @@ const STATUS_LABELS: Record<Decision["status"], string> = {
   failed: "Sending failed",
 };
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+/** Risk and urgency as coloured words (no pills): high red, medium amber, low green. */
+const LEVEL_TEXT = { high: "text-bad", medium: "text-warn", low: "text-ok" } as const;
+const LEVEL_WORD = { high: "High", medium: "Medium", low: "Low" } as const;
+
+/** What each lookup the agent made means to a seller. */
+const TOOL_LABELS: Record<string, string> = {
+  get_store_order: "Your order",
+  get_shipment_tracking: "Tracking on PayPal",
+  get_refund: "Refunds",
+  get_dispute: "The dispute",
+  get_order: "PayPal order",
+  list_transactions: "Transactions",
+};
+
+/** A quiet white card with a blue section label: the dashboard's container for Sira's report. */
+function Block({ id, title, aside, children, className }: { id: string; title: string; aside?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <div className="mt-5 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-      <h3 className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">{title}</h3>
+    <section aria-labelledby={id} className={cn("rounded-xl border border-line bg-canvas px-6 py-5", className)}>
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <h2 id={id} className="text-[13px] font-medium text-accent">
+          {title}
+        </h2>
+        {aside}
+      </div>
       {children}
-    </div>
+    </section>
+  );
+}
+
+function Rows({ rows }: { rows: { label: string; value: React.ReactNode; muted?: boolean }[] }) {
+  return (
+    <dl>
+      {rows.map((r, i) => (
+        <div key={i} className={cn("flex flex-col gap-1 py-3 text-[14.5px] leading-[22px] sm:flex-row sm:gap-5", i < rows.length - 1 && "border-b border-line-subtle")}>
+          {/* stacks on a phone; long ids (tracking numbers) may break anywhere */}
+          <dt className={cn("shrink-0 text-fg-muted sm:w-[140px]", !r.label && "hidden sm:block")}>{r.label}</dt>
+          <dd className={cn("min-w-0 flex-1 [overflow-wrap:anywhere]", r.muted ? "text-fg-muted" : "text-fg")}>{r.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -27,12 +61,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function SentActions({ actions }: { actions: Decision["actions"] }) {
   if (actions.length === 0) return null;
   return (
-    <ul className="my-3 space-y-1 text-sm">
+    <ul className="mt-4 space-y-1 text-[13.5px]">
       {actions.map((s, i) => (
-        <li key={i} className={s.success ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
-          {s.success ? "✓ Sent" : "✗ Failed"}: {DRAFT_LABELS[s.actionType as keyof typeof DRAFT_LABELS] ?? s.actionType}
+        <li key={i} className={s.success ? "text-ok" : "text-bad"}>
+          {s.success ? "Sent" : "Failed"}: {DRAFT_LABELS[s.actionType as keyof typeof DRAFT_LABELS] ?? s.actionType}
           {s.error && ` (${s.error})`}
-          <span className="text-xs text-zinc-400">
+          <span className="text-fg-muted">
             {" "}
             · {new Date(s.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
           </span>
@@ -42,7 +76,10 @@ function SentActions({ actions }: { actions: Decision["actions"] }) {
   );
 }
 
-/** The agent's report: recommendation, risk, urgency, reasoning, other options, evidence and drafts. */
+/**
+ * Sira's report on a dispute, Mock 2 style: the recommendation, what Sira checked, the other options,
+ * the drafts (with Approve / Reject) and the Ask Sira chat, each in its own quiet card.
+ */
 export function AssessmentReport({
   disputeId,
   decision,
@@ -63,112 +100,86 @@ export function AssessmentReport({
 }) {
   if (!decision) {
     return (
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        {disputeStatus === "WAITING_FOR_SELLER_RESPONSE"
-          ? "Not assessed yet. The agent runs when the dispute arrives or changes; this usually takes under a minute."
-          : "No assessment needed right now: PayPal isn't waiting on you."}
-      </p>
+      <Block id="rec" title="Sira recommends">
+        <p className="text-[14.5px] text-fg-body">
+          {disputeStatus === "WAITING_FOR_SELLER_RESPONSE"
+            ? "Not assessed yet. Sira runs when the dispute arrives or changes; this usually takes under a minute."
+            : "Nothing to decide right now: PayPal isn't waiting on you."}
+        </p>
+      </Block>
     );
   }
 
   const a = decision.assessment;
   const reviewable = decision.current && (decision.status === "pending_review" || decision.status === "failed");
-  const assessedAt = new Date(decision.createdAt).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const assessedAt = new Date(decision.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const call =
+    a.recommendation === "settle" && a.settle_amount != null
+      ? `Settle for ${formatAmount(a.settle_amount, currency)}`
+      : a.recommendation === "refund"
+        ? `Refund ${formatAmount(amount, currency)}`
+        : (RECOMMENDATION[a.recommendation]?.label ?? a.recommendation);
+
+  const checked = [
+    ...(a.investigation ?? []).map((t) => ({ label: TOOL_LABELS[t.tool] ?? t.tool, value: t.summary, muted: !t.ok })),
+    ...a.key_evidence.map((value, i) => ({ label: i === 0 ? "Supports" : "", value })),
+    ...a.missing_evidence.map((value, i) => ({ label: i === 0 ? "Missing" : "", value, muted: true })),
+  ];
 
   return (
-    <div className="text-sm">
+    <div className="flex flex-col gap-5">
       {!decision.current && (
-        <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+        <p className="rounded-xl border border-line bg-canvas px-5 py-3 text-[14px] text-warn">
           The dispute has changed since this report. A new one will replace it shortly.
         </p>
       )}
-      {a.rule === "auto_refund" && (
-        <p className="mb-4 rounded-md bg-sky-50 px-3 py-2 text-sky-800 dark:bg-sky-950 dark:text-sky-300">
-          Handled by your auto-refund rule. Change it in{" "}
-          <a href="/settings" className="font-medium underline">
-            Settings
-          </a>
-          .
+
+      <Block id="rec" title="Sira recommends" aside={<span className="text-[12.5px] text-fg-muted">Updated {assessedAt}</span>}>
+        {a.rule === "auto_refund" && (
+          <p className="mb-2 text-[13.5px] text-fg-body">
+            Handled by your auto-refund rule.{" "}
+            <a href="/settings" className="text-accent hover:underline">
+              Change it in Settings
+            </a>
+          </p>
+        )}
+        <p className="text-[22px] font-[480] text-fg">{call}</p>
+        <p className="mt-2 text-[15px] leading-6 text-fg-body">{a.reasoning}</p>
+        <div className="mt-4 flex flex-wrap gap-x-7 gap-y-2 border-t border-line-subtle pt-3.5 text-[13.5px]">
+          <span title={urgency.reason}>
+            <span className="text-fg-muted">Urgency </span>
+            <span className={cn("font-medium", LEVEL_TEXT[urgency.urgency])}>{LEVEL_WORD[urgency.urgency]}</span>
+          </span>
+          <span title={a.risk_reason}>
+            <span className="text-fg-muted">Risk if you fight </span>
+            <span className={cn("font-medium", LEVEL_TEXT[a.risk])}>{LEVEL_WORD[a.risk]}</span>
+          </span>
+          <span>
+            <span className="text-fg-muted">Confidence </span>
+            <span className="font-medium text-fg">{Math.round(a.confidence * 100)}%</span>
+          </span>
+        </div>
+        <p className="mt-2 text-[13px] leading-5 text-fg-muted">
+          {a.risk_reason} {urgency.reason}
         </p>
+      </Block>
+
+      {checked.length > 0 && (
+        <Block id="checked" title="What Sira checked">
+          <Rows rows={checked} />
+        </Block>
       )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <RecommendationBadge recommendation={a.recommendation} settleAmount={a.settle_amount} currency={currency} />
-        <LevelBadge name="Risk" level={a.risk} />
-        <LevelBadge name="Urgency" level={urgency.urgency} />
-      </div>
-
-      <p className="mt-4 leading-relaxed">{a.reasoning}</p>
-      <p className="mt-2 text-zinc-500 dark:text-zinc-400">
-        <span className="font-medium">Risk:</span> {a.risk_reason}
-      </p>
-      <p className="mt-1 text-zinc-500 dark:text-zinc-400">
-        <span className="font-medium">Urgency:</span> {urgency.reason}
-      </p>
 
       {a.alternatives.length > 0 && (
-        <Section title="Other options">
-          <ul className="space-y-2">
-            {a.alternatives.map((alt) => (
-              <li key={alt.option}>
-                <span className="font-medium">{RECOMMENDATION[alt.option]?.label ?? alt.option}:</span>{" "}
-                <span className="text-zinc-600 dark:text-zinc-400">{alt.what_happens}</span>
-              </li>
-            ))}
-          </ul>
-        </Section>
+        <Block id="options" title="Other options">
+          <Rows rows={a.alternatives.map((alt) => ({ label: RECOMMENDATION[alt.option]?.label ?? alt.option, value: alt.what_happens }))} />
+        </Block>
       )}
 
-      {a.investigation && a.investigation.length > 0 && (
-        <Section title="What the agent checked">
-          <ul className="space-y-1.5">
-            {a.investigation.map((t, i) => (
-              <li key={i} className="flex gap-2">
-                <span className={t.ok ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"}>{t.ok ? "✓" : "–"}</span>
-                <span className={t.ok ? "" : "text-zinc-500 dark:text-zinc-400"}>{t.summary}</span>
-                <span className="ml-auto shrink-0 font-mono text-[11px] text-zinc-400">{t.tool}</span>
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
-
-      <Section title="Evidence">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <ul className="space-y-1.5">
-            {a.key_evidence.map((e, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="text-emerald-600 dark:text-emerald-400">✓</span>
-                <span>{e}</span>
-              </li>
-            ))}
-          </ul>
-          {a.missing_evidence.length > 0 && (
-            <ul className="space-y-1.5">
-              {a.missing_evidence.map((e, i) => (
-                <li key={i} className="flex gap-2 text-zinc-600 dark:text-zinc-400">
-                  <span className="text-amber-600 dark:text-amber-400">?</span>
-                  <span>{e}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </Section>
-
-      <Section title={a.drafts.length === 1 ? "Draft" : "Drafts"}>
+      <Block id="drafts" title={reviewable ? "Your response" : a.drafts.length === 1 ? "Draft" : "Drafts"}>
         {reviewable ? (
           <>
-            {mode === "demo" && (
-              <p className="mb-3 rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-800 dark:bg-sky-950 dark:text-sky-300">
-                Demo mode: try Approve or Reject freely. Nothing is sent to PayPal or saved.
-              </p>
-            )}
+            {mode === "demo" && <p className="mb-3 text-[13px] text-fg-muted">Demo mode: try Approve or Reject freely. Nothing is sent to PayPal or saved.</p>}
             {decision.status === "failed" && <SentActions actions={decision.actions} />}
             <ReviewForm
               key={a.drafts.map((d) => d.text).join("|")}
@@ -184,25 +195,23 @@ export function AssessmentReport({
           <>
             <div className="space-y-3">
               {a.drafts.map((d, i) => (
-                <div key={i} className="rounded-md border border-zinc-200 dark:border-zinc-800">
-                  <p className="border-b border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                <div key={i}>
+                  <p className="mb-1.5 text-[13px] text-fg-muted">
                     {DRAFT_LABELS[d.action] ?? d.action} → {d.recipient === "paypal" ? "PayPal" : "buyer"}
                     {d.action === "provide_evidence" && <EvidencePackLink disputeId={disputeId} />}
                   </p>
-                  <p className="whitespace-pre-wrap px-3 py-2 leading-relaxed">{d.text}</p>
+                  <p className="rounded-xl bg-muted/70 px-5 py-4 text-[15px] leading-[25px] whitespace-pre-wrap text-fg">{d.text}</p>
                 </div>
               ))}
             </div>
             <SentActions actions={decision.actions} />
           </>
         )}
-      </Section>
+      </Block>
 
-      <div className="mt-5">
-        <ChatPanel disputeId={disputeId} />
-      </div>
+      <ChatPanel disputeId={disputeId} />
 
-      <p className="mt-5 text-xs text-zinc-400">
+      <p className="text-[12px] text-fg-muted">
         {STATUS_LABELS[decision.status] ?? decision.status} · assessed {assessedAt}
         {decision.model && ` · ${decision.model}`}
         {decision.promptVersion && ` · prompt ${decision.promptVersion}`}

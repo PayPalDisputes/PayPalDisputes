@@ -3,7 +3,7 @@
 import { AgCharts } from "ag-charts-react";
 import type { AgCartesianChartOptions } from "ag-charts-community";
 import { barChart, ChartCard, Empty, twoLines } from "./Charts";
-import { baseChart, COLORS } from "./ag-setup";
+import { baseChart, BLUES, COLORS } from "./ag-setup";
 
 /* ------------------------------------------------------------------ */
 /* Insights page: why disputes happen                                  */
@@ -15,9 +15,9 @@ export type ReasonResult = { label: string; open: number; won: number; settled: 
 export function ReasonResultChart({ rows }: { rows: ReasonResult[] }) {
   const total = rows.reduce((s, r) => s + r.open + r.won + r.settled + r.lost, 0);
   const series = [
-    { yKey: "open", yName: "Still open", fill: COLORS.ink },
-    { yKey: "won", yName: "Won", fill: COLORS.refund },
-    { yKey: "settled", yName: "Settled", fill: COLORS.settle },
+    { yKey: "open", yName: "Still open", fill: BLUES[2] },
+    { yKey: "won", yName: "Won", fill: BLUES[0] },
+    { yKey: "settled", yName: "Settled", fill: BLUES[1] },
     { yKey: "lost", yName: "Lost", fill: COLORS.urgent },
   ] as const;
   return (
@@ -60,7 +60,7 @@ export function ReasonResultChart({ rows }: { rows: ReasonResult[] }) {
   );
 }
 
-export type ProofBar = { label: string; value: number; urgent: boolean };
+export type ProofBar = { label: string; value: number; urgent: boolean; color?: string };
 
 /** "Not received" disputes by the shipping proof the seller had. Red = no delivery proof, the preventable ones. */
 export function ShippingProofChart({ bars }: { bars: ProofBar[] }) {
@@ -68,7 +68,7 @@ export function ShippingProofChart({ bars }: { bars: ProofBar[] }) {
   return (
     <ChartCard
       title="Shipping proof on “not received” claims"
-      description="What proof you had when a buyer said the item never arrived. Red bars had no proof of delivery."
+      description="What proof you had when a buyer said the item never arrived. The deepest blue had no proof of delivery."
       table={bars.map((b) => ({ label: b.label, value: String(b.value) }))}
     >
       {total === 0 ? (
@@ -83,7 +83,7 @@ export function ShippingProofChart({ bars }: { bars: ProofBar[] }) {
 }
 
 /** Disputes opened per week, so a spike after a product launch or carrier change stands out. */
-export function TrendChart({ weeks }: { weeks: { label: string; value: number }[] }) {
+export function TrendChart({ weeks }: { weeks: { label: string; value: number; color?: string }[] }) {
   const total = weeks.reduce((s, w) => s + w.value, 0);
   return (
     <ChartCard
@@ -103,7 +103,7 @@ export function TrendChart({ weeks }: { weeks: { label: string; value: number }[
 }
 
 /** Disputes by order value: shows whether small claims are worth an auto-refund rule. */
-export function ValueBandChart({ bands }: { bands: { label: string; value: number }[] }) {
+export function ValueBandChart({ bands }: { bands: { label: string; value: number; color?: string }[] }) {
   const total = bands.reduce((s, b) => s + b.value, 0);
   return (
     <ChartCard

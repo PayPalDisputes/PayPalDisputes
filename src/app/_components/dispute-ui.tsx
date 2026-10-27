@@ -53,9 +53,9 @@ export function EvidencePackLink({ disputeId }: { disputeId: string }) {
       href={`/api/disputes/${encodeURIComponent(disputeId)}/evidence-pack`}
       target="_blank"
       rel="noopener"
-      className="float-right font-medium text-sky-700 hover:underline dark:text-sky-400"
+      className="ml-2 font-normal text-accent hover:underline"
     >
-      📎 Evidence pack (PDF)
+      · Evidence pack (PDF)
     </a>
   );
 }

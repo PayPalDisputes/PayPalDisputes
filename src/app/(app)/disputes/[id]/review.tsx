@@ -56,8 +56,8 @@ export function ReviewForm({
       <input type="hidden" name="decisionId" value={decisionId} />
       <div className="space-y-3">
         {drafts.map((d, i) => (
-          <label key={i} className="block rounded-md border border-zinc-200 dark:border-zinc-800">
-            <span className="block border-b border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+          <label key={i} className="block">
+            <span className="mb-1.5 block text-[13px] text-fg-muted">
               {DRAFT_LABELS[d.action] ?? d.action} → {d.recipient === "paypal" ? "PayPal" : "buyer"}
               {d.action === "provide_evidence" && <EvidencePackLink disputeId={disputeId} />}
             </span>
@@ -67,20 +67,20 @@ export function ReviewForm({
               maxLength={MAX_DRAFT_LENGTH}
               rows={Math.min(10, Math.max(3, Math.ceil(d.text.length / 80)))}
               disabled={busy || done}
-              className="block w-full resize-y rounded-b-md bg-transparent px-3 py-2 leading-relaxed outline-none focus:bg-zinc-50 disabled:opacity-60 dark:focus:bg-zinc-900"
+              className="block w-full resize-y rounded-xl border border-transparent bg-muted/70 px-5 py-4 text-[15px] leading-[25px] text-fg outline-none focus:border-line-strong focus:bg-canvas disabled:opacity-60"
             />
           </label>
         ))}
       </div>
 
       {!done && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
             type="submit"
             formAction={approve}
             onClick={confirmApprove}
             disabled={busy}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            className="h-10 rounded-full bg-accent px-5 text-[14px] font-medium text-white hover:bg-[#0062c4] disabled:opacity-50"
           >
             {approving ? "Sending…" : "Approve & send"}
           </button>
@@ -88,21 +88,21 @@ export function ReviewForm({
             type="submit"
             formAction={reject}
             disabled={busy}
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="h-10 rounded-full bg-muted px-[18px] text-[14px] text-fg hover:bg-inset disabled:opacity-50"
           >
             {rejecting ? "Rejecting…" : "Reject"}
           </button>
-          <span className="text-xs text-zinc-400">You can edit the drafts before approving.</span>
+          <span className="text-[13px] text-fg-muted">You can edit the text before approving.</span>
         </div>
       )}
 
       {approveState?.kind === "approve" && (
-        <div className="mt-4 rounded-md bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-900">
+        <div role="status" className="mt-4 rounded-xl border border-line px-5 py-4 text-[14px]">
           {approveState.error ? (
-            <p className="text-red-600 dark:text-red-400">{approveState.error}</p>
+            <p className="text-bad">{approveState.error}</p>
           ) : (
             <>
-              <p className="font-medium">
+              <p className="font-medium text-fg">
                 {approveState.mode === "demo"
                   ? approveState.ok
                     ? "Demo mode: everything checks out. In live mode this is what would be sent:"
@@ -111,20 +111,20 @@ export function ReviewForm({
                     ? "Sent to PayPal."
                     : "Some steps failed:"}
               </p>
-              <ul className="mt-1 space-y-1">
+              <ul className="mt-1.5 space-y-1 text-fg-body">
                 {approveState.steps.map((s, i) => (
-                  <li key={i} className={s.ok ? "" : "text-red-600 dark:text-red-400"}>
-                    {s.ok ? "✓" : "✗"} {DRAFT_LABELS[s.action]}: {s.message}
+                  <li key={i} className={s.ok ? "" : "text-bad"}>
+                    {DRAFT_LABELS[s.action]}: {s.message}
                   </li>
                 ))}
               </ul>
-              {approveState.mode === "demo" && <p className="mt-2 text-xs text-zinc-400">Reload the page to try again.</p>}
+              {approveState.mode === "demo" && <p className="mt-2 text-[12.5px] text-fg-muted">Reload the page to try again.</p>}
             </>
           )}
         </div>
       )}
       {rejectState?.kind === "reject" && (
-        <p className={`mt-4 text-sm ${rejectState.ok ? "text-zinc-600 dark:text-zinc-400" : "text-red-600 dark:text-red-400"}`}>
+        <p role="status" className={`mt-4 text-[14px] ${rejectState.ok ? "text-fg-body" : "text-bad"}`}>
           {rejectState.ok
             ? rejectState.mode === "demo"
               ? "Demo mode: the report would be marked rejected and nothing sent. Reload the page to try again."

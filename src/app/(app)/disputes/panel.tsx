@@ -2,7 +2,9 @@ import { SidePanel } from "@/components/app/SidePanel";
 import { computeUrgency } from "@/lib/agent";
 import type { DisputeDetail, HomeDispute } from "@/lib/dashboard";
 import type { ActionsMode } from "@/lib/respond";
-import { Deadline, formatAmount, humanize, reasonLabel, StatusBadge } from "@/app/_components/dispute-ui";
+import { Money } from "@/components/app/bits";
+import { dueLabel, stageLabel } from "@/lib/dispute-stage";
+import { humanize, reasonLabel } from "@/app/_components/dispute-ui";
 import { AssessmentReport } from "./[id]/assessment";
 import { BuyerHistoryCard } from "./[id]/buyer-history";
 
@@ -37,6 +39,7 @@ export function DisputePanel({
   const { raw } = dispute;
   const claim = raw.messages?.find((m) => m.posted_by === "BUYER")?.content;
   const buyer = raw.disputed_transactions?.[0]?.buyer?.name ?? "Buyer";
+  const due = dispute.status === "WAITING_FOR_SELLER_RESPONSE" ? dueLabel(dispute.daysLeft) : null;
 
   return (
     <SidePanel
@@ -46,44 +49,51 @@ export function DisputePanel({
       nextHref={next ? withOpen(next.id) : undefined}
       nextLabel={`Next to review (${remaining})`}
     >
-      <div className="space-y-6 px-5 py-6 sm:px-7">
-        <header>
+      <div className="flex flex-col gap-5 bg-subtle px-5 py-6 sm:px-7">
+        <header className="flex flex-col gap-1.5">
           <p className="font-mono text-[12px] text-fg-muted">{dispute.id}</p>
-          <h2 className="mt-1 text-[22px] font-semibold tracking-[-0.01em] text-fg">
-            {reasonLabel(dispute.reason)} · {formatAmount(dispute.amount, dispute.currency)}
-          </h2>
-          <p className="mt-1 text-[13px] text-fg-body">
-            {buyer} · {dispute.sellerName ?? "Unlinked seller"} · {humanize(dispute.stage)} stage
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-[13px]">
-            <StatusBadge status={dispute.status} />
-            <Deadline dueAt={dispute.dueAt} daysLeft={dispute.daysLeft} status={dispute.status} />
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-[22px] font-[480] tracking-[0.01em] text-fg">{buyer}</h2>
+            <Money amount={dispute.amount} currency={dispute.currency} className="text-[22px] font-[480] text-fg" />
           </div>
+          <p className="text-[14px] text-fg-body">
+            {raw.disputed_transactions?.[0]?.items?.[0]?.item_name ?? "Order"} · {reasonLabel(dispute.reason)}
+          </p>
+          <p className="text-[13px] text-fg-muted">
+            {stageLabel({ status: dispute.status, report: dispute.decision ? { recommendation: dispute.decision.assessment.recommendation, status: dispute.decision.status, current: dispute.decision.current } : null })}
+            {due && (
+              <>
+                {" · "}
+                <span className={(dispute.daysLeft ?? 99) <= 0 ? "font-medium text-bad" : ""}>{due}</span>
+              </>
+            )}
+            {" · "}
+            {humanize(dispute.stage)} stage
+          </p>
         </header>
 
-        <section>
-          <h3 className="mb-2 t-section">Buyer&apos;s claim</h3>
-          <blockquote className="rounded-xl border border-line bg-subtle px-4 py-3 text-[14px] leading-[22px] text-fg-heading">
-            {claim ?? <span className="text-fg-muted">The buyer didn&apos;t leave a message.</span>}
-          </blockquote>
-        </section>
+        {claim && (
+          <section aria-label="Buyer's claim" className="rounded-xl border border-line bg-canvas px-6 py-4">
+            <h3 className="mb-1.5 text-[13px] text-fg-muted">{buyer.split(/\s+/)[0]} wrote</h3>
+            <p className="text-[14.5px] leading-[22px] text-fg-body">&ldquo;{claim}&rdquo;</p>
+          </section>
+        )}
 
-        <section>
-          <h3 className="mb-2 t-section">Recommendation</h3>
-          <div className="rounded-xl border border-line p-4">
-            <AssessmentReport
-              disputeId={dispute.id}
-              decision={dispute.decision}
-              urgency={computeUrgency(raw as Parameters<typeof computeUrgency>[0], new Date().toISOString())}
-              amount={dispute.amount}
-              currency={dispute.currency}
-              disputeStatus={dispute.status}
-              mode={mode}
-            />
-          </div>
-        </section>
+        <AssessmentReport
+          disputeId={dispute.id}
+          decision={dispute.decision}
+          urgency={computeUrgency(raw as Parameters<typeof computeUrgency>[0], new Date().toISOString())}
+          amount={dispute.amount}
+          currency={dispute.currency}
+          disputeStatus={dispute.status}
+          mode={mode}
+        />
 
-        {dispute.buyerHistory && <BuyerHistoryCard history={dispute.buyerHistory} />}
+        {dispute.buyerHistory && (
+          <section aria-label="Buyer history" className="rounded-xl border border-line bg-canvas px-6 py-4">
+            <BuyerHistoryCard history={dispute.buyerHistory} />
+          </section>
+        )}
       </div>
     </SidePanel>
   );

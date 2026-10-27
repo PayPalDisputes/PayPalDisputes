@@ -4,10 +4,9 @@ import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { Download, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import type { Choice, OutcomeRow, Result } from "@/lib/outcomes";
 import { formatAmount, reasonLabel } from "@/app/_components/dispute-ui";
-import { Badge } from "../ui/primitives";
 import { gridTheme } from "./ag-setup";
 
 type Row = OutcomeRow & { totals?: boolean };
@@ -34,10 +33,12 @@ function DisputeCell({ data }: Cell) {
   );
 }
 
+const RESULT_TEXT = { ok: "text-ok", warn: "text-warn", bad: "text-bad", neutral: "text-fg-body" } as const;
+
 function ResultCell({ data }: Cell) {
   if (!data || data.totals) return null;
   const r = RESULT[data.result];
-  return <Badge tone={r.tone}>{r.label}</Badge>;
+  return <span className={`font-medium ${RESULT_TEXT[r.tone]}`}>{r.label}</span>;
 }
 
 /** "Fight", plus "followed Sira" when the seller did what Sira advised. */
@@ -131,7 +132,7 @@ export function OutcomesGrid({ rows }: { rows: OutcomeRow[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search buyer, dispute, outcome…"
-            className="h-10 w-full rounded-full border border-line bg-canvas pr-4 pl-9 text-[13.5px] text-fg placeholder:text-fg-muted focus:border-line-strong focus:outline-none"
+            className="h-9 w-full rounded-[10px] border border-line bg-canvas pr-4 pl-9 text-[13.5px] text-fg placeholder:text-fg-muted focus:border-line-strong focus:outline-none"
           />
         </label>
         <span className="text-[12.5px] text-fg-muted">
@@ -140,9 +141,8 @@ export function OutcomesGrid({ rows }: { rows: OutcomeRow[] }) {
         <button
           type="button"
           onClick={() => gridRef.current?.api.exportDataAsCsv({ fileName: "sira-dispute-outcomes.csv" })}
-          className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-canvas px-3.5 text-[13px] font-medium text-fg-heading transition-colors hover:bg-muted"
+          className="ml-auto text-[13.5px] text-fg-body hover:text-fg"
         >
-          <Download aria-hidden strokeWidth={1.75} className="size-4" />
           Export CSV
         </button>
       </div>

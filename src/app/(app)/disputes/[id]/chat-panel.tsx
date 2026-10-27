@@ -71,38 +71,39 @@ export function ChatPanel({ disputeId }: { disputeId: string }) {
       <button
         type="button"
         onClick={openPanel}
-        className="w-full rounded-md border border-zinc-200 px-3 py-2 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
+        className="flex w-full items-center justify-between rounded-xl border border-line bg-canvas px-6 py-4 text-left transition-colors hover:border-line-strong"
       >
-        💬 Ask Sira about this dispute
+        <span className="text-[13px] font-medium text-accent">Ask Sira about this dispute</span>
+        <span className="text-[13px] text-fg-muted">Why this call? Change the tone? Ask anything</span>
       </button>
     );
   }
 
   return (
-    <div className="rounded-md border border-zinc-200 text-sm dark:border-zinc-800">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
-        <span className="font-medium">Ask Sira</span>
-        <button type="button" onClick={() => setOpen(false)} className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
+    <section aria-label="Ask Sira" className="rounded-xl border border-line bg-canvas text-[14px]">
+      <div className="flex items-center justify-between px-6 pt-5 pb-2">
+        <span className="text-[13px] font-medium text-accent">Ask Sira about this dispute</span>
+        <button type="button" onClick={() => setOpen(false)} className="text-[13px] text-fg-muted hover:text-fg">
           Close
         </button>
       </div>
 
-      <div className="max-h-[420px] space-y-3 overflow-y-auto px-3 py-3">
-        {loaded === undefined && <p className="text-zinc-500">Loading…</p>}
-        {loaded === null && <p className="text-zinc-500">Chat isn&apos;t available for this dispute.</p>}
-        {loaded?.unavailable && <p className="text-zinc-500">Chat isn&apos;t set up yet (run supabase/chat.sql).</p>}
+      <div className="max-h-[440px] space-y-3 overflow-y-auto px-6 py-3">
+        {loaded === undefined && <p className="text-fg-muted">Loading…</p>}
+        {loaded === null && <p className="text-fg-muted">Chat isn&apos;t available for this dispute.</p>}
+        {loaded?.unavailable && <p className="text-fg-muted">Chat isn&apos;t set up yet (run supabase/chat.sql).</p>}
 
         {loaded?.conversationId && resumeChoice === null && (
-          <div className="rounded-md bg-zinc-50 px-3 py-3 dark:bg-zinc-900">
-            <p className="font-medium">Pick up where you left off?</p>
-            <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+          <div className="rounded-xl bg-muted/70 px-4 py-3">
+            <p className="font-medium text-fg">Pick up where you left off?</p>
+            <p className="mt-1 text-fg-body">
               Last time you asked: &ldquo;{loaded.lastAsked}&rdquo; · {loaded.lastAt ? when(loaded.lastAt) : ""}
             </p>
             <div className="mt-3 flex gap-2">
-              <button type="button" onClick={() => resume("continue")} className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+              <button type="button" onClick={() => resume("continue")} className="h-8 rounded-full bg-accent px-3.5 text-[13px] font-medium text-white hover:bg-[#0062c4]">
                 Continue
               </button>
-              <button type="button" onClick={() => resume("fresh")} className="rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium dark:border-zinc-700">
+              <button type="button" onClick={() => resume("fresh")} className="h-8 rounded-full bg-canvas px-3.5 text-[13px] text-fg hover:bg-inset">
                 Start fresh
               </button>
             </div>
@@ -111,10 +112,10 @@ export function ChatPanel({ disputeId }: { disputeId: string }) {
 
         {resumeChoice !== null && turns.length === 0 && (
           <div>
-            <p className="text-zinc-600 dark:text-zinc-400">Ask about this dispute, or ask Sira to change the drafts.</p>
+            <p className="text-fg-body">Ask about this dispute, or ask Sira to change the drafts.</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
-                <button key={s} type="button" onClick={() => send(s)} disabled={pending} className="rounded-full border border-zinc-300 px-3 py-1 text-xs hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-900">
+                <button key={s} type="button" onClick={() => send(s)} disabled={pending} className="h-[34px] rounded-full bg-muted px-3.5 text-[13.5px] text-fg hover:bg-inset disabled:opacity-50">
                   {s}
                 </button>
               ))}
@@ -124,18 +125,18 @@ export function ChatPanel({ disputeId }: { disputeId: string }) {
 
         {turns.map((t, i) => (
           <div key={i} className={t.role === "seller" ? "flex justify-end" : ""}>
-            <div className={t.role === "seller" ? "max-w-[85%] rounded-lg bg-zinc-900 px-3 py-2 text-white dark:bg-zinc-100 dark:text-zinc-900" : "max-w-[95%]"}>
-              <p className="whitespace-pre-wrap leading-relaxed">{t.content}</p>
-              {t.role === "sira" && t.saved && <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">✓ Drafts updated above. Nothing is sent until you approve.</p>}
+            <div className={t.role === "seller" ? "max-w-[80%] rounded-xl bg-muted px-3.5 py-2.5 text-fg" : "max-w-[95%] text-fg"}>
+              <p className="leading-[23px] whitespace-pre-wrap">{t.content}</p>
+              {t.role === "sira" && t.saved && <p className="mt-1 text-[12.5px] text-ok">Drafts updated above. Nothing is sent until you approve.</p>}
               {t.role === "sira" && t.preview && (
                 <div className="mt-2 space-y-2">
-                  <p className="text-xs text-zinc-500">Revised drafts (demo account: shown here, not saved)</p>
+                  <p className="text-[12.5px] text-fg-muted">Revised drafts (demo account: shown here, not saved)</p>
                   {t.preview.map((d, j) => (
-                    <div key={j} className="rounded-md border border-zinc-200 dark:border-zinc-800">
-                      <p className="border-b border-zinc-200 px-2 py-1 text-xs text-zinc-500 dark:border-zinc-800">
+                    <div key={j} className="rounded-xl bg-muted/70">
+                      <p className="px-4 pt-3 text-[12.5px] text-fg-muted">
                         {DRAFT_LABELS[d.action]} → {d.recipient === "paypal" ? "PayPal" : "buyer"}
                       </p>
-                      <p className="whitespace-pre-wrap px-2 py-1.5">{d.text}</p>
+                      <p className="px-4 pt-1 pb-3 whitespace-pre-wrap">{d.text}</p>
                     </div>
                   ))}
                 </div>
@@ -143,7 +144,7 @@ export function ChatPanel({ disputeId }: { disputeId: string }) {
             </div>
           </div>
         ))}
-        {pending && resumeChoice !== null && <p className="text-zinc-500">Sira is thinking…</p>}
+        {pending && resumeChoice !== null && <p className="text-fg-muted">Sira is thinking…</p>}
         <div ref={endRef} />
       </div>
 
@@ -153,24 +154,25 @@ export function ChatPanel({ disputeId }: { disputeId: string }) {
             e.preventDefault();
             send(text);
           }}
-          className="border-t border-zinc-200 p-2 dark:border-zinc-800"
+          className="px-6 pt-1 pb-5"
         >
-          {error && <p className="mb-2 px-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
-          <div className="flex gap-2">
+          {error && <p className="mb-2 text-[12.5px] text-bad">{error}</p>}
+          <div className="flex h-11 items-center gap-2 rounded-xl border border-line pr-1.5 pl-3.5 focus-within:border-line-strong">
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
               maxLength={MAX}
-              placeholder="Ask about this dispute…"
+              placeholder="Ask anything about this dispute"
+              aria-label="Ask Sira"
               disabled={pending}
-              className="min-w-0 flex-1 rounded-md border border-zinc-200 bg-transparent px-2 py-1.5 outline-none focus:border-zinc-400 dark:border-zinc-800"
+              className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-fg-muted"
             />
-            <button type="submit" disabled={pending || !text.trim()} className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900">
-              Send
+            <button type="submit" disabled={pending || !text.trim()} className="h-8 rounded-lg bg-accent px-3.5 text-[13px] font-medium text-white hover:bg-[#0062c4] disabled:opacity-50">
+              Ask
             </button>
           </div>
         </form>
       )}
-    </div>
+    </section>
   );
 }

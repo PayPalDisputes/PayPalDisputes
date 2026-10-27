@@ -10,26 +10,26 @@ import { AllCommunityModule as ChartsCommunity, ModuleRegistry as ChartModules, 
 GridModules.registerModules([GridCommunity]);
 ChartModules.registerModules(ChartsCommunity);
 
-const FONT = "var(--font-geist-sans), system-ui, sans-serif";
+const FONT = "var(--font-inter), system-ui, sans-serif";
 
-/** Data grid styled with the app's tokens: cool white, slate ink, hairline rows, no column lines. */
+/** Data grid in the dashboard's quiet style: white, ink text, hairline rows, no column lines. */
 export const gridTheme = themeQuartz.withParams({
   browserColorScheme: "light",
   fontFamily: FONT,
   fontSize: 13.5,
   headerFontSize: 12.5,
-  headerFontWeight: 500,
+  headerFontWeight: 420,
   backgroundColor: "#ffffff",
-  foregroundColor: "#0f1419",
-  headerTextColor: "#7c8595",
-  headerBackgroundColor: "#f6f8fb",
-  borderColor: "rgba(15, 23, 42, 0.1)",
-  rowBorder: { color: "rgba(15, 23, 42, 0.06)" },
+  foregroundColor: "#1e1e2a",
+  headerTextColor: "#70707d",
+  headerBackgroundColor: "#ffffff",
+  borderColor: "#ececf1",
+  rowBorder: { color: "#f2f2f5" },
   columnBorder: false,
   wrapperBorder: true,
-  wrapperBorderRadius: 16,
+  wrapperBorderRadius: 12,
   accentColor: "#0070e0",
-  rowHoverColor: "rgba(0, 112, 224, 0.035)",
+  rowHoverColor: "#fafafc",
   selectedRowBackgroundColor: "rgba(0, 112, 224, 0.06)",
   oddRowBackgroundColor: "#ffffff",
   spacing: 7,
@@ -44,25 +44,27 @@ export const gridTheme = themeQuartz.withParams({
  * Recommendation colours follow the entity, never its rank.
  */
 export const COLORS = {
-  ink: "#003087", // single-series bars (PayPal navy)
-  urgent: "#b4372f", // status: due within 3 days (always paired with a text label)
+  ink: "#0070e0", // single-series bars (PayPal blue)
+  urgent: "#b42318", // status: due within 3 days (always paired with a text label)
   fight: "#3a5fa8",
   settle: "#d0703f",
   refund: "#1a9a7a",
-  text: "#141a22",
-  muted: "#7c8595",
-  grid: "rgba(15, 23, 42, 0.07)",
+  text: "#1e1e2a",
+  muted: "#70707d",
+  grid: "#ececf1",
   surface: "#ffffff",
 } as const;
 
-/** Charts draw on a canvas, which can't read CSS variables, so resolve the real Geist family name. */
+export { BLUES } from "@/lib/palette";
+
+/** Charts draw on a canvas, which can't read CSS variables, so resolve the real Inter family name. */
 function chartFont() {
   if (typeof window === "undefined") return "system-ui, sans-serif";
-  const geist = getComputedStyle(document.documentElement).getPropertyValue("--font-geist-sans").trim();
-  return geist ? `${geist}, system-ui, sans-serif` : "system-ui, sans-serif";
+  const inter = getComputedStyle(document.documentElement).getPropertyValue("--font-inter").trim();
+  return inter ? `${inter}, system-ui, sans-serif` : "system-ui, sans-serif";
 }
 
-/** Shared base for every chart: transparent background, Geist type, recessive axes. */
+/** Shared base for every chart: transparent background, Inter type, recessive axes. */
 export function baseChart(): Partial<AgChartOptions> {
   return {
     background: { visible: false },
@@ -78,7 +80,7 @@ export function baseChart(): Partial<AgChartOptions> {
         gridLineColor: COLORS.grid,
         backgroundColor: "transparent",
         chartBackgroundColor: "transparent",
-        tooltipBackgroundColor: "#0f1419",
+        tooltipBackgroundColor: "#1e1e2a",
         tooltipTextColor: "#ffffff",
         tooltipSubtleTextColor: "rgba(255,255,255,0.7)",
         tooltipBorderRadius: 8,
