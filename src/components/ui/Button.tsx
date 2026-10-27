@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "soft" | "ghost";
 type Size = "sm" | "md" | "lg";
 
 const base =
@@ -13,6 +13,8 @@ const variants: Record<Variant, string> = {
     "bg-[linear-gradient(180deg,var(--mk-btn-from)_0%,var(--mk-btn-to)_100%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_1px_2px_rgba(0,0,0,0.3),0_0_0_1px_var(--mk-btn-to)] hover:bg-[linear-gradient(180deg,var(--mk-btn-hover-from)_0%,var(--mk-btn-hover-to)_100%)]",
   secondary:
     "bg-canvas text-fg shadow-[0_1px_2px_rgba(0,0,0,0.06),0_0_0_1px_var(--mk-btn-edge)] hover:bg-muted",
+  /** Mercury-style quiet pill: a light fill, no border. */
+  soft: "bg-muted text-fg hover:bg-inset",
   ghost: "text-fg-body hover:bg-muted hover:text-fg",
 };
 

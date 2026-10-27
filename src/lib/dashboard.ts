@@ -252,6 +252,9 @@ export type HomeDispute = ListedDispute & {
   buyerName: string | null;
   /** PayPal's outcome code once resolved, e.g. RESOLVED_SELLER_FAVOUR. */
   outcome: string | null;
+  /** The first disputed item's name, as the buyer saw it. */
+  item: string | null;
+  openedAt: string | null;
 };
 
 /** Everything the dashboard home needs, optionally narrowed to one seller. */
@@ -260,7 +263,7 @@ export async function getHomeData(sellerId?: string): Promise<{ disputes: HomeDi
   let disputesQuery = db
     .from("disputes")
     .select(
-      "id, seller_id, merchant_id, reason, status, lifecycle_stage, amount, currency, seller_response_due_at, paypal_updated_at, buyer:raw->disputed_transactions->0->buyer->>name, outcome:raw->dispute_outcome->>outcome_code",
+      "id, seller_id, merchant_id, reason, status, lifecycle_stage, amount, currency, seller_response_due_at, paypal_created_at, paypal_updated_at, buyer:raw->disputed_transactions->0->buyer->>name, outcome:raw->dispute_outcome->>outcome_code, item:raw->disputed_transactions->0->items->0->>item_name",
     )
     .order("paypal_updated_at", { ascending: false, nullsFirst: false });
   if (sellerId) disputesQuery = disputesQuery.eq("seller_id", sellerId);
@@ -305,6 +308,8 @@ export async function getHomeData(sellerId?: string): Promise<{ disputes: HomeDi
         updatedAt: d.paypal_updated_at,
         buyerName: (d.buyer as string | null) ?? null,
         outcome: (d.outcome as string | null) ?? null,
+        item: (d.item as string | null)?.trim() || null,
+        openedAt: d.paypal_created_at,
         report: reportSummary(latest.get(d.id), d.paypal_updated_at),
       };
     }),

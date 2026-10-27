@@ -1,45 +1,36 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, Settings, Store } from "lucide-react";
+import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, Search, SlidersHorizontal } from "lucide-react";
+import { HideAmounts } from "@/components/app/HideAmounts";
 import { NavLink } from "@/components/app/NavLink";
-import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { requireSession, sellerScope, sessionMode } from "@/lib/auth";
 import { getHomeDataCached } from "@/lib/dashboard";
 
 /**
- * Seller workspace shell, laid out like the PayPal business dashboard sellers already know
- * (sidebar, top bar, content) but in Sira's own branding.
+ * Seller workspace shell in the quiet, Mercury-style look (Mock 2): a white sidebar, a top bar with
+ * search and a hide-amounts toggle, and pages on a near-white canvas.
  */
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   await connection(); // counts come from live Supabase rows
   const session = await requireSession();
   const { disputes } = await getHomeDataCached(sellerScope(session));
   const accountName = session.kind === "seller" ? session.name : "Demo account";
-  const initials = accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "K";
+  const initials = accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "S";
   const needsResponse = disputes.filter((d) => d.status === "WAITING_FOR_SELLER_RESPONSE").length;
-  const awaitingApproval = disputes.filter(
-    (d) => d.status !== "RESOLVED" && d.report?.status === "pending_review" && d.report.current,
-  ).length;
   const mode = sessionMode(session);
   // Team-only tools (Evals) stay out of the seller's sidebar unless SHOW_INTERNAL_TOOLS=true.
   const showInternal = process.env.SHOW_INTERNAL_TOOLS === "true";
 
   return (
-    <div className="theme-app flex min-h-full flex-1 bg-canvas text-fg [color-scheme:light]">
+    <div className="theme-app flex min-h-full flex-1 bg-subtle text-fg [color-scheme:light]">
       {/* Sidebar (desktop) */}
-      <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line bg-subtle px-4 pt-6 pb-5 lg:flex">
-        <Link href="/dashboard" className="px-3" aria-label="Sira dashboard home">
+      <aside className="sticky top-0 hidden h-dvh w-[240px] shrink-0 flex-col border-r border-line bg-canvas px-3.5 pt-5 pb-5 lg:flex">
+        <Link href="/dashboard" className="px-2.5" aria-label="Sira dashboard home">
           <Logo />
         </Link>
-        <Button href="/disputes?view=approval" size="md" className="mt-7 w-full">
-          Review drafts
-          {awaitingApproval > 0 && (
-            <span className="rounded-full bg-white/15 px-1.5 text-[11px] leading-4 tabular-nums">{awaitingApproval}</span>
-          )}
-        </Button>
 
-        <nav aria-label="Workspace" className="mt-6 flex flex-col gap-1">
+        <nav aria-label="Workspace" className="mt-7 flex flex-col gap-0.5">
           <NavLink href="/dashboard" exact icon={<House strokeWidth={1.6} />}>
             Home
           </NavLink>
@@ -52,37 +43,24 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           <NavLink href="/insights" icon={<ChartNoAxesColumn strokeWidth={1.6} />}>
             Insights
           </NavLink>
-          <NavLink href="/settings" icon={<Settings strokeWidth={1.6} />}>
+          <NavLink href="/settings" icon={<SlidersHorizontal strokeWidth={1.6} />}>
             Settings
           </NavLink>
         </nav>
 
         {showInternal && (
-          <>
-            <p className="mt-7 px-3 text-[11px] font-medium tracking-[0.04em] text-fg-muted uppercase">Internal</p>
-            <nav aria-label="Internal" className="mt-2 flex flex-col gap-1">
-              <NavLink href="/evals" icon={<FlaskConical strokeWidth={1.6} />}>
-                Evals
-              </NavLink>
-            </nav>
-          </>
+          <nav aria-label="Internal" className="mt-6 flex flex-col gap-0.5 border-t border-line pt-4">
+            <NavLink href="/evals" icon={<FlaskConical strokeWidth={1.6} />}>
+              Evals
+            </NavLink>
+          </nav>
         )}
 
-        <p className="mt-7 px-3 text-[11px] font-medium tracking-[0.04em] text-fg-muted uppercase">Coming soon</p>
-        <ul className="mt-2 flex flex-col gap-1" aria-label="Coming soon">
-          {[
-            { label: "Stores", icon: Store },
-          ].map(({ label, icon: Icon }) => (
-            <li key={label} className="flex h-10 cursor-default items-center gap-3 px-3 text-[14px] text-fg-muted/70">
-              <Icon strokeWidth={1.6} className="size-[18px]" />
-              {label}
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-auto space-y-3 px-1">
-          <ModeBadge mode={mode} />
-          <Link href="/" className="block px-2 text-[12.5px] text-fg-muted hover:text-fg">
+        <div className="mt-auto space-y-2 px-2.5">
+          <p className="text-[12px] leading-[18px] text-fg-muted">
+            {mode === "live" ? "Live · approvals reach PayPal" : "Demo mode · nothing is sent to PayPal"}
+          </p>
+          <Link href="/" className="block text-[12px] text-fg-muted hover:text-fg">
             ← sira.com
           </Link>
         </div>
@@ -90,32 +68,38 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur-md">
-          <div className="flex h-16 items-center gap-4 px-5 md:px-8">
+        <header className="sticky top-0 z-30 border-b border-line bg-subtle/90 backdrop-blur-md">
+          <div className="flex h-16 items-center gap-3 px-5 md:px-8">
             <Link href="/dashboard" className="lg:hidden" aria-label="Sira dashboard home">
               <Logo />
             </Link>
-            <div className="ml-auto flex items-center gap-3">
-              <span className="hidden sm:block lg:hidden">
-                <ModeBadge mode={mode} />
-              </span>
+            {/* Search jumps to the disputes list, filtered */}
+            <form action="/disputes" role="search" className="hidden max-w-[560px] flex-1 md:block">
+              <label className="flex h-10 items-center gap-2.5 rounded-[10px] border border-line bg-canvas px-3.5 focus-within:border-line-strong">
+                <Search aria-hidden strokeWidth={1.8} className="size-4 text-fg-muted" />
+                <span className="sr-only">Search disputes</span>
+                <input
+                  type="search"
+                  name="q"
+                  placeholder="Search buyer, item or dispute ID"
+                  className="h-full flex-1 bg-transparent text-[14px] text-fg outline-none placeholder:text-fg-muted"
+                />
+              </label>
+            </form>
+            <div className="ml-auto flex items-center gap-2">
+              <HideAmounts />
               <Link
                 href="/disputes?view=needs-response"
                 aria-label={`${needsResponse} disputes need a response`}
-                className="relative inline-flex size-10 items-center justify-center rounded-full text-fg-heading transition-colors hover:bg-muted"
+                className="relative inline-flex size-10 items-center justify-center rounded-full bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
               >
-                <Bell strokeWidth={1.6} className="size-5" />
-                {needsResponse > 0 && (
-                  <span className="absolute top-1.5 right-1.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] leading-4 font-semibold text-white tabular-nums">
-                    {needsResponse}
-                  </span>
-                )}
+                <Bell strokeWidth={1.6} className="size-[17px]" />
+                {needsResponse > 0 && <span className="absolute top-2 right-2.5 size-2 rounded-full border-2 border-muted bg-accent" />}
               </Link>
-              <span className="h-6 w-px bg-line" aria-hidden />
               <span
                 title={accountName}
                 aria-label={`Signed in as ${accountName}`}
-                className="inline-flex size-9 items-center justify-center rounded-full bg-brand-bg text-[12px] font-semibold text-brand-navy"
+                className="ml-1 inline-flex size-10 items-center justify-center rounded-full bg-inset text-[13px] font-medium text-fg-body"
               >
                 {initials}
               </span>
@@ -156,17 +140,5 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         </main>
       </div>
     </div>
-  );
-}
-
-function ModeBadge({ mode }: { mode: "live" | "demo" }) {
-  return mode === "live" ? (
-    <span className="inline-flex items-center gap-2 rounded-full border border-line bg-canvas px-3 py-1 text-[12px] text-fg-body">
-      <span className="size-1.5 rounded-full bg-ok" /> Live: approvals reach PayPal
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-2 rounded-full border border-line bg-canvas px-3 py-1 text-[12px] text-fg-body">
-      <span className="size-1.5 rounded-full bg-warn" /> Demo mode: nothing is sent
-    </span>
   );
 }

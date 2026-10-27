@@ -55,23 +55,24 @@
 }
 
 /*
- * The seller dashboard's palette: cool white, slate ink and PayPal blue, matching the landing page.
- * Scoped to the app shell so the marketing pages keep their own palette until they're redone.
+ * The seller dashboard (Mock 2): Mercury-style quiet neutrals, Inter, and PayPal blue used
+ * sparingly — one primary action per view, links, and Sira's labels. Status colour is text, not pills.
+ * Scoped to the app shell so the marketing pages keep their own palette.
  */
 .theme-app {
-  --mk-bg: #ffffff;
-  --mk-bg-subtle: #f6f8fb;
-  --mk-bg-muted: #eef2f7;
-  --mk-bg-inset: #e3e9f1;
+  --mk-bg: #ffffff;          /* cards */
+  --mk-bg-subtle: #fbfbfc;   /* page */
+  --mk-bg-muted: #f0f0f4;    /* quiet buttons, selected nav */
+  --mk-bg-inset: #e6e6ec;
 
-  --mk-fg: #0f1419;
-  --mk-fg-heading: #141a22;
-  --mk-fg-body: #4b5565;
-  --mk-fg-muted: #7c8595;
+  --mk-fg: #1e1e2a;
+  --mk-fg-heading: #1e1e2a;
+  --mk-fg-body: #3c3c48;
+  --mk-fg-muted: #70707d;
 
-  --mk-line: rgba(15, 23, 42, 0.1);
-  --mk-line-subtle: rgba(15, 23, 42, 0.06);
-  --mk-line-strong: rgba(15, 23, 42, 0.18);
+  --mk-line: #ececf1;
+  --mk-line-subtle: #f2f2f5;
+  --mk-line-strong: #d9d9e1;
 
   --mk-accent: #0070e0;
 
@@ -79,28 +80,31 @@
   --mk-ok-bg: #e9f6ef;
   --mk-warn: #a15c00;
   --mk-warn-bg: #fdf3e2;
-  --mk-bad: #c0362c;
+  --mk-bad: #b42318;
   --mk-bad-bg: #fdecea;
   --mk-info: #0062cc;
   --mk-info-bg: #eaf3fe;
 
-  --mk-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 30px rgba(15, 23, 42, 0.04);
-  --mk-shadow-float: 0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 40px -8px rgba(15, 23, 42, 0.14);
+  --mk-shadow-card: 0 1px 2px rgba(30, 30, 42, 0.04), 0 8px 30px rgba(30, 30, 42, 0.04);
+  --mk-shadow-float: 0 1px 2px rgba(30, 30, 42, 0.06), 0 12px 40px -8px rgba(30, 30, 42, 0.14);
 
-  --mk-btn-from: #1f2630;
-  --mk-btn-to: #0f1419;
-  --mk-btn-hover-from: #2b3440;
-  --mk-btn-hover-to: #1a212b;
-  --mk-btn-edge: rgba(15, 23, 42, 0.14);
+  /* Primary button: solid PayPal blue */
+  --mk-btn-from: #0070e0;
+  --mk-btn-to: #0070e0;
+  --mk-btn-hover-from: #0062c4;
+  --mk-btn-hover-to: #0062c4;
+  --mk-btn-edge: transparent;
+
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-weight: 420;
+  font-feature-settings: "cv11", "ss01";
 }
 
-/* Data-grid column headers read as labels: small mono caps, like the landing page's eyebrows */
+/* Data-grid column headers read as quiet labels, like the rest of the dashboard */
 .theme-app .ag-header-cell-text {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 12.5px;
+  font-weight: 420;
+  color: var(--mk-fg-muted);
 }
 
 @theme inline {
@@ -474,19 +478,32 @@ body {
 
 /* Section label inside the app: small mono caps, like the landing page's eyebrows */
 @utility t-section {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 11.5px;
+  /* Dashboard section label: quiet sentence case (Mock 2), not mono caps */
+  font-size: 14px;
   line-height: 1.4;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 420;
   color: var(--mk-fg-muted);
 }
 
-/* Large figures (money, counts): the landing headline's tight sans, never serif */
+/* Big money figures: Inter at a medium-ish weight, tabular digits */
 @utility t-figure {
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  font-weight: 400;
-  letter-spacing: -0.04em;
+  font-weight: 480;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+}
+
+/* "Hide amounts" in the dashboard top bar blurs every figure marked .money */
+[data-hide-amounts] .money {
+  filter: blur(7px);
+  user-select: none;
+}
+
+/* Evidence grid: a missing tracking number shows as a dashed field to fill in */
+.theme-app .ag-cell.evidence-missing::after {
+  content: "";
+  position: absolute;
+  inset: 10px 8px;
+  border: 1px dashed var(--mk-line-strong);
+  border-radius: 8px;
+  pointer-events: none;
 }

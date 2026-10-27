@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { ArrowRight, ChevronDown, Clock3, ExternalLink, FileCheck2, Inbox, ListTree, MessageSquareWarning } from "lucide-react";
-import { DeadlineChart, OutcomeChart, ReasonChart, RecommendationChart, type Bucket, type OutcomeBar } from "@/components/app/Charts";
-import { OutcomesGrid } from "@/components/app/OutcomesGrid";
-import { getOutcomes, type OutcomeRow, type OutcomeSummary } from "@/lib/outcomes";
-import { RollingNumber } from "@/components/motion/RollingNumber";
-import { Badge, DecisionBadge } from "@/components/ui/primitives";
-import { formatAmount, reasonLabel, StatusBadge } from "@/app/_components/dispute-ui";
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus } from "lucide-react";
+import { Amount, Money, Panel, ProgressLine, SectionHead } from "@/components/app/bits";
+import { AtRiskChart, type RiskPoint } from "@/components/app/HomeCharts";
+import { Button } from "@/components/ui/Button";
 import { requireSession } from "@/lib/auth";
 import { getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
+import { callLabel, dueLabel, stageLabel, stageStep } from "@/lib/dispute-stage";
+import { getInsights, type InsightDispute } from "@/lib/insights";
+import { cn } from "@/lib/cn";
 
 export const metadata: Metadata = { title: "Home · Sira" };
 
@@ -17,205 +17,435 @@ const RESOLUTION_CENTER = (process.env.PAYPAL_API_BASE ?? "").includes("sandbox"
   ? "https://www.sandbox.paypal.com/disputes/"
   : "https://www.paypal.com/disputes/";
 
+const DAY = 86_400_000;
 const isOpen = (d: HomeDispute) => d.status !== "RESOLVED";
-const needsResponse = (d: HomeDispute) => d.status === "WAITING_FOR_SELLER_RESPONSE";
-const awaitingApproval = (d: HomeDispute) => isOpen(d) && d.report?.status === "pending_review" && d.report.current;
+const waitingOnSeller = (d: HomeDispute) => d.status === "WAITING_FOR_SELLER_RESPONSE";
+const draftReady = (d: HomeDispute) => isOpen(d) && d.report?.status === "pending_review" && d.report.current;
+const firstName = (name: string | null) => name?.split(/\s+/)[0] ?? "A buyer";
 
-/** "$1,982.40" → ["$", "1,982.40"], "CA$2,140.00" → ["CA$", "2,140.00"]. */
-function splitCurrency(amount: number, currency: string) {
-  const formatted = formatAmount(amount, currency);
-  const m = formatted.match(/^([^\d]*)(.*)$/);
-  return [m?.[1] ?? "", m?.[2] ?? formatted] as const;
+/** The request's clock, read outside render so the page stays a pure function of its data. */
+const nowMs = () => Date.now();
+
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 }
+
+/** "2026-10" for a date, and back to a label. */
+const monthKey = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+const monthLabel = (key: string) =>
+  new Date(`${key}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+const shiftMonth = (key: string, by: number) => {
+  const d = new Date(`${key}-01T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() + by);
+  return monthKey(d);
+};
 
 export default async function DashboardHome({ searchParams }: PageProps<"/dashboard">) {
   await connection();
   const session = await requireSession();
-  const { seller } = await searchParams;
+  const { seller, month } = await searchParams;
   const sellerId = session.kind === "seller" ? session.sellerId : typeof seller === "string" ? seller : undefined;
-  const [{ disputes, sellers: allSellers }, outcomes] = await Promise.all([getHomeDataCached(sellerId), getOutcomes(sellerId)]);
+  const [{ disputes, sellers: allSellers }, insights] = await Promise.all([getHomeDataCached(sellerId), getInsights(sellerId)]);
   const sellers = session.kind === "seller" ? allSellers.filter((s) => s.id === session.sellerId) : allSellers;
   const store = sellers.find((s) => s.id === sellerId);
+  const storeQuery = store ? `&seller=${encodeURIComponent(store.id)}` : "";
 
   const open = disputes.filter(isOpen);
-  const respond = disputes.filter(needsResponse);
-  const approvals = disputes.filter(awaitingApproval);
-  // Same rules as the Results section (src/lib/outcomes.ts): a buyer cancelling counts as a win.
-  const won = outcomes.summary.won;
-  const lost = outcomes.summary.lost;
+  const waiting = disputes.filter(waitingOnSeller).sort((a, b) => (a.daysLeft ?? 99) - (b.daysLeft ?? 99));
+  const drafts = disputes.filter(draftReady);
+  const proofById = new Map(insights.disputes.map((d) => [d.id, d] as const));
+  const needsTracking = waiting.filter((d) => {
+    const p = proofById.get(d.id)?.proof;
+    return d.reason === "MERCHANDISE_OR_SERVICE_NOT_RECEIVED" && (p === "no_tracking" || p === "no_record" || p === "not_delivered");
+  });
 
-  // Amount at risk = what buyers are claiming on open disputes, per currency (no conversion).
+  // At risk = what buyers claim on open disputes, in the main currency.
   const totals = new Map<string, number>();
   for (const d of open) totals.set(d.currency ?? "USD", (totals.get(d.currency ?? "USD") ?? 0) + (d.amount ?? 0));
   const byCurrency = [...totals.entries()].sort((a, b) => b[1] - a[1]);
-  const [headCurrency, headTotal] = byCurrency[0] ?? ["USD", 0];
-  const [symbol, digits] = splitCurrency(headTotal, headCurrency);
+  const [currency, atRisk] = byCurrency[0] ?? ["USD", 0];
 
-  // Chart data, all from the same rows the rest of the page uses.
-  const buckets: Bucket[] = [
-    { label: "Overdue", test: (n: number) => n < 0, urgent: true },
-    { label: "0–3 days", test: (n: number) => n >= 0 && n <= 3, urgent: true },
-    { label: "4–7 days", test: (n: number) => n >= 4 && n <= 7, urgent: false },
-    { label: "8–14 days", test: (n: number) => n >= 8 && n <= 14, urgent: false },
-    { label: "15+ days", test: (n: number) => n >= 15, urgent: false },
-  ].map(({ label, test, urgent }) => ({ label, urgent, value: respond.filter((d) => d.daysLeft !== null && test(d.daysLeft)).length }));
-  const reasonCounts = new Map<string, number>();
-  for (const d of open) reasonCounts.set(reasonLabel(d.reason), (reasonCounts.get(reasonLabel(d.reason)) ?? 0) + 1);
-  const reasons = [...reasonCounts.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
-  const mix = (["fight", "settle", "refund"] as const).map((rec) => ({
-    label: ({ fight: "Fight", settle: "Settle", refund: "Refund" } as const)[rec],
-    value: open.filter((d) => d.report?.recommendation === rec && d.report.current).length,
-  }));
+  const now = nowMs();
+  const outcomes = insights.impact.outcomes;
+  const resolvedRows = insights.outcomeRows;
+  const last30 = resolvedRows.filter((r) => r.resolvedAt && now - new Date(r.resolvedAt).getTime() <= 30 * DAY && r.currency === currency);
+  const kept30 = last30.reduce((s, r) => s + r.kept, 0);
+  const refunded30 = last30.reduce((s, r) => s + r.refunded, 0);
 
-  const nextDeadline = respond
-    .filter((d) => d.daysLeft !== null)
-    .sort((a, b) => (a.daysLeft ?? 0) - (b.daysLeft ?? 0))[0];
+  // Amount at risk on each of the last 30 days: disputes opened by then and not yet resolved.
+  const resolvedAt = new Map(resolvedRows.map((r) => [r.disputeId, r.resolvedAt] as const));
+  const points: RiskPoint[] = Array.from({ length: 31 }, (_, i) => {
+    const day = now - (30 - i) * DAY;
+    const value = disputes
+      .filter((d) => (d.currency ?? "USD") === currency)
+      .filter((d) => d.openedAt && new Date(d.openedAt).getTime() <= day)
+      .filter((d) => {
+        const r = d.status === "RESOLVED" ? resolvedAt.get(d.id) : null;
+        return !r || new Date(r).getTime() > day;
+      })
+      .reduce((s, d) => s + (d.amount ?? 0), 0);
+    return { label: i === 30 ? "Today" : new Date(day).toLocaleDateString("en-US", { month: "short", day: "numeric" }), value };
+  });
+
+  // Dispute activity for one month (?month=2026-10), like Mercury's money in / money out.
+  const thisMonth = monthKey(new Date());
+  const shownMonth = typeof month === "string" && /^\d{4}-\d{2}$/.test(month) ? month : thisMonth;
+  const inMonth = resolvedRows.filter((r) => r.resolvedAt && monthKey(new Date(r.resolvedAt)) === shownMonth);
+  const itemOf = (id: string) => proofById.get(id)?.item ?? "Order";
+  const keptRows = inMonth.filter((r) => r.kept > 0);
+  const refundRows = inMonth.filter((r) => r.refunded > 0);
+
+  const recent = [...disputes].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")).slice(0, 6);
 
   return (
-    <div className="mx-auto w-full max-w-[1120px] px-5 pt-8 pb-20 md:px-10 md:pt-10">
-      {/* Store selector, like PayPal's business name in the page header */}
-      <StoreSelector stores={sellers} current={store} />
-
-      {/* Headline number */}
-      <section aria-labelledby="at-risk" className="mt-8">
-        <p className="flex items-baseline gap-2 t-figure text-[56px] leading-none text-fg md:text-[76px]">
-          <RollingNumber value={digits} prefix={symbol} delay={150} stagger={120} />
-          <span className="font-sans text-[18px] font-medium text-fg-heading md:text-[20px]">{headCurrency}</span>
-        </p>
-        <h1 id="at-risk" className="mt-3 text-[15px] text-fg-body">
-          At risk in {open.length} open dispute{open.length === 1 ? "" : "s"}
-        </h1>
-        {byCurrency.length > 1 && (
-          <p className="mt-1.5 text-[13px] text-fg-muted">
-            Also{" "}
-            {byCurrency
-              .slice(1)
-              .map(([c, t]) => `${formatAmount(t, c)} ${c}`)
-              .join(" · ")}
-          </p>
-        )}
-        <p className="mt-4 text-[12px] text-fg-muted">* What buyers are claiming on disputes that are still open. Nothing has been refunded.</p>
+    <div className="mx-auto flex w-full max-w-[1080px] flex-col gap-7 px-5 pt-7 pb-20 md:px-8">
+      {/* Welcome + Sira's briefing + actions */}
+      <section aria-labelledby="hello" className="flex flex-col gap-[18px]">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h1 id="hello" className="text-[24px] font-[480] tracking-[0.01em] text-fg">
+            {greeting()}
+            {session.kind === "seller" ? `, ${firstName(session.name)}` : ""}
+          </h1>
+          {sellers.length > 1 && <StoreSelector stores={sellers} current={store} />}
+        </div>
+        <Briefing waiting={waiting} drafts={drafts} needsTracking={needsTracking} open={open.length} items={proofById} />
+        <div role="group" aria-label="Quick actions" className="flex flex-wrap gap-2">
+          {drafts.length > 0 && (
+            <Button href="/review" prefetch={false} size="md" className="h-[38px] px-4">
+              <ArrowRight aria-hidden strokeWidth={1.8} className="size-[15px]" />
+              Review {drafts.length} draft{drafts.length === 1 ? "" : "s"}
+            </Button>
+          )}
+          <Button href="/evidence" variant="soft" size="md" className="h-[38px] px-4 font-normal">
+            <Plus aria-hidden strokeWidth={1.6} className="size-[15px]" />
+            Add tracking
+          </Button>
+          <a
+            href={RESOLUTION_CENTER}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-[38px] items-center gap-2 rounded-full bg-muted px-4 text-[14px] text-fg transition-colors hover:bg-inset"
+          >
+            <ExternalLink aria-hidden strokeWidth={1.6} className="size-[15px]" />
+            Open in PayPal
+          </a>
+        </div>
       </section>
 
-      {/* Alert cards */}
-      <section aria-label="Needs attention" className="mt-10 grid gap-4 md:grid-cols-2">
-        <AlertCard
-          icon={<FileCheck2 strokeWidth={1.6} />}
-          href="/disputes?view=approval"
-          title={
-            approvals.length === 0
-              ? "No drafts waiting for you"
-              : `${approvals.length} draft${approvals.length === 1 ? "" : "s"} waiting for your approval`
-          }
-          body={
-            approvals.length === 0
-              ? "When the agent drafts a response, it lands here for you to review."
-              : "Read, edit and approve each response. Nothing goes to PayPal until you do."
-          }
-          tone={approvals.length > 0 ? "accent" : "neutral"}
-        />
-        <AlertCard
-          icon={<Clock3 strokeWidth={1.6} />}
-          href={nextDeadline ? `/disputes/${nextDeadline.id}` : "/disputes"}
-          title={
-            nextDeadline
-              ? nextDeadline.daysLeft! < 0
-                ? "A response deadline has passed"
-                : nextDeadline.daysLeft === 0
-                  ? "A response is due today"
-                  : `Next deadline in ${nextDeadline.daysLeft} day${nextDeadline.daysLeft === 1 ? "" : "s"}`
-              : "No response deadlines coming up"
-          }
-          body={
-            nextDeadline
-              ? `${nextDeadline.buyerName ?? "Buyer"} · ${reasonLabel(nextDeadline.reason)} · ${formatAmount(nextDeadline.amount, nextDeadline.currency)}`
-              : "PayPal isn't waiting on you for anything right now."
-          }
-          tone={nextDeadline && (nextDeadline.daysLeft ?? 99) <= 3 ? "bad" : "neutral"}
-        />
-      </section>
-
-      {/* Quick access */}
-      <section aria-labelledby="quick-access" className="mt-12">
-        <h2 id="quick-access" className="t-section">
-          Quick access
-        </h2>
-        <ul className="mt-5 grid grid-cols-3 gap-y-6 sm:grid-cols-5 md:flex md:gap-10">
-          <QuickLink href="/disputes?view=approval" icon={<FileCheck2 strokeWidth={1.5} />} label="Review drafts" />
-          <QuickLink href="/disputes?view=needs-response" icon={<MessageSquareWarning strokeWidth={1.5} />} label="Needs response" />
-          <QuickLink href="/disputes" icon={<ListTree strokeWidth={1.5} />} label="All disputes" />
-          <QuickLink href="/disputes?view=resolved" icon={<Inbox strokeWidth={1.5} />} label="Resolved" />
-          <QuickLink href={RESOLUTION_CENTER} external icon={<ExternalLink strokeWidth={1.5} />} label="Open in PayPal" />
-        </ul>
-      </section>
-
-      {/* Performance */}
-      <section aria-labelledby="performance" className="mt-12">
-        <div className="flex items-end justify-between">
-          <div>
-            <h2 id="performance" className="t-section">
-              Dispute performance
-            </h2>
-            <p className="mt-0.5 text-[12.5px] text-fg-muted">All time{store ? ` · ${store.name}` : ""}</p>
+      {/* At risk + Waiting on you */}
+      <div className="flex flex-wrap gap-5">
+        <Panel aria-labelledby="atrisk" className="flex min-w-0 flex-[1.2_1_380px] flex-col px-6 pt-6 pb-3">
+          <h2 id="atrisk" className="text-[14px] text-fg-muted">
+            At risk
+          </h2>
+          <Money amount={atRisk} currency={currency} className="mt-2 text-[34px] leading-none font-[480] text-fg" />
+          <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-[13px] text-fg-body">
+            <span>
+              {open.length} open dispute{open.length === 1 ? "" : "s"} · last 30 days
+              {byCurrency.length > 1 && (
+                <span className="text-fg-muted">
+                  {" "}
+                  · also{" "}
+                  {byCurrency.slice(1).map(([c, t], i) => (
+                    <span key={c}>
+                      {i > 0 && ", "}
+                      <Amount amount={t} currency={c} />
+                    </span>
+                  ))}
+                </span>
+              )}
+            </span>
+            <span className="flex gap-4">
+              <span>
+                ↗ <Amount amount={kept30} currency={currency} /> kept
+              </span>
+              <span>
+                ↘ <Amount amount={refunded30} currency={currency} /> refunded
+              </span>
+            </span>
           </div>
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <StatCard label="Open disputes" value={open.length} href="/disputes" />
-          <StatCard label="Needs your response" value={respond.length} href="/disputes?view=needs-response" />
-          <StatCard label="Won" value={won} hint="Resolved in your favour" />
-          <StatCard label="Lost" value={lost} hint="Resolved for the buyer" />
-        </div>
-      </section>
+          <div className="money mt-2">
+            <AtRiskChart points={points} currency={currency} />
+          </div>
+        </Panel>
 
-      {/* Results */}
-      <ResultsSection rows={outcomes.rows} summary={outcomes.summary} storeName={store?.name} />
+        <Panel aria-labelledby="waiting" className="min-w-0 flex-[1_1_340px] px-6 pt-6 pb-3">
+          <SectionHead
+            id="waiting"
+            title="Waiting on you"
+            aside={
+              <Link href="/disputes?view=needs-response" className="text-[13px] text-fg-muted hover:text-fg">
+                View all
+              </Link>
+            }
+          />
+          {waiting.length === 0 ? (
+            <p className="py-10 text-center text-[14px] text-fg-muted">Nothing is waiting on you.</p>
+          ) : (
+            <ul className="mt-3">
+              {waiting.slice(0, 5).map((d) => (
+                <li key={d.id}>
+                  <Link href={`/disputes/${d.id}`} className="flex items-center gap-3 border-t border-line-subtle py-3">
+                    <Initials name={d.buyerName} />
+                    <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                      <span className="truncate text-[14px] text-fg">{d.buyerName ?? "Buyer"}</span>
+                      <span className="truncate text-[13px] text-fg-muted">{d.item ?? "Order"}</span>
+                    </span>
+                    <span className="flex flex-col items-end gap-[3px]">
+                      <Amount amount={d.amount} currency={d.currency} className="text-[14px] text-fg" />
+                      <span className={cn("text-[12.5px]", (d.daysLeft ?? 99) <= 0 ? "font-medium text-bad" : "text-fg-muted")}>
+                        {dueLabel(d.daysLeft)}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </div>
 
-      {/* Insights */}
-      <section aria-labelledby="insights" className="mt-12">
-        <h2 id="insights" className="t-section">
-          Insights
-        </h2>
-        <p className="mt-0.5 text-[12.5px] text-fg-muted">Open disputes right now{store ? ` · ${store.name}` : ""}</p>
-        <div className="mt-4 grid gap-3 lg:grid-cols-3">
-          <DeadlineChart buckets={buckets} />
-          <ReasonChart reasons={reasons} />
-          <RecommendationChart mix={mix} />
+      {/* Dispute activity, like Mercury's money movement */}
+      <section aria-labelledby="activity" className="flex flex-col gap-3.5">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 id="activity" className="text-[20px] font-[480] tracking-[0.01em] text-fg">
+            Dispute activity
+          </h2>
+          <span className="flex items-center gap-1">
+            <Link
+              href={`/dashboard?month=${shiftMonth(shownMonth, -1)}${storeQuery}`}
+              aria-label="Previous month"
+              className="inline-flex size-8 items-center justify-center rounded-lg text-fg-body hover:bg-muted"
+            >
+              <ChevronLeft strokeWidth={1.8} className="size-4" />
+            </Link>
+            <span className="text-[14px] text-fg-body">{monthLabel(shownMonth)}</span>
+            {shownMonth < thisMonth ? (
+              <Link
+                href={`/dashboard?month=${shiftMonth(shownMonth, 1)}${storeQuery}`}
+                aria-label="Next month"
+                className="inline-flex size-8 items-center justify-center rounded-lg text-fg-body hover:bg-muted"
+              >
+                <ChevronRight strokeWidth={1.8} className="size-4" />
+              </Link>
+            ) : (
+              <span aria-hidden className="inline-flex size-8 items-center justify-center text-line-strong">
+                <ChevronRight strokeWidth={1.8} className="size-4" />
+              </span>
+            )}
+          </span>
+          <span className="flex-1" />
+          <span className="text-[13px] text-fg-body">
+            {insights.impact.handled} handled by Sira · about {Number.isInteger(insights.impact.hoursSaved) ? insights.impact.hoursSaved : insights.impact.hoursSaved.toFixed(1)} hours saved
+          </span>
         </div>
+        <div className="flex flex-wrap gap-5">
+          <ActivityCard
+            title="Kept"
+            subtitle="Won or closed by the buyer"
+            total={keptRows.reduce((s, r) => s + r.kept, 0)}
+            currency={currency}
+            tone="kept"
+            rows={keptRows.map((r) => ({ id: r.disputeId, name: r.buyerName, item: itemOf(r.disputeId), amount: r.kept, currency: r.currency }))}
+          />
+          <ActivityCard
+            title="Refunded"
+            subtitle="Refunded or settled"
+            total={refundRows.reduce((s, r) => s + r.refunded, 0)}
+            currency={currency}
+            tone="refunded"
+            rows={refundRows.map((r) => ({ id: r.disputeId, name: r.buyerName, item: itemOf(r.disputeId), amount: r.refunded, currency: r.currency }))}
+          />
+        </div>
+        {outcomes.resolved === 0 && <p className="text-[13px] text-fg-muted">Results appear here as disputes close.</p>}
       </section>
 
       {/* Recent disputes */}
-      <section aria-labelledby="recent" className="mt-12">
-        <div className="flex items-end justify-between">
-          <h2 id="recent" className="t-section">
-            Recent disputes
-          </h2>
-          <Link href="/disputes" className="inline-flex items-center gap-1 text-[13px] font-medium text-fg underline-offset-4 hover:underline">
-            View all <ArrowRight strokeWidth={1.75} className="size-3.5" />
-          </Link>
-        </div>
-        <RecentTable disputes={disputes.slice(0, 6)} />
-      </section>
+      <Panel aria-labelledby="recent" className="px-6 pt-5 pb-2">
+        <SectionHead
+          id="recent"
+          title="Recent disputes"
+          aside={
+            <Link href="/disputes" className="text-[13px] text-fg-muted hover:text-fg">
+              View all
+            </Link>
+          }
+        />
+        {recent.length === 0 ? (
+          <p className="py-10 text-center text-[14px] text-fg-muted">No disputes yet. They appear here as soon as PayPal sends them.</p>
+        ) : (
+          <div className="mt-2.5 overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse text-left text-[14px]">
+              <thead>
+                <tr className="text-[12.5px] text-fg-muted">
+                  <th scope="col" className="py-2 font-[420]">Buyer</th>
+                  <th scope="col" className="py-2 font-[420]">Where it stands</th>
+                  <th scope="col" className="py-2 font-[420]">Sira&apos;s call</th>
+                  <th scope="col" className="py-2 text-right font-[420]">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((d) => (
+                  <tr key={d.id} className="group relative border-t border-line-subtle">
+                    <td className="py-3 pr-4">
+                      {/* the whole row is clickable through this stretched link */}
+                      <Link href={`/disputes/${d.id}`} className="flex flex-col gap-[3px] after:absolute after:inset-0">
+                        <span className="text-fg group-hover:underline">{d.buyerName ?? "Buyer"}</span>
+                        <span className="text-[13px] text-fg-muted">{d.item ?? "Order"}</span>
+                      </Link>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <span className="flex flex-col gap-1.5">
+                        <span className="text-fg-body">{stageLabel(d)}</span>
+                        <ProgressLine step={stageStep(d)} className="w-[150px]" />
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4 text-fg-body">{callLabel(d.report, d.currency) ?? <span className="text-fg-muted">Not assessed</span>}</td>
+                    <td className="py-3 text-right">
+                      <Amount amount={d.amount} currency={d.currency} className="text-fg" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
 
-function StoreSelector({ stores, current }: { stores: { id: string; name: string }[]; current?: { id: string; name: string } }) {
-  const title = current?.name ?? "All stores";
-  if (stores.length < 2) return <h2 className="text-[24px] font-semibold tracking-[-0.01em] text-fg">{stores[0]?.name ?? title}</h2>;
+/**
+ * Sira's note at the top of Home, written by fixed rules from the seller's own disputes:
+ * what is due today, which drafts are ready, which orders need tracking.
+ */
+function Briefing({
+  waiting,
+  drafts,
+  needsTracking,
+  open,
+  items,
+}: {
+  waiting: HomeDispute[];
+  drafts: HomeDispute[];
+  needsTracking: HomeDispute[];
+  open: number;
+  items: Map<string, InsightDispute>;
+}) {
+  type Line = { id: string; href: string; who: string; text: string };
+  const lines: Line[] = [];
+  const seen = new Set<string>();
+  const add = (d: HomeDispute, text: string, href: string) => {
+    if (seen.has(d.id) || lines.length >= 3) return;
+    seen.add(d.id);
+    lines.push({ id: d.id, href, who: `${firstName(d.buyerName)}'s ${(d.item ?? items.get(d.id)?.item ?? "order").toLowerCase()}`, text });
+  };
+  for (const d of waiting.filter((d) => (d.daysLeft ?? 99) <= 1)) add(d, (d.daysLeft ?? 0) < 0 ? "is overdue" : d.daysLeft === 0 ? "is due today" : "is due tomorrow", `/disputes/${d.id}`);
+  for (const d of drafts) add(d, "has a reply ready", "/review");
+  for (const d of needsTracking) add(d, "needs tracking", "/evidence");
+  const rest = Math.max(0, open - lines.length);
+
   return (
-    <details className="group relative inline-block">
-      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg text-[24px] font-semibold tracking-[-0.01em] text-fg [&::-webkit-details-marker]:hidden">
-        {title}
-        <ChevronDown strokeWidth={1.75} className="size-5 text-fg-muted transition-transform group-open:rotate-180" />
+    <p className="max-w-[760px] text-[16px] leading-[26px] text-fg-body">
+      {lines.length === 0 ? (
+        <>Nothing needs you today. Sira is watching {open === 1 ? "your open dispute" : `your ${open} open disputes`}.</>
+      ) : (
+        <>
+          {lines.length === 1 ? "One dispute needs" : `${lines.length === 2 ? "Two" : "Three"} disputes need`} you today:{" "}
+          {lines.map((l, i) => (
+            <span key={l.id}>
+              {i > 0 && (i === lines.length - 1 ? ", and " : ", ")}
+              <Link href={l.href} className="font-medium text-fg underline decoration-line-strong underline-offset-4 hover:decoration-fg">
+                {l.who}
+              </Link>{" "}
+              {l.text}
+            </span>
+          ))}
+          .{rest > 0 && ` Sira is watching the other ${rest}.`}
+        </>
+      )}
+    </p>
+  );
+}
+
+function ActivityCard({
+  title,
+  subtitle,
+  total,
+  currency,
+  tone,
+  rows,
+}: {
+  title: string;
+  subtitle: string;
+  total: number;
+  currency: string;
+  tone: "kept" | "refunded";
+  rows: { id: string; name: string | null; item: string; amount: number; currency: string }[];
+}) {
+  return (
+    <Panel className="flex-[1_1_320px] p-6">
+      <h3 className="text-[14px] text-fg-muted">{title}</h3>
+      <Money
+        amount={total}
+        currency={currency}
+        sign={tone === "refunded" && total > 0 ? "−" : undefined}
+        className={cn("mt-2 block text-[26px] leading-none font-[480]", tone === "kept" ? "text-ok" : "text-fg")}
+        centsClassName={tone === "kept" ? "text-ok/80" : undefined}
+      />
+      <p className="mt-5 mb-1 text-[13px] text-fg-muted">{subtitle}</p>
+      {rows.length === 0 ? (
+        <p className="border-t border-line-subtle pt-3 text-[13.5px] text-fg-muted">None this month.</p>
+      ) : (
+        rows.slice(0, 4).map((r) => (
+          <Link key={r.id} href={`/disputes/${r.id}`} className="flex items-center gap-3 border-t border-line-subtle py-2.5 text-[14px]">
+            <Initials name={r.name} size="sm" />
+            <span className="flex-1 truncate">{r.item}</span>
+            <Amount amount={r.amount} currency={r.currency} className={tone === "refunded" ? "text-fg" : "text-ok"} />
+          </Link>
+        ))
+      )}
+    </Panel>
+  );
+}
+
+function Initials({ name, size = "md" }: { name: string | null; size?: "sm" | "md" }) {
+  const initials =
+    (name ?? "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase())
+      .join("") || "?";
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center rounded-full border border-line font-medium text-fg-body",
+        size === "sm" ? "size-7 text-[11px]" : "size-8 text-[11.5px]",
+      )}
+    >
+      {initials}
+    </span>
+  );
+}
+
+function StoreSelector({ stores, current }: { stores: { id: string; name: string }[]; current?: { id: string; name: string } }) {
+  return (
+    <details className="group relative">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1 text-[14px] text-fg-body hover:bg-muted [&::-webkit-details-marker]:hidden">
+        {current?.name ?? "All stores"}
+        <ChevronDown strokeWidth={1.75} className="size-4 text-fg-muted transition-transform group-open:rotate-180" />
       </summary>
-      <ul className="absolute left-0 z-20 mt-2 w-64 rounded-xl border border-line bg-canvas p-1.5 shadow-float">
+      <ul className="absolute right-0 z-20 mt-2 w-60 rounded-xl border border-line bg-canvas p-1.5 shadow-float">
         {[{ id: "", name: "All stores" }, ...stores].map((s) => (
           <li key={s.id || "all"}>
             <Link
               href={s.id ? `/dashboard?seller=${encodeURIComponent(s.id)}` : "/dashboard"}
-              className="flex items-center justify-between rounded-lg px-3 py-2 text-[14px] text-fg-heading hover:bg-subtle"
+              className="flex items-center justify-between rounded-lg px-3 py-2 text-[14px] text-fg hover:bg-subtle"
             >
               {s.name}
               {(current?.id ?? "") === s.id && <span className="size-1.5 rounded-full bg-fg" />}
@@ -224,221 +454,5 @@ function StoreSelector({ stores, current }: { stores: { id: string; name: string
         ))}
       </ul>
     </details>
-  );
-}
-
-function AlertCard({
-  icon,
-  href,
-  title,
-  body,
-  tone,
-}: {
-  icon: React.ReactNode;
-  href: string;
-  title: string;
-  body: string;
-  tone: "neutral" | "accent" | "bad";
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex gap-4 rounded-2xl border border-line bg-canvas p-5 transition-[border-color,box-shadow] duration-200 hover:border-line-strong hover:shadow-card"
-    >
-      <span
-        className={
-          "flex size-10 shrink-0 items-center justify-center rounded-xl [&>svg]:size-5 " +
-          (tone === "accent" ? "bg-fg text-white" : tone === "bad" ? "bg-bad-bg text-bad" : "bg-subtle text-fg-heading")
-        }
-      >
-        {icon}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-[15px] font-medium text-fg underline-offset-4 group-hover:underline">{title}</span>
-        <span className="mt-1 block text-[13px] leading-5 text-fg-body">{body}</span>
-      </span>
-    </Link>
-  );
-}
-
-function QuickLink({ href, icon, label, external }: { href: string; icon: React.ReactNode; label: string; external?: boolean }) {
-  const content = (
-    <>
-      <span className="flex size-14 items-center justify-center rounded-full bg-subtle text-fg-heading ring-1 ring-line transition-[background-color,box-shadow] duration-200 group-hover:bg-canvas group-hover:shadow-card [&>svg]:size-[22px]">
-        {icon}
-      </span>
-      <span className="text-center text-[12.5px] leading-4 text-fg-body group-hover:text-fg">{label}</span>
-    </>
-  );
-  const className = "group flex w-[88px] flex-col items-center gap-2.5 justify-self-center";
-  return (
-    <li>
-      {external ? (
-        <a href={href} target="_blank" rel="noreferrer" className={className}>
-          {content}
-        </a>
-      ) : (
-        <Link href={href} className={className}>
-          {content}
-        </Link>
-      )}
-    </li>
-  );
-}
-
-function StatCard({ label, value, hint, href }: { label: string; value: number; hint?: string; href?: string }) {
-  const inner = (
-    <>
-      <span className="text-[13px] font-medium text-fg-heading">{label}</span>
-      <span className="mt-3 block t-figure text-[40px] leading-none text-fg tabular-nums">{value}</span>
-      {hint && <span className="mt-2 block text-[12px] text-fg-muted">{hint}</span>}
-    </>
-  );
-  const className = "block rounded-2xl border border-line bg-canvas p-5 transition-[border-color,box-shadow] duration-200";
-  return href ? (
-    <Link href={href} className={className + " hover:border-line-strong hover:shadow-card"}>
-      {inner}
-    </Link>
-  ) : (
-    <div className={className}>{inner}</div>
-  );
-}
-
-function RecentTable({ disputes }: { disputes: HomeDispute[] }) {
-  if (disputes.length === 0) {
-    return (
-      <p className="mt-4 rounded-2xl border border-dashed border-line-strong p-10 text-center text-[14px] text-fg-body">
-        No disputes yet. They appear here as soon as PayPal sends them.
-      </p>
-    );
-  }
-  return (
-    <div className="mt-4 overflow-x-auto rounded-2xl border border-line">
-      <table className="w-full min-w-[720px] text-left text-[13.5px]">
-        <thead className="bg-subtle text-[12.5px] text-fg-body">
-          <tr>
-            <th className="px-5 py-3.5 font-medium">Date</th>
-            <th className="px-4 py-3.5 font-medium">Buyer</th>
-            <th className="px-4 py-3.5 font-medium">Reason</th>
-            <th className="px-4 py-3.5 font-medium">Status</th>
-            <th className="px-4 py-3.5 font-medium">Recommendation</th>
-            <th className="px-5 py-3.5 text-right font-medium">Amount</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line-subtle">
-          {disputes.map((d) => (
-            <tr key={d.id} className="group relative transition-colors hover:bg-subtle/60">
-              <td className="px-5 py-3.5 whitespace-nowrap text-fg-body">
-                {d.updatedAt ? new Date(d.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
-              </td>
-              <td className="px-4 py-3.5">
-                {/* the whole row is clickable through this stretched link */}
-                <Link href={`/disputes/${d.id}`} className="font-medium text-fg after:absolute after:inset-0">
-                  {d.buyerName ?? "Unknown buyer"}
-                </Link>
-                {d.sellerName && <span className="block text-[12px] text-fg-muted">{d.sellerName}</span>}
-              </td>
-              <td className="px-4 py-3.5 text-fg-body">{reasonLabel(d.reason)}</td>
-              <td className="px-4 py-3.5">
-                <StatusBadge status={d.status} />
-              </td>
-              <td className="px-4 py-3.5">
-                {d.report?.recommendation ? (
-                  <span className="inline-flex items-center gap-2">
-                    <DecisionBadge decision={d.report.recommendation} />
-                    {d.report.status === "pending_review" && d.report.current && isOpen(d) && <Badge tone="info">Needs approval</Badge>}
-                  </span>
-                ) : (
-                  <span className="text-fg-muted">Not assessed</span>
-                )}
-              </td>
-              <td className="px-5 py-3.5 text-right font-medium whitespace-nowrap text-fg tabular-nums">{formatAmount(d.amount, d.currency)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-/** Outcome tracking: how resolved disputes ended, and whether following Sira's advice paid off. */
-function ResultsSection({ rows, summary, storeName }: { rows: OutcomeRow[]; summary: OutcomeSummary; storeName?: string }) {
-  const kept = summary.kept[0];
-  const bars: OutcomeBar[] = (
-    [
-      { label: "Fought", match: (r: OutcomeRow) => r.did === "fight" },
-      { label: "Offered to settle", match: (r: OutcomeRow) => r.did === "settle" },
-      { label: "Refunded", match: (r: OutcomeRow) => r.did === "refund" },
-      { label: "No response", match: (r: OutcomeRow) => r.did === null },
-    ] as const
-  )
-    .map(({ label, match }) => {
-      const group = rows.filter(match);
-      return {
-        label,
-        won: group.filter((r) => r.result === "won").length,
-        settled: group.filter((r) => r.result === "settled").length,
-        lost: group.filter((r) => r.result === "lost").length,
-      };
-    })
-    .filter((b) => b.won + b.settled + b.lost > 0);
-  const response =
-    summary.avgResponseHours === null
-      ? "—"
-      : summary.avgResponseHours < 1
-        ? `${Math.max(1, Math.round(summary.avgResponseHours * 60))} min`
-        : summary.avgResponseHours < 48
-          ? `${summary.avgResponseHours.toFixed(1)} h`
-          : `${(summary.avgResponseHours / 24).toFixed(1)} days`;
-
-  return (
-    <section aria-labelledby="results" className="mt-12">
-      <h2 id="results" className="t-section">
-        Results
-      </h2>
-      <p className="mt-0.5 text-[12.5px] text-fg-muted">Resolved disputes{storeName ? ` · ${storeName}` : ""}</p>
-      {summary.resolved === 0 ? (
-        <p className="mt-4 rounded-2xl border border-dashed border-line bg-canvas px-5 py-8 text-center text-[13.5px] text-fg-muted">
-          Results appear here as disputes close: what you kept, and whether following Sira&apos;s advice paid off.
-        </p>
-      ) : (
-        <>
-          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <ResultCard
-              label="Money kept"
-              value={kept ? formatAmount(kept.amount, kept.currency) : "—"}
-              hint={summary.kept.length > 1 ? `plus ${summary.kept.slice(1).map((k) => formatAmount(k.amount, k.currency)).join(", ")}` : `on ${summary.resolved} resolved dispute${summary.resolved === 1 ? "" : "s"}`}
-            />
-            <ResultCard
-              label="Sira's call held up"
-              value={summary.followed ? `${summary.heldUp} of ${summary.followed}` : "—"}
-              hint="When you followed its advice"
-            />
-            <ResultCard
-              label="Won when you fought"
-              value={summary.fought ? `${summary.foughtWon} of ${summary.fought}` : "—"}
-              hint={summary.autoRefunded ? `${summary.autoRefunded} auto-refunded by your rule` : "Evidence submitted to PayPal"}
-            />
-            <ResultCard label="Time to respond" value={response} hint="Average, from dispute opened" />
-          </div>
-          <div className="mt-3 grid gap-3 lg:grid-cols-3">
-            <OutcomeChart bars={bars} />
-            <div className="lg:col-span-2">
-              <OutcomesGrid rows={rows} />
-            </div>
-          </div>
-        </>
-      )}
-    </section>
-  );
-}
-
-function ResultCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="block rounded-2xl border border-line bg-canvas p-5">
-      <span className="text-[13px] font-medium text-fg-heading">{label}</span>
-      <span className="mt-3 block t-figure text-[32px] leading-none text-fg tabular-nums">{value}</span>
-      {hint && <span className="mt-2 block text-[12px] text-fg-muted">{hint}</span>}
-    </div>
   );
 }

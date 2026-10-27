@@ -1,4 +1,4 @@
-import { getOutcomes, type OutcomeSummary, type Result } from "@/lib/outcomes";
+import { getOutcomes, type OutcomeRow, type OutcomeSummary, type Result } from "@/lib/outcomes";
 import { supabaseAdmin } from "@/lib/supabase";
 
 // Insights: what Sira has saved the seller (impact), and why their disputes happen (prevention).
@@ -80,6 +80,8 @@ export type Impact = {
 
 export type Insights = {
   impact: Impact;
+  /** Resolved disputes with their outcome (from outcomes.ts), newest first. */
+  outcomeRows: OutcomeRow[];
   disputes: InsightDispute[];
   items: ItemRow[];
   tips: Tip[];
@@ -167,7 +169,7 @@ export async function getInsights(sellerId?: string): Promise<Insights> {
   };
 
   const items = itemRows(disputes);
-  return { impact, disputes, items, tips: tips(disputes, items, now) };
+  return { impact, outcomeRows: outcomes.rows, disputes, items, tips: tips(disputes, items, now) };
 }
 
 function itemRows(disputes: InsightDispute[]): ItemRow[] {

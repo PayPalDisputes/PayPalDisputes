@@ -1,35 +1,53 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { Money } from "@/components/app/bits";
+import { Button } from "@/components/ui/Button";
 import { computeUrgency } from "@/lib/agent";
 import { canAccessDispute, requireSession, sessionMode } from "@/lib/auth";
 import { getDisputeDetail, type OrderEvidence, type PayPalDisputeDetail } from "@/lib/dashboard";
+import { dueLabel } from "@/lib/dispute-stage";
 import { getDisputeOutcome, type OutcomeRow } from "@/lib/outcomes";
-import { Deadline, formatAmount, humanize, reasonLabel, StatusBadge } from "@/app/_components/dispute-ui";
+import { EvidencePackLink, formatAmount, humanize, reasonLabel } from "@/app/_components/dispute-ui";
+import { cn } from "@/lib/cn";
 import { AssessmentReport } from "./assessment";
 import { BuyerHistoryCard } from "./buyer-history";
+
+export const metadata: Metadata = { title: "Dispute · Sira" };
+
+const RESOLUTION_CENTER = (process.env.PAYPAL_API_BASE ?? "").includes("sandbox") || !process.env.PAYPAL_API_BASE
+  ? "https://www.sandbox.paypal.com/disputes/"
+  : "https://www.paypal.com/disputes/";
 
 /** PayPal's action names (the `rel` of each POST link) in seller-facing words. */
 const ACTIONS: Record<string, string> = {
   make_offer: "Make an offer",
-  provide_evidence: "Submit evidence",
-  accept_claim: "Accept & refund",
-  send_message: "Message buyer",
+  provide_evidence: "Provide evidence",
+  accept_claim: "Accept the claim",
+  send_message: "Send a message",
   escalate: "Escalate to PayPal",
   acknowledge_return_item: "Acknowledge return",
 };
 
 const money = (m?: { value: string; currency_code: string }) => (m ? formatAmount(Number(m.value), m.currency_code) : "—");
 
-function formatDateTime(iso?: string) {
+function formatDate(iso?: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+function formatDateTime(iso?: string | null) {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+/** One labelled group inside the right-hand facts panel. */
+function Facts({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-zinc-200 p-5 dark:border-zinc-800">
-      <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{title}</h2>
+    <section aria-labelledby={id} className="border-b border-line-subtle py-[18px] last:border-b-0">
+      <h2 id={id} className="mb-2.5 text-[13px] text-fg-muted">
+        {title}
+      </h2>
       {children}
     </section>
   );
@@ -37,11 +55,15 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex justify-between gap-4 py-1.5 text-sm">
-      <dt className="text-zinc-500 dark:text-zinc-400">{label}</dt>
+    <>
+      <dt className="text-fg-muted">{label}</dt>
       <dd className="text-right">{children}</dd>
-    </div>
+    </>
   );
+}
+
+function FieldList({ children }: { children: React.ReactNode }) {
+  return <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[14px]">{children}</dl>;
 }
 
 type TimelineEvent = { at: string; actor: string; kind: "message" | "offer" | "evidence" | "request"; text: string };
@@ -60,7 +82,7 @@ function buildTimeline(raw: PayPalDisputeDetail, currency: string | null): Timel
   for (const e of raw.evidences ?? []) {
     if (!e.date || e.evidence_type === "CREATE") continue; // CREATE repeats the buyer's opening message
     if (e.source === "REQUESTED_FROM_SELLER") {
-      events.push({ at: e.date, actor: "PAYPAL", kind: "request", text: `Requested from seller: ${humanize(e.evidence_type)}` });
+      events.push({ at: e.date, actor: "PAYPAL", kind: "request", text: `Requested from you: ${humanize(e.evidence_type)}` });
       continue;
     }
     const tracking = e.evidence_info?.tracking_info?.map((t) => `${t.carrier_name} ${t.tracking_number}`).join(", ");
@@ -72,7 +94,7 @@ function buildTimeline(raw: PayPalDisputeDetail, currency: string | null): Timel
         humanize(e.evidence_type),
         tracking,
         e.evidence_info?.refund_ids?.length ? `refund ${e.evidence_info.refund_ids.join(", ")}` : null,
-        e.documents?.length ? `📎 ${e.documents.map((doc) => doc.name).join(", ")}` : null,
+        e.documents?.length ? `attached ${e.documents.map((doc) => doc.name).join(", ")}` : null,
         e.notes,
       ]
         .filter(Boolean)
@@ -82,103 +104,37 @@ function buildTimeline(raw: PayPalDisputeDetail, currency: string | null): Timel
   return events.sort((a, b) => a.at.localeCompare(b.at));
 }
 
-const ACTOR_STYLES: Record<string, string> = {
-  BUYER: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  SELLER: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300",
-  PAYPAL: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-};
+const ACTOR = { BUYER: "Buyer", SELLER: "You", PAYPAL: "PayPal" } as Record<string, string>;
+const KIND = { message: "wrote", offer: "", evidence: "submitted", request: "" } as const;
 
-function Timeline({ events }: { events: TimelineEvent[] }) {
-  if (events.length === 0) return <p className="text-sm text-zinc-500">No activity yet.</p>;
+function Timeline({ events, buyer }: { events: TimelineEvent[]; buyer: string }) {
+  if (events.length === 0) return <p className="text-[14px] text-fg-muted">No activity yet.</p>;
   return (
-    <ol className="space-y-4">
+    <ol>
       {events.map((e, i) => (
-        <li key={i} className="flex gap-3">
-          <span className={`h-fit shrink-0 rounded px-2 py-0.5 text-xs font-medium ${ACTOR_STYLES[e.actor] ?? ACTOR_STYLES.PAYPAL}`}>
-            {e.actor === "PAYPAL" ? "PayPal" : humanize(e.actor)}
+        <li key={i} className={cn("flex gap-4 py-3", i < events.length - 1 && "border-b border-line-subtle")}>
+          <span className="w-[72px] shrink-0 text-[13px] text-fg-muted">{formatDate(e.at)}</span>
+          <span className="flex min-w-0 flex-1 flex-col gap-1 text-[14px]">
+            <span className="text-fg">
+              {e.actor === "BUYER" ? buyer : (ACTOR[e.actor] ?? humanize(e.actor))}
+              {KIND[e.kind] ? ` ${KIND[e.kind]}` : ""}
+            </span>
+            <span className={cn("leading-[22px]", e.kind === "message" ? "text-fg-body" : "text-fg-muted")}>
+              {e.kind === "message" ? `“${e.text}”` : e.text}
+            </span>
           </span>
-          <div className="min-w-0 text-sm">
-            <p className={e.kind === "message" ? "" : "italic text-zinc-600 dark:text-zinc-400"}>{e.text}</p>
-            <p className="mt-0.5 text-xs text-zinc-400">{formatDateTime(e.at)}</p>
-          </div>
         </li>
       ))}
     </ol>
   );
 }
 
-const SHIPPING_STYLES: Record<string, string> = {
-  DELIVERED: "text-emerald-700 dark:text-emerald-400",
-  IN_TRANSIT: "text-sky-700 dark:text-sky-400",
-  LABEL_CREATED: "text-amber-600 dark:text-amber-400",
-  NOT_SHIPPED: "text-amber-600 dark:text-amber-400",
-  RETURNED_TO_SENDER: "text-red-600 dark:text-red-400",
-};
-
-const yesNo = (value: boolean | null, good: string, bad: string) =>
-  value === null ? "—" : value ? <span className="text-emerald-700 dark:text-emerald-400">{good}</span> : <span className="text-red-600 dark:text-red-400">{bad}</span>;
-
 /** Whether this order's tracking is on the PayPal transaction (uploaded by src/lib/tracking.ts). */
-function PayPalTracking({ order }: { order: OrderEvidence }) {
-  if (order.payPalTrackingUploadedAt) {
-    return (
-      <span className="text-emerald-700 dark:text-emerald-400">
-        Uploaded ✓ <span className="text-xs text-zinc-400">{formatDateTime(order.payPalTrackingUploadedAt)}</span>
-      </span>
-    );
-  }
-  if (order.payPalTrackingError) return <span className="text-red-600 dark:text-red-400">Upload failed: {order.payPalTrackingError}</span>;
-  if (order.shippingStatus !== "DELIVERED" && order.shippingStatus !== "IN_TRANSIT") {
-    return <span className="text-zinc-500 dark:text-zinc-400">Not shipped, nothing to upload</span>;
-  }
-  return <span className="text-zinc-500 dark:text-zinc-400">Not uploaded yet</span>;
-}
-
-/** The seller's order record: carrier, tracking, delivery and the carrier's scan history. */
-function Shipping({ order }: { order: OrderEvidence | null }) {
-  if (!order) return <p className="text-sm text-zinc-500">No order record for this transaction.</p>;
-  return (
-    <>
-      <dl>
-        <Field label="Order">{order.orderNumber ?? "—"}</Field>
-        <Field label="Carrier">{order.carrier ?? "—"}</Field>
-        <Field label="Tracking">
-          <span className="font-mono text-xs">{order.trackingNumber ?? "—"}</span>
-        </Field>
-        <Field label="Status">
-          <span className={SHIPPING_STYLES[order.shippingStatus ?? ""] ?? ""}>{humanize(order.shippingStatus)}</span>
-        </Field>
-        <Field label="Shipped">{formatDateTime(order.shippedAt ?? undefined)}</Field>
-        <Field label="Delivered">{formatDateTime(order.deliveredAt ?? undefined)}</Field>
-        <Field label="Signature">{yesNo(order.signatureConfirmed, "Confirmed", "None")}</Field>
-        <Field label="Ship to">
-          {order.shipToName && <span className="block">{order.shipToName}</span>}
-          <span className="block text-xs text-zinc-500 dark:text-zinc-400">{order.shipToAddress ?? "—"}</span>
-        </Field>
-        <Field label="Matches PayPal address">{yesNo(order.shipToMatchesPayPal, "Yes", "No")}</Field>
-        <Field label="Tracking on PayPal">
-          <PayPalTracking order={order} />
-        </Field>
-      </dl>
-
-      {order.trackingEvents.length > 0 && (
-        <ol className="mt-4 space-y-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-          {[...order.trackingEvents].reverse().map((e, i) => (
-            <li key={i} className="text-sm">
-              <p>{e.description}</p>
-              <p className="text-xs text-zinc-400">
-                {formatDateTime(e.at)}
-                {e.location && ` · ${e.location}`}
-              </p>
-            </li>
-          ))}
-        </ol>
-      )}
-
-      {order.notes && <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">{order.notes}</p>}
-      {order.simulated && <p className="mt-3 text-xs text-zinc-400">Demo data, not from a real carrier.</p>}
-    </>
-  );
+function payPalTracking(order: OrderEvidence) {
+  if (order.payPalTrackingUploadedAt) return <span>Uploaded {formatDate(order.payPalTrackingUploadedAt)}</span>;
+  if (order.payPalTrackingError) return <span className="text-bad">Upload failed</span>;
+  if (order.shippingStatus !== "DELIVERED" && order.shippingStatus !== "IN_TRANSIT") return <span className="text-fg-muted">Nothing to upload yet</span>;
+  return <span className="text-fg-muted">Not uploaded yet</span>;
 }
 
 export default async function DisputeDetailPage({ params }: PageProps<"/disputes/[id]">) {
@@ -189,136 +145,196 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
   const [dispute, outcome] = await Promise.all([getDisputeDetail(id), getDisputeOutcome(id)]);
   if (!dispute) notFound();
 
-  const { raw } = dispute;
+  const { raw, order } = dispute;
   const tx = raw.disputed_transactions?.[0];
   const item = tx?.items?.[0];
-  const claim = raw.messages?.find((m) => m.posted_by === "BUYER")?.content;
+  const buyer = tx?.buyer?.name ?? "Buyer";
   const hold = raw.fund_movements?.find((f) => f.reason === "HOLD_PLACED");
   const allowed = (raw.links ?? []).filter((l) => l.method === "POST").map((l) => l.rel);
+  const waiting = dispute.status === "WAITING_FOR_SELLER_RESPONSE";
+  const draftReady = dispute.decision?.current && dispute.decision.status === "pending_review" && dispute.status !== "RESOLVED";
+  const due = waiting ? dueLabel(dispute.daysLeft) : null;
 
   return (
-    <div className="mx-auto w-full max-w-[1120px] px-5 pt-8 pb-20 md:px-10 md:pt-10">
-      <Link href="/disputes" className="text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
-        ← All disputes
-      </Link>
-
-      <header className="mt-4 mb-8 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="font-mono text-xs text-zinc-500">{dispute.id}</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-            {reasonLabel(dispute.reason)} · {formatAmount(dispute.amount, dispute.currency)}
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            {dispute.sellerName ?? `Unlinked seller (${dispute.merchantId ?? "unknown"})`} · {humanize(dispute.stage)} stage
-            · opened {formatDateTime(raw.create_time)}
-          </p>
-        </div>
-        <div className="text-sm sm:text-right">
-          <StatusBadge status={dispute.status} />
-          {dispute.status === "WAITING_FOR_SELLER_RESPONSE" && (
-            <div className="mt-2">
-              <Deadline dueAt={dispute.dueAt} daysLeft={dispute.daysLeft} status={dispute.status} />
+    <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-7 px-5 pt-7 pb-20 md:px-10">
+      <header className="flex flex-col gap-3.5">
+        <nav aria-label="Breadcrumb" className="flex gap-1.5 text-[13px] text-fg-muted">
+          <Link href="/disputes" className="text-fg-body hover:text-fg">
+            Disputes
+          </Link>
+          <span aria-hidden>/</span>
+          <span className="font-mono text-[12px]">{dispute.id}</span>
+        </nav>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-[26px] font-[480] tracking-[0.01em] text-fg">{buyer}</h1>
+            <p className="text-[15px] text-fg-body">
+              {item?.item_name ?? "Order"} · {reasonLabel(dispute.reason)}
+            </p>
+            <p className="text-[13px] text-fg-muted">
+              Opened {formatDate(raw.create_time)}
+              {due && (
+                <>
+                  {" · "}
+                  <span className={cn("font-medium", (dispute.daysLeft ?? 99) <= 0 ? "text-bad" : "text-fg")}>
+                    Your response is {due.toLowerCase()}
+                    {dispute.dueAt ? ` (${formatDate(dispute.dueAt)})` : ""}
+                  </span>
+                </>
+              )}
+              {dispute.status === "WAITING_FOR_BUYER_RESPONSE" && raw.buyer_response_due_date && ` · Buyer has until ${formatDate(raw.buyer_response_due_date)}`}
+              {" · "}
+              {humanize(dispute.stage)} stage
+              {dispute.sellerName ? ` · ${dispute.sellerName}` : ""}
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-3">
+            <Money amount={dispute.amount} currency={dispute.currency} className="text-[26px] font-[480] text-fg" />
+            <div className="flex gap-2">
+              <a
+                href={RESOLUTION_CENTER}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-[38px] items-center rounded-full bg-muted px-4 text-[14px] text-fg hover:bg-inset"
+              >
+                Open in PayPal
+              </a>
+              {draftReady && (
+                <Button href="/review" prefetch={false} className="h-[38px] px-4">
+                  Review draft
+                </Button>
+              )}
             </div>
-          )}
-          {dispute.status === "WAITING_FOR_BUYER_RESPONSE" && raw.buyer_response_due_date && (
-            <p className="mt-2 text-xs text-zinc-400">Buyer has until {formatDateTime(raw.buyer_response_due_date)}</p>
-          )}
+          </div>
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <Card title="Buyer's claim">
-            <blockquote className="border-l-2 border-zinc-300 pl-3 text-sm dark:border-zinc-700">
-              {claim ?? <span className="text-zinc-400">The buyer didn&apos;t leave a message.</span>}
-            </blockquote>
-          </Card>
-
-          <Card title="AI assessment">
-            <AssessmentReport
-              disputeId={dispute.id}
-              decision={dispute.decision}
-              urgency={computeUrgency(raw as Parameters<typeof computeUrgency>[0], new Date().toISOString())}
-              amount={dispute.amount}
-              currency={dispute.currency}
-              disputeStatus={dispute.status}
-              mode={sessionMode(session)}
-            />
-          </Card>
-
-          <Card title="Activity">
-            <Timeline events={buildTimeline(raw, dispute.currency)} />
-          </Card>
+      <div className="flex flex-wrap items-start gap-6">
+        {/* Left: Sira's report and the story so far */}
+        <div className="flex min-w-0 flex-[2_1_520px] flex-col gap-5">
+          <AssessmentReport
+            disputeId={dispute.id}
+            decision={dispute.decision}
+            urgency={computeUrgency(raw as Parameters<typeof computeUrgency>[0], new Date().toISOString())}
+            amount={dispute.amount}
+            currency={dispute.currency}
+            disputeStatus={dispute.status}
+            mode={sessionMode(session)}
+          />
+          <section aria-labelledby="activity" className="rounded-xl border border-line bg-canvas px-6 py-5">
+            <h2 id="activity" className="mb-1 text-[13px] font-medium text-accent">
+              Activity
+            </h2>
+            <Timeline events={buildTimeline(raw, dispute.currency)} buyer={buyer} />
+          </section>
         </div>
 
-        <div className="space-y-6">
+        {/* Right: the facts */}
+        <aside aria-label="Details" className="min-w-0 flex-[1_1_300px] rounded-xl border border-line bg-canvas px-[22px]">
           {outcome && (
-            <Card title="Outcome">
-              <OutcomeSummaryCard outcome={outcome} />
-            </Card>
+            <Facts id="outcome" title="Outcome">
+              <OutcomeSummary outcome={outcome} />
+            </Facts>
           )}
-
-          <Card title="Transaction">
-            <dl>
-              <Field label="Item">{item?.item_description ?? item?.item_name ?? "—"}</Field>
-              <Field label="Paid">{money(tx?.gross_amount)}</Field>
-              <Field label="Date">{formatDateTime(tx?.create_time)}</Field>
-              <Field label="Status">{humanize(tx?.transaction_status ?? null)}</Field>
-              {hold && <Field label="On hold">{money(hold.amount)}</Field>}
-              <Field label="Seller Protection">
-                {tx?.seller_protection_eligible ? (
-                  <span className="text-emerald-700 dark:text-emerald-400">Eligible ({humanize(tx.seller_protection_type ?? null)})</span>
-                ) : (
-                  "Not eligible"
-                )}
+          <Facts id="tx" title="Transaction">
+            <FieldList>
+              {order?.orderNumber && <Field label="Order">{order.orderNumber}</Field>}
+              <Field label="Paid">
+                {formatDate(tx?.create_time)}, <span className="money">{money(tx?.gross_amount)}</span>
               </Field>
-            </dl>
-          </Card>
-
-          <Card title="Buyer history">
-            <BuyerHistoryCard history={dispute.buyerHistory} />
-          </Card>
-
-          <Card title="Shipping">
-            <Shipping order={dispute.order} />
-          </Card>
-
-          <Card title="Offer">
-            <dl>
-              <Field label="Buyer wants">{money(raw.offer?.buyer_requested_amount)}</Field>
-              <Field label="Seller offered">{money(raw.offer?.seller_offered_amount)}</Field>
-            </dl>
-          </Card>
-
-          <Card title="PayPal allows right now">
-            {allowed.length === 0 ? (
-              <p className="text-sm text-zinc-500">No seller actions available.</p>
+              <Field label="Status">{humanize(tx?.transaction_status ?? null)}</Field>
+              {hold && (
+                <Field label="On hold">
+                  <span className="money">{money(hold.amount)}</span>
+                </Field>
+              )}
+              <Field label="PayPal ID">
+                <span className="font-mono text-[12px]">{tx?.seller_transaction_id ?? "—"}</span>
+              </Field>
+              <Field label="Protection">
+                {tx?.seller_protection_eligible ? <span className="text-ok">Eligible</span> : <span className="text-fg-muted">Not eligible</span>}
+              </Field>
+            </FieldList>
+          </Facts>
+          <Facts id="ship" title="Shipping">
+            {order ? (
+              <FieldList>
+                <Field label="Carrier">{order.carrier ?? "—"}</Field>
+                <Field label="Tracking">
+                  <span className="font-mono text-[12px] break-all">{order.trackingNumber ?? <span className="text-bad">Missing</span>}</span>
+                </Field>
+                <Field label="Status">{humanize(order.shippingStatus)}</Field>
+                {order.deliveredAt && <Field label="Delivered">{formatDate(order.deliveredAt)}</Field>}
+                {!order.deliveredAt && order.shippedAt && <Field label="Shipped">{formatDate(order.shippedAt)}</Field>}
+                <Field label="Signature">{order.signatureConfirmed ? "Signed for" : "None"}</Field>
+                <Field label="Address">{order.shipToMatchesPayPal === null ? "—" : order.shipToMatchesPayPal ? "Matches PayPal" : <span className="text-bad">Differs from PayPal</span>}</Field>
+                <Field label="On PayPal">{payPalTracking(order)}</Field>
+              </FieldList>
             ) : (
-              <ul className="flex flex-wrap gap-2">
-                {allowed.map((rel) => (
-                  <li key={rel} className="rounded-full border border-zinc-200 px-2.5 py-0.5 text-xs dark:border-zinc-700">
-                    {ACTIONS[rel] ?? humanize(rel)}
+              <p className="text-[14px] text-fg-muted">
+                No order record.{" "}
+                <Link href="/evidence" className="text-accent hover:underline">
+                  Add tracking
+                </Link>
+              </p>
+            )}
+            {order?.trackingEvents && order.trackingEvents.length > 0 && (
+              <ol className="mt-3 space-y-1.5 border-t border-line-subtle pt-3 text-[13px]">
+                {[...order.trackingEvents].reverse().slice(0, 4).map((e, i) => (
+                  <li key={i}>
+                    <span className="text-fg-body">{e.description}</span>
+                    <span className="block text-[12px] text-fg-muted">
+                      {formatDateTime(e.at)}
+                      {e.location && ` · ${e.location}`}
+                    </span>
                   </li>
                 ))}
-              </ul>
+              </ol>
             )}
-          </Card>
-        </div>
+            {order?.simulated && <p className="mt-2 text-[12px] text-fg-muted">Demo data, not from a real carrier.</p>}
+          </Facts>
+          <Facts id="buyer" title="Buyer">
+            <BuyerHistoryCard history={dispute.buyerHistory} />
+          </Facts>
+          {(raw.offer?.buyer_requested_amount || raw.offer?.seller_offered_amount) && (
+            <Facts id="offer" title="Offer">
+              <FieldList>
+                <Field label="Buyer wants">
+                  <span className="money">{money(raw.offer?.buyer_requested_amount)}</span>
+                </Field>
+                <Field label="You offered">
+                  <span className="money">{money(raw.offer?.seller_offered_amount)}</span>
+                </Field>
+              </FieldList>
+            </Facts>
+          )}
+          <Facts id="evidence" title="Evidence">
+            <p className="text-[14px] text-fg-body">
+              The PDF Sira attaches when you fight.
+              <EvidencePackLink disputeId={dispute.id} />
+            </p>
+          </Facts>
+          <Facts id="allowed" title="PayPal allows right now">
+            <p className="text-[14px] leading-[22px] text-fg-body">
+              {allowed.length === 0 ? <span className="text-fg-muted">No seller actions available.</span> : allowed.map((rel) => ACTIONS[rel] ?? humanize(rel)).join(" · ")}
+            </p>
+          </Facts>
+        </aside>
       </div>
     </div>
   );
 }
 
 const RESULT_TEXT: Record<OutcomeRow["result"], { label: string; className: string }> = {
-  won: { label: "Won", className: "text-emerald-700 dark:text-emerald-400" },
-  settled: { label: "Settled", className: "text-amber-700 dark:text-amber-400" },
-  lost: { label: "Resolved for the buyer", className: "text-red-600 dark:text-red-400" },
-  other: { label: "Closed", className: "text-zinc-600 dark:text-zinc-400" },
+  won: { label: "Won", className: "text-ok" },
+  settled: { label: "Settled", className: "text-warn" },
+  lost: { label: "Resolved for the buyer", className: "text-bad" },
+  other: { label: "Closed", className: "text-fg-body" },
 };
 const CHOICE_TEXT = { fight: "Fight", settle: "Settle", refund: "Refund" } as const;
 
 /** How the dispute ended, what was kept, and how that lined up with Sira's advice. */
-function OutcomeSummaryCard({ outcome: o }: { outcome: OutcomeRow }) {
+function OutcomeSummary({ outcome: o }: { outcome: OutcomeRow }) {
   const r = RESULT_TEXT[o.result];
   const advice = o.autoRefunded
     ? "Handled by your auto-refund rule."
@@ -330,14 +346,20 @@ function OutcomeSummaryCard({ outcome: o }: { outcome: OutcomeRow }) {
         ? `Sira advised ${CHOICE_TEXT[o.advised]}; no response was sent.`
         : null;
   return (
-    <div className="text-sm">
-      <p className={`text-base font-semibold ${r.className}`}>{r.label}</p>
-      <dl className="mt-2">
-        <Field label="You kept">{formatAmount(o.kept, o.currency)}</Field>
-        {o.refunded > 0 && <Field label="Refunded to buyer">{formatAmount(o.refunded, o.currency)}</Field>}
-        <Field label="Resolved">{formatDateTime(o.resolvedAt ?? undefined)}</Field>
-      </dl>
-      {advice && <p className="mt-2 text-zinc-600 dark:text-zinc-400">{advice}</p>}
+    <div className="text-[14px]">
+      <p className={cn("text-[16px] font-[480]", r.className)}>{r.label}</p>
+      <FieldList>
+        <Field label="You kept">
+          <span className="money">{formatAmount(o.kept, o.currency)}</span>
+        </Field>
+        {o.refunded > 0 && (
+          <Field label="Refunded">
+            <span className="money">{formatAmount(o.refunded, o.currency)}</span>
+          </Field>
+        )}
+        <Field label="Resolved">{formatDate(o.resolvedAt)}</Field>
+      </FieldList>
+      {advice && <p className="mt-2 text-fg-body">{advice}</p>}
     </div>
   );
 }

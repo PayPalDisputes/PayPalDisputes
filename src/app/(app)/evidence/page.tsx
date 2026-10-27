@@ -18,39 +18,34 @@ export default async function EvidencePage() {
   const demoRows = rows.filter((r) => r.simulated).length;
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-5 pt-8 pb-20 md:px-10 md:pt-10">
-      <header className="max-w-[720px]">
-        <h1 className="text-[24px] font-semibold tracking-[-0.01em] text-fg">Evidence</h1>
-        <p className="mt-1 text-[13.5px] leading-5 text-fg-body">
-          The proof behind each open dispute. Tracking and delivery details are what win &ldquo;item not received&rdquo; claims, so add them here and
-          ask the agent to re-check.
+    <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-5 pt-8 pb-20 md:px-10 md:pt-9">
+      <header className="flex max-w-[680px] flex-col gap-1.5">
+        <h1 className="text-[24px] font-[480] tracking-[0.01em] text-fg">Evidence</h1>
+        <p className="text-[14.5px] leading-[22px] text-fg-body">
+          Tracking and delivery proof for your open disputes. Sira uploads tracking to PayPal and attaches it to every response.
         </p>
       </header>
 
-      {demo && (
-        <p className="mt-5 rounded-xl border border-line bg-subtle px-4 py-3 text-[13px] text-fg-body">
-          You&apos;re in the demo account: try editing and importing, but nothing is saved. Sign in with PayPal to manage your own evidence.
-        </p>
-      )}
-
-      {(missingTracking > 0 || demoRows > 0) && (
-        <div className="mt-5 flex flex-wrap gap-2 text-[12.5px]">
+      {(missingTracking > 0 || demo || demoRows > 0) && (
+        <div className="flex flex-col gap-1 text-[14px]">
           {missingTracking > 0 && (
-            <span className="rounded-full bg-warn-bg px-3 py-1 text-warn">
-              {missingTracking} dispute{missingTracking === 1 ? "" : "s"} missing tracking (highlighted)
-            </span>
+            <p>
+              <span className="font-medium text-bad">
+                {missingTracking} {missingTracking === 1 ? "order is" : "orders are"} missing tracking.
+              </span>{" "}
+              <span className="text-fg-body">Without it, &ldquo;not received&rdquo; claims are usually lost.</span>
+            </p>
           )}
-          {demoRows > 0 && (
-            <span className="rounded-full bg-muted px-3 py-1 text-fg-body">
+          {demo && <p className="text-fg-muted">You&apos;re in the demo account: try editing and importing, but nothing is saved.</p>}
+          {!demo && demoRows > 0 && (
+            <p className="text-fg-muted">
               {demoRows} row{demoRows === 1 ? "" : "s"} still use demo data. Editing a row replaces it with yours.
-            </span>
+            </p>
           )}
         </div>
       )}
 
-      <div className="mt-6">
-        <EvidenceGrid rows={rows} demo={demo} />
-      </div>
+      <EvidenceGrid rows={rows} demo={demo} />
     </div>
   );
 }
