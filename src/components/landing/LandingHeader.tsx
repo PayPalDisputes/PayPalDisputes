@@ -42,7 +42,7 @@ export function LandingHeader() {
           </Link>
           <Link
             href={site.appHref}
-            className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#141312] py-2 pr-3 pl-4 text-white hover:bg-[#34312e]"
+            className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#0070E0] py-2 pr-3 pl-4 text-white hover:bg-[#0062c4]"
           >
             Open dashboard
             <ChevronRight aria-hidden className="size-3.5" strokeWidth={2} />

@@ -29,7 +29,7 @@ function PrimaryButton({ href, children, inverted }: { href: string; children: R
       href={href}
       className={cn(
         "inline-flex h-11 items-center gap-1.5 rounded-full pr-4 pl-5 text-[14.5px]",
-        inverted ? "bg-white text-[#141312] hover:bg-[#ecebe7]" : "bg-[#141312] text-white hover:bg-[#34312e]",
+        inverted ? "bg-white font-medium text-[#0070E0] hover:bg-[#eaf3fe]" : "bg-[#0070E0] text-white hover:bg-[#0062c4]",
       )}
     >
       {children}
@@ -44,7 +44,7 @@ function SecondaryButton({ href, children, inverted }: { href: string; children:
       href={href}
       className={cn(
         "inline-flex h-11 items-center rounded-full px-5 text-[14.5px]",
-        inverted ? "bg-white/10 text-white hover:bg-white/15" : "border border-[#141312]/[0.12] hover:bg-[#f7f7f5]",
+        inverted ? "bg-white/15 text-white hover:bg-white/25" : "border border-[#141312]/[0.12] hover:bg-[#f7f7f5]",
       )}
     >
       {children}
@@ -197,11 +197,11 @@ export default function LandingPage() {
       </section>
 
       {/* Closing band */}
-      <section className="bg-[#141312] text-white">
+      <section className="bg-[#0070E0] text-white">
         <div className={cn(wrap, "flex flex-col gap-8 py-20 md:flex-row md:items-end md:justify-between")}>
           <div>
             <h2 className={h2}>{cta.title}</h2>
-            <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/60">{cta.body}</p>
+            <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/85">{cta.body}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <PrimaryButton href={cta.primary.href} inverted>
