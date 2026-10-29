@@ -150,8 +150,8 @@ export function HeroStage() {
             <div className="mt-4 flex gap-2 text-[12.5px]">
               <span
                 className={cn(
-                  "rounded-full bg-[#141312] px-4 py-1.5 text-white transition-transform duration-150",
-                  s === 7 && "scale-95 bg-[#34312e]",
+                  "rounded-full bg-[#0070e0] px-4 py-1.5 text-white transition-transform duration-150",
+                  s === 7 && "scale-95 bg-[#0062c4]",
                 )}
               >
                 {sent ? "Approved" : "Approve"}
