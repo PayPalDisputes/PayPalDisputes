@@ -20,8 +20,7 @@ export default function PricingPage() {
     <div className="theme-app bg-canvas text-fg">
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-5 pt-36 pb-12 text-center sm:px-8">
-        <p className="text-[14px] font-medium text-accent">Pricing</p>
-        <h1 className="mx-auto mt-3 max-w-[760px] text-[40px] leading-[1.1] font-[480] tracking-[-0.01em] text-balance text-fg sm:text-[52px]">
+        <h1 className="mx-auto max-w-[760px] text-[40px] leading-[1.1] font-[480] tracking-[-0.01em] text-balance text-fg sm:text-[52px]">
           Simple pricing. No cut of your wins.
         </h1>
         <p className="mx-auto mt-5 max-w-[620px] text-[17px] leading-[27px] text-fg-body">
