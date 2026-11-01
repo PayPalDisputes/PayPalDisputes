@@ -12,13 +12,6 @@ const footerColumns = [
       { label: "Evidence", href: "/evidence" },
     ],
   },
-  {
-    title: "Company",
-    links: [
-      { label: "Pricing", href: "/pricing" },
-      { label: "Sign in", href: "/signin" },
-    ],
-  },
 ];
 
 /** Shell for the landing page: a nav that floats over the hero, white page and a column footer. Always light. */
@@ -36,7 +29,7 @@ export default function LandingLayout({ children }: LayoutProps<"/">) {
         {children}
       </main>
       <footer className="mx-auto w-full max-w-6xl px-5 pt-16 pb-10 sm:px-8">
-        <div className="grid gap-10 sm:grid-cols-[1.5fr_1fr_1fr]">
+        <div className="grid gap-10 sm:grid-cols-[2fr_1fr]">
           <div>
             <Logo />
             <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-[#77736c]">{site.tagline}</p>

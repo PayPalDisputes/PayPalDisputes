@@ -34,12 +34,6 @@ export function LandingHeader() {
           <Logo />
         </Link>
         <nav className="flex items-center gap-1 text-[14px]">
-          <Link href="/pricing" className="hidden rounded-full px-3 py-2 text-[#55524d] hover:text-[#141312] sm:inline">
-            Pricing
-          </Link>
-          <Link href="/signin" className="rounded-full px-3 py-2 text-[#55524d] hover:text-[#141312]">
-            Sign in
-          </Link>
           <Link
             href={site.appHref}
             className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#0070E0] py-2 pr-3 pl-4 text-white hover:bg-[#0062c4]"

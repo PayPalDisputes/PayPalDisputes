@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
 import { ActivityTicker } from "@/components/landing/ActivityTicker";
-import { BandDots } from "@/components/landing/BandDots";
 import { CaseStack } from "@/components/landing/CaseStack";
 import { HeroStage } from "@/components/landing/HeroStage";
 import { Process } from "@/components/landing/Process";
@@ -53,7 +52,7 @@ function SecondaryButton({ href, children, inverted }: { href: string; children:
 }
 
 export default function LandingPage() {
-  const { hero, activity, reasons, jobs, numbers, how, rules, cta } = landing;
+  const { hero, activity, reasons, jobs, how, rules, cta } = landing;
 
   return (
     <>
@@ -63,12 +62,7 @@ export default function LandingPage() {
         {/* Top padding includes the 64px nav, which floats over this section */}
         <div className={cn(wrap, "grid items-center gap-12 pt-36 pb-20 md:pt-44 md:pb-24 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16")}>
           <div className="max-w-[40rem]">
-            <p className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">
-              {hero.stat.label}
-              <span className="rounded-md border border-[#141312]/[0.08] bg-white px-1.5 py-0.5 text-[12px] tracking-normal text-[#141312] normal-case tabular-nums">
-                {hero.stat.value}
-              </span>
-            </p>
+            <p className="font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">{hero.eyebrow}</p>
             <h1 className="mt-6 text-[clamp(2.75rem,5.6vw,4.75rem)] leading-[1.0] font-normal tracking-[-0.045em]">
               {hero.title.map((l) => (
                 <span key={l} className="block lg:whitespace-nowrap">
@@ -132,24 +126,6 @@ export default function LandingPage() {
               </Link>
             );
           })}
-        </div>
-      </section>
-
-      {/* Numbers band */}
-      <section className="relative isolate bg-[#f7f7f5] py-24">
-        <BandDots className="-z-10" />
-        <div className={cn(wrap, "text-center")}>
-          <h2 className={h2}>{numbers.title}</h2>
-          <p className="mt-3 text-[15px] text-[#77736c]">{numbers.body}</p>
-          <dl className="mx-auto mt-14 grid max-w-3xl sm:grid-cols-3 sm:divide-x sm:divide-[#141312]/[0.08]">
-            {numbers.stats.map((s) => (
-              <div key={s.label} className="flex flex-col-reverse gap-2 px-6 py-5 sm:py-0">
-                <dt className="font-mono text-[10.5px] tracking-[0.12em] text-[#77736c] uppercase">{s.label}</dt>
-                <dd className="text-[clamp(2.25rem,4vw,3rem)] leading-none tracking-[-0.04em] tabular-nums">{s.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-12 text-[12px] text-[#9a968e]">{numbers.note}</p>
         </div>
       </section>
 
