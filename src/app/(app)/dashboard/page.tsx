@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus } from "lucide-react";
+import { ArrowRight, ChevronDown, ExternalLink, Plus } from "lucide-react";
 import { Amount, Money, Panel, ProgressLine, SectionHead } from "@/components/app/bits";
 import { AtRiskChart, type RiskPoint } from "@/components/app/HomeCharts";
 import { Button } from "@/components/ui/Button";
 import { requireSession } from "@/lib/auth";
 import { getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
-import { callLabel, dueLabel, stageLabel, stageStep } from "@/lib/dispute-stage";
-import { getInsights, type InsightDispute } from "@/lib/insights";
+import { callLabel, dueLabel, stageLabel } from "@/lib/dispute-stage";
+import { getInsights } from "@/lib/insights";
 import { cn } from "@/lib/cn";
 
 export const metadata: Metadata = { title: "Home · Sira" };
@@ -21,44 +21,24 @@ const DAY = 86_400_000;
 const isOpen = (d: HomeDispute) => d.status !== "RESOLVED";
 const waitingOnSeller = (d: HomeDispute) => d.status === "WAITING_FOR_SELLER_RESPONSE";
 const draftReady = (d: HomeDispute) => isOpen(d) && d.report?.status === "pending_review" && d.report.current;
-const firstName = (name: string | null) => name?.split(/\s+/)[0] ?? "A buyer";
 
 /** The request's clock, read outside render so the page stays a pure function of its data. */
 const nowMs = () => Date.now();
 
-function greeting() {
-  const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-}
-
-/** "2026-10" for a date, and back to a label. */
-const monthKey = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-const monthLabel = (key: string) =>
-  new Date(`${key}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
-const shiftMonth = (key: string, by: number) => {
-  const d = new Date(`${key}-01T00:00:00Z`);
-  d.setUTCMonth(d.getUTCMonth() + by);
-  return monthKey(d);
-};
 
 export default async function DashboardHome({ searchParams }: PageProps<"/dashboard">) {
   await connection();
   const session = await requireSession();
-  const { seller, month } = await searchParams;
+  const { seller } = await searchParams;
   const sellerId = session.kind === "seller" ? session.sellerId : typeof seller === "string" ? seller : undefined;
   const [{ disputes, sellers: allSellers }, insights] = await Promise.all([getHomeDataCached(sellerId), getInsights(sellerId)]);
   const sellers = session.kind === "seller" ? allSellers.filter((s) => s.id === session.sellerId) : allSellers;
   const store = sellers.find((s) => s.id === sellerId);
-  const storeQuery = store ? `&seller=${encodeURIComponent(store.id)}` : "";
 
   const open = disputes.filter(isOpen);
   const waiting = disputes.filter(waitingOnSeller).sort((a, b) => (a.daysLeft ?? 99) - (b.daysLeft ?? 99));
   const drafts = disputes.filter(draftReady);
-  const proofById = new Map(insights.disputes.map((d) => [d.id, d] as const));
-  const needsTracking = waiting.filter((d) => {
-    const p = proofById.get(d.id)?.proof;
-    return d.reason === "MERCHANDISE_OR_SERVICE_NOT_RECEIVED" && (p === "no_tracking" || p === "no_record" || p === "not_delivered");
-  });
+  const overdue = waiting.filter((d) => (d.daysLeft ?? 99) < 0).length;
 
   // At risk = what buyers claim on open disputes, in the main currency.
   const totals = new Map<string, number>();
@@ -88,28 +68,40 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
     return { label: i === 30 ? "Today" : new Date(day).toLocaleDateString("en-US", { month: "short", day: "numeric" }), value };
   });
 
-  // Dispute activity for one month (?month=2026-10), like Mercury's money in / money out.
-  const thisMonth = monthKey(new Date());
-  const shownMonth = typeof month === "string" && /^\d{4}-\d{2}$/.test(month) ? month : thisMonth;
-  const inMonth = resolvedRows.filter((r) => r.resolvedAt && monthKey(new Date(r.resolvedAt)) === shownMonth);
-  const itemOf = (id: string) => proofById.get(id)?.item ?? "Order";
-  const keptRows = inMonth.filter((r) => r.kept > 0);
-  const refundRows = inMonth.filter((r) => r.refunded > 0);
+  // Dispute activity over the same 30 days as the chart, like Mercury's money in / money out.
+  const keptRows = last30.filter((r) => r.kept > 0);
+  const refundRows = last30.filter((r) => r.refunded > 0);
 
   const recent = [...disputes].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")).slice(0, 6);
 
   return (
     <div className="mx-auto flex w-full max-w-[1080px] flex-col gap-7 px-5 pt-7 pb-20 md:px-8">
-      {/* Welcome + Sira's briefing + actions */}
-      <section aria-labelledby="hello" className="flex flex-col gap-[18px]">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h1 id="hello" className="text-[24px] font-[480] tracking-[0.01em] text-fg">
-            {greeting()}
-            {session.kind === "seller" ? `, ${firstName(session.name)}` : ""}
+      {/* Headline numbers + actions */}
+      <section aria-labelledby="overview" className="flex flex-col gap-[18px]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 id="overview" className="sr-only">
+            Overview
           </h1>
           {sellers.length > 1 && <StoreSelector stores={sellers} current={store} />}
         </div>
-        <Briefing waiting={waiting} drafts={drafts} needsTracking={needsTracking} open={open.length} items={proofById} />
+        <div className="grid grid-cols-2 gap-3 sm:max-w-[520px]">
+          <CountCard
+            href="/disputes?view=needs-response"
+            label="Need your response"
+            value={waiting.length}
+            hint={
+              waiting.length === 0
+                ? "Nothing needs you"
+                : overdue > 0
+                  ? `${overdue} overdue`
+                  : drafts.length > 0
+                    ? `${drafts.length} draft${drafts.length === 1 ? "" : "s"} ready`
+                    : "Sira is drafting"
+            }
+            tone={overdue > 0 ? "bad" : undefined}
+          />
+          <CountCard href="/disputes" label="Active disputes" value={open.length} hint="Open with PayPal" />
+        </div>
         <div role="group" aria-label="Quick actions" className="flex flex-wrap gap-2">
           {drafts.length > 0 && (
             <Button href="/review" prefetch={false} size="md" className="h-[38px] px-4">
@@ -142,7 +134,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
           <Money amount={atRisk} currency={currency} className="mt-2 text-[34px] leading-none font-[480] text-fg" />
           <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-[13px] text-fg-body">
             <span>
-              {open.length} open dispute{open.length === 1 ? "" : "s"} · last 30 days
+              Last 30 days
               {byCurrency.length > 1 && (
                 <span className="text-fg-muted">
                   {" "}
@@ -212,51 +204,15 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
           <h2 id="activity" className="text-[20px] font-[480] tracking-[0.01em] text-fg">
             Dispute activity
           </h2>
-          <span className="flex items-center gap-1">
-            <Link
-              href={`/dashboard?month=${shiftMonth(shownMonth, -1)}${storeQuery}`}
-              aria-label="Previous month"
-              className="inline-flex size-8 items-center justify-center rounded-lg text-fg-body hover:bg-muted"
-            >
-              <ChevronLeft strokeWidth={1.8} className="size-4" />
-            </Link>
-            <span className="text-[14px] text-fg-body">{monthLabel(shownMonth)}</span>
-            {shownMonth < thisMonth ? (
-              <Link
-                href={`/dashboard?month=${shiftMonth(shownMonth, 1)}${storeQuery}`}
-                aria-label="Next month"
-                className="inline-flex size-8 items-center justify-center rounded-lg text-fg-body hover:bg-muted"
-              >
-                <ChevronRight strokeWidth={1.8} className="size-4" />
-              </Link>
-            ) : (
-              <span aria-hidden className="inline-flex size-8 items-center justify-center text-line-strong">
-                <ChevronRight strokeWidth={1.8} className="size-4" />
-              </span>
-            )}
-          </span>
+          <span className="text-[14px] text-fg-body">Last 30 days</span>
           <span className="flex-1" />
           <span className="text-[13px] text-fg-body">
             {insights.impact.handled} handled by Sira · about {Number.isInteger(insights.impact.hoursSaved) ? insights.impact.hoursSaved : insights.impact.hoursSaved.toFixed(1)} hours saved
           </span>
         </div>
         <div className="flex flex-wrap gap-5">
-          <ActivityCard
-            title="Kept"
-            subtitle="Won or closed by the buyer"
-            total={keptRows.reduce((s, r) => s + r.kept, 0)}
-            currency={currency}
-            tone="kept"
-            rows={keptRows.map((r) => ({ id: r.disputeId, name: r.buyerName, item: itemOf(r.disputeId), amount: r.kept, currency: r.currency }))}
-          />
-          <ActivityCard
-            title="Refunded"
-            subtitle="Refunded or settled"
-            total={refundRows.reduce((s, r) => s + r.refunded, 0)}
-            currency={currency}
-            tone="refunded"
-            rows={refundRows.map((r) => ({ id: r.disputeId, name: r.buyerName, item: itemOf(r.disputeId), amount: r.refunded, currency: r.currency }))}
-          />
+          <ActivityCard title="Kept" subtitle="Won or closed by the buyer" total={keptRows.reduce((s, r) => s + r.kept, 0)} count={keptRows.length} currency={currency} tone="kept" />
+          <ActivityCard title="Refunded" subtitle="Refunded or settled" total={refundRows.reduce((s, r) => s + r.refunded, 0)} count={refundRows.length} currency={currency} tone="refunded" />
         </div>
         {outcomes.resolved === 0 && <p className="text-[13px] text-fg-muted">Results appear here as disputes close.</p>}
       </section>
@@ -298,7 +254,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
                     <td className="py-3 pr-4">
                       <span className="flex flex-col gap-1.5">
                         <span className="text-fg-body">{stageLabel(d)}</span>
-                        <ProgressLine step={stageStep(d)} className="w-[150px]" />
+                        <ProgressLine dispute={d} className="w-[150px]" />
                       </span>
                     </td>
                     <td className="py-3 pr-4 text-fg-body">{callLabel(d.report, d.currency) ?? <span className="text-fg-muted">Not assessed</span>}</td>
@@ -318,56 +274,14 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
 
 /* ------------------------------------------------------------------ */
 
-/**
- * Sira's note at the top of Home, written by fixed rules from the seller's own disputes:
- * what is due today, which drafts are ready, which orders need tracking.
- */
-function Briefing({
-  waiting,
-  drafts,
-  needsTracking,
-  open,
-  items,
-}: {
-  waiting: HomeDispute[];
-  drafts: HomeDispute[];
-  needsTracking: HomeDispute[];
-  open: number;
-  items: Map<string, InsightDispute>;
-}) {
-  type Line = { id: string; href: string; who: string; text: string };
-  const lines: Line[] = [];
-  const seen = new Set<string>();
-  const add = (d: HomeDispute, text: string, href: string) => {
-    if (seen.has(d.id) || lines.length >= 3) return;
-    seen.add(d.id);
-    lines.push({ id: d.id, href, who: `${firstName(d.buyerName)}'s ${(d.item ?? items.get(d.id)?.item ?? "order").toLowerCase()}`, text });
-  };
-  for (const d of waiting.filter((d) => (d.daysLeft ?? 99) <= 1)) add(d, (d.daysLeft ?? 0) < 0 ? "is overdue" : d.daysLeft === 0 ? "is due today" : "is due tomorrow", `/disputes/${d.id}`);
-  for (const d of drafts) add(d, "has a reply ready", "/review");
-  for (const d of needsTracking) add(d, "needs tracking", "/evidence");
-  const rest = Math.max(0, open - lines.length);
-
+/** A headline count at the top of Home, linking to the disputes it counts. */
+function CountCard({ href, label, value, hint, tone }: { href: string; label: string; value: number; hint: string; tone?: "bad" }) {
   return (
-    <p className="max-w-[760px] text-[16px] leading-[26px] text-fg-body">
-      {lines.length === 0 ? (
-        <>Nothing needs you today. Sira is watching {open === 1 ? "your open dispute" : `your ${open} open disputes`}.</>
-      ) : (
-        <>
-          {lines.length === 1 ? "One dispute needs" : `${lines.length === 2 ? "Two" : "Three"} disputes need`} you today:{" "}
-          {lines.map((l, i) => (
-            <span key={l.id}>
-              {i > 0 && (i === lines.length - 1 ? ", and " : ", ")}
-              <Link href={l.href} className="font-medium text-fg underline decoration-line-strong underline-offset-4 hover:decoration-fg">
-                {l.who}
-              </Link>{" "}
-              {l.text}
-            </span>
-          ))}
-          .{rest > 0 && ` Sira is watching the other ${rest}.`}
-        </>
-      )}
-    </p>
+    <Link href={href} className="group flex flex-col gap-2 rounded-xl border border-line bg-canvas px-5 py-4 transition-colors hover:border-line-strong">
+      <span className="text-[13px] text-fg-body">{label}</span>
+      <span className="text-[32px] leading-none font-[480] text-fg tabular-nums">{value}</span>
+      <span className={cn("text-[12.5px]", tone === "bad" ? "font-medium text-bad" : "text-fg-muted")}>{hint}</span>
+    </Link>
   );
 }
 
@@ -375,39 +289,26 @@ function ActivityCard({
   title,
   subtitle,
   total,
+  count,
   currency,
   tone,
-  rows,
 }: {
   title: string;
   subtitle: string;
   total: number;
+  count: number;
   currency: string;
   tone: "kept" | "refunded";
-  rows: { id: string; name: string | null; item: string; amount: number; currency: string }[];
 }) {
+  // Refunds read in red, but only when there's something refunded; nothing to show stays neutral.
+  const color = total === 0 ? "text-fg" : tone === "kept" ? "text-ok" : "text-bad";
   return (
     <Panel className="flex-[1_1_320px] p-6">
       <h3 className="text-[14px] text-fg-muted">{title}</h3>
-      <Money
-        amount={total}
-        currency={currency}
-        sign={tone === "refunded" && total > 0 ? "−" : undefined}
-        className={cn("mt-2 block text-[26px] leading-none font-[480]", tone === "kept" ? "text-ok" : "text-fg")}
-        centsClassName={tone === "kept" ? "text-ok/80" : undefined}
-      />
-      <p className="mt-5 mb-1 text-[13px] text-fg-muted">{subtitle}</p>
-      {rows.length === 0 ? (
-        <p className="border-t border-line-subtle pt-3 text-[13.5px] text-fg-muted">None this month.</p>
-      ) : (
-        rows.slice(0, 4).map((r) => (
-          <Link key={r.id} href={`/disputes/${r.id}`} className="flex items-center gap-3 border-t border-line-subtle py-2.5 text-[14px]">
-            <Initials name={r.name} size="sm" />
-            <span className="flex-1 truncate">{r.item}</span>
-            <Amount amount={r.amount} currency={r.currency} className={tone === "refunded" ? "text-fg" : "text-ok"} />
-          </Link>
-        ))
-      )}
+      <Money amount={total} currency={currency} className={cn("mt-2 block text-[26px] leading-none font-[480]", color)} centsClassName={cn(color, "opacity-80")} />
+      <p className="mt-3 text-[13px] text-fg-muted">
+        {subtitle} · {count === 0 ? "none yet" : `${count} dispute${count === 1 ? "" : "s"}`}
+      </p>
     </Panel>
   );
 }

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { STAGE_STEPS } from "@/lib/dispute-stage";
+import { STAGE_STEPS, stageStep, stageTone, type StageInput, type StageTone } from "@/lib/dispute-stage";
 
 // Small pieces shared by the dashboard pages (Mock 2 look).
 
@@ -41,11 +41,21 @@ export function Amount({ amount, currency, className }: { amount: number | null;
 }
 
 /** The thin 5-step "where it stands" line; finished steps in PayPal blue. */
-export function ProgressLine({ step, className }: { step: number; className?: string }) {
+const TONE_FILL: Record<StageTone, string> = {
+  won: "bg-ok",
+  lost: "bg-bad",
+  closed: "bg-fg-muted",
+  yours: "bg-accent",
+  theirs: "bg-fg-body/55",
+};
+
+/** Five-step progress line, coloured by outcome (won, refunded, closed) or by whose turn it is. */
+export function ProgressLine({ dispute, className }: { dispute: StageInput; className?: string }) {
+  const step = stageStep(dispute);
   return (
     <span role="img" aria-label={`Step ${step} of 5: ${STAGE_STEPS[step - 1]}`} className={cn("flex w-[120px] gap-[3px]", className)}>
       {STAGE_STEPS.map((s, i) => (
-        <span key={s} className={cn("h-[3px] flex-1 rounded-full", i < step ? "bg-accent" : "bg-inset")} />
+        <span key={s} className={cn("h-[3px] flex-1 rounded-full", i < step ? TONE_FILL[stageTone(dispute)] : "bg-inset")} />
       ))}
     </span>
   );

@@ -8,7 +8,7 @@ import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { Search } from "lucide-react";
 import { formatAmount, reasonLabel } from "@/app/_components/dispute-ui";
 import type { HomeDispute } from "@/lib/dashboard";
-import { callLabel, dueLabel, stageLabel, stageStep } from "@/lib/dispute-stage";
+import { callLabel, dueLabel, stageLabel } from "@/lib/dispute-stage";
 import { cn } from "@/lib/cn";
 import { Amount, ProgressLine } from "./bits";
 import { gridTheme } from "./ag-setup";
@@ -37,7 +37,7 @@ function StageCell({ data: d }: Cell) {
   return (
     <span className="flex flex-col gap-1.5 leading-tight">
       <span className="text-fg-body">{stageLabel(d)}</span>
-      <ProgressLine step={stageStep(d)} />
+      <ProgressLine dispute={d} />
     </span>
   );
 }
@@ -84,7 +84,7 @@ function DisputeCard({ d, href }: { d: HomeDispute; href: string }) {
       <span className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[13px]">
         <span className="flex flex-col gap-1.5">
           <span className="text-fg-body">{stageLabel(d)}</span>
-          <ProgressLine step={stageStep(d)} />
+          <ProgressLine dispute={d} />
         </span>
         <span className="text-fg-body">{callLabel(d.report, d.currency) ?? ""}</span>
       </span>

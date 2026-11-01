@@ -25,6 +25,9 @@ function Row({ title, htmlFor, description, children, last }: { title: string; h
   );
 }
 
+/** Demo account: every control is visibly switched off, not just unsaveable. */
+const lockedClass = "opacity-55 select-none [&_*]:cursor-not-allowed";
+
 /** Dispute policies form (Mock 2 layout). Read-only for the demo account. */
 export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readOnly: boolean }) {
   const [state, save, saving] = useActionState<SettingsState, FormData>(saveSettings, null);
@@ -35,7 +38,7 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
 
   return (
     <form action={save} className="flex flex-col gap-3">
-      <fieldset disabled={disabled} className="rounded-xl border border-line bg-canvas px-6">
+      <fieldset disabled={disabled} className={`rounded-xl border border-line bg-canvas px-6 ${readOnly ? lockedClass : ""}`}>
         <legend className="sr-only">Automatic decisions</legend>
         <Row title="Auto-refund small claims" description="Sira refunds small claims straight away, unless you already refunded the buyer or PayPal doesn't allow it. Everything else still waits for you.">
           <div className="flex flex-col gap-3.5">
@@ -89,7 +92,7 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
         </Row>
       </fieldset>
 
-      <fieldset disabled={disabled} className="rounded-xl border border-line bg-canvas px-6">
+      <fieldset disabled={disabled} className={`rounded-xl border border-line bg-canvas px-6 ${readOnly ? lockedClass : ""}`}>
         <legend className="sr-only">Policies</legend>
         <Row title="Return policy" htmlFor="returnPolicy" description="Sira quotes this when a buyer asks about returns, and weighs it in its advice.">
           <textarea

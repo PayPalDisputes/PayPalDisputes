@@ -38,15 +38,16 @@ export default async function InsightsPage() {
       tone: "text-ok",
     },
     {
-      label: "Won or settled",
-      value: outcomes.resolved ? `${outcomes.won + outcomes.settled} of ${outcomes.resolved}` : "—",
+      label: "Won",
+      value: outcomes.resolved ? `${outcomes.won} of ${outcomes.resolved}` : "—",
       hint: outcomes.autoRefunded ? `${outcomes.autoRefunded} small claim${outcomes.autoRefunded === 1 ? "" : "s"} auto-refunded` : "resolved disputes",
     },
     {
-      label: "Missed deadlines",
-      value: String(impact.overdue),
-      hint: impact.overdue ? "respond now: PayPal rules for the buyer" : "a missed deadline is an automatic loss",
-      tone: impact.overdue ? "text-bad" : undefined,
+      label: "Resolved",
+      value: String(outcomes.resolved),
+      hint: outcomes.resolved
+        ? [outcomes.won && `${outcomes.won} won`, outcomes.settled && `${outcomes.settled} settled`, outcomes.lost && `${outcomes.lost} lost`].filter(Boolean).join(" · ")
+        : "closed by PayPal",
     },
   ];
 

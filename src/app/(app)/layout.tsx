@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, Search, SlidersHorizontal } from "lucide-react";
+import { AccountMenu } from "@/components/app/AccountMenu";
 import { HideAmounts } from "@/components/app/HideAmounts";
 import { NavLink } from "@/components/app/NavLink";
 import { Logo } from "@/components/ui/Logo";
@@ -56,13 +57,13 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </nav>
         )}
 
-        <div className="mt-auto space-y-2 px-2.5">
-          <p className="text-[12px] leading-[18px] text-fg-muted">
+        <div className="mt-auto flex flex-col gap-3">
+          <p className="px-2.5 text-[12px] leading-[18px] text-fg-muted">
             {mode === "live" ? "Live · approvals reach PayPal" : "Demo mode · nothing is sent to PayPal"}
           </p>
-          <Link href="/" className="block text-[12px] text-fg-muted hover:text-fg">
-            ← sira.com
-          </Link>
+          <div className="border-t border-line pt-3">
+            <AccountMenu name={accountName} initials={initials} variant="sidebar" />
+          </div>
         </div>
       </aside>
 
@@ -96,18 +97,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
                 <Bell strokeWidth={1.6} className="size-[17px]" />
                 {needsResponse > 0 && <span className="absolute top-2 right-2.5 size-2 rounded-full border-2 border-muted bg-accent" />}
               </Link>
-              <span
-                title={accountName}
-                aria-label={`Signed in as ${accountName}`}
-                className="ml-1 inline-flex size-10 items-center justify-center rounded-full bg-inset text-[13px] font-medium text-fg-body"
-              >
-                {initials}
-              </span>
-              <form action="/api/auth/logout" method="post">
-                <button type="submit" className="rounded-full px-3 py-1.5 text-[13px] text-fg-muted transition-colors hover:bg-muted hover:text-fg">
-                  Sign out
-                </button>
-              </form>
+              {/* On desktop the account lives at the bottom of the sidebar */}
+              <div className="lg:hidden">
+                <AccountMenu name={accountName} initials={initials} variant="compact" />
+              </div>
             </div>
           </div>
           {/* Section tabs (mobile / tablet); scrolls sideways when they don't all fit */}

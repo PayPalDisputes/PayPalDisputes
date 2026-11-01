@@ -11,13 +11,15 @@ import { cn } from "@/lib/cn";
 
 export const metadata: Metadata = { title: "Disputes · Sira" };
 
+const draftReady = (d: HomeDispute) => d.status !== "RESOLVED" && d.report?.status === "pending_review" && d.report.current;
+
+/** Tabs, most urgent first. "Needs your response" covers both disputes waiting on the seller and drafts to approve. */
 const VIEWS = {
-  all: { label: "All", match: () => true },
-  approval: {
-    label: "Drafts to review",
-    match: (d: HomeDispute) => d.status !== "RESOLVED" && d.report?.status === "pending_review" && d.report.current,
+  "needs-response": {
+    label: "Needs your response",
+    match: (d: HomeDispute) => d.status === "WAITING_FOR_SELLER_RESPONSE" || Boolean(draftReady(d)),
   },
-  "needs-response": { label: "Waiting on you", match: (d: HomeDispute) => d.status === "WAITING_FOR_SELLER_RESPONSE" },
+  all: { label: "All", match: () => true },
   "due-this-week": {
     label: "Due this week",
     match: (d: HomeDispute) => d.status === "WAITING_FOR_SELLER_RESPONSE" && d.daysLeft !== null && d.daysLeft <= 7,
@@ -28,26 +30,30 @@ const VIEWS = {
 } as const;
 type View = keyof typeof VIEWS;
 
-/** Soonest seller deadline first; disputes without one go last. */
-const byDeadline = (a: HomeDispute, b: HomeDispute) =>
-  (a.dueAt ? new Date(a.dueAt).getTime() : Infinity) - (b.dueAt ? new Date(b.dueAt).getTime() : Infinity);
+/** Most urgent first: soonest seller deadline, then other open disputes, then resolved ones. */
+const urgency = (d: HomeDispute) => (d.status === "RESOLVED" ? 2 : d.dueAt ? 0 : 1);
+const byUrgency = (a: HomeDispute, b: HomeDispute) =>
+  urgency(a) - urgency(b) || (a.dueAt ? new Date(a.dueAt).getTime() : 0) - (b.dueAt ? new Date(b.dueAt).getTime() : 0);
 
 export default async function DisputesPage({ searchParams }: PageProps<"/disputes">) {
   await connection(); // always read fresh rows from Supabase, never a build-time snapshot
   const { view: rawView, open, q } = await searchParams;
-  const view: View = typeof rawView === "string" && rawView in VIEWS ? (rawView as View) : "all";
-  const listHref = view === "all" ? "/disputes" : `/disputes?view=${view}`;
   const session = await requireSession();
   const canOpen = typeof open === "string" && (await canAccessDispute(open));
   const [{ disputes }, opened] = await Promise.all([
     getHomeDataCached(sellerScope(session)),
     canOpen ? getDisputeDetail(open) : Promise.resolve(null),
   ]);
-  const rows = disputes.filter(VIEWS[view].match).sort(byDeadline);
+  // Old links used ?view=approval for drafts; they now land on the merged tab.
+  const requested = rawView === "approval" ? "needs-response" : rawView;
+  const needsYou = disputes.filter(VIEWS["needs-response"].match).length;
+  const view: View =
+    typeof requested === "string" && requested in VIEWS ? (requested as View) : needsYou > 0 ? "needs-response" : "all";
+  const listHref = `/disputes?view=${view}`;
+  const rows = disputes.filter(VIEWS[view].match).sort(byUrgency);
 
   const open_ = disputes.filter((d) => d.status !== "RESOLVED");
-  const waiting = disputes.filter(VIEWS["needs-response"].match).length;
-  const drafts = disputes.filter(VIEWS.approval.match).length;
+  const drafts = disputes.filter(draftReady).length;
   const atRisk = new Map<string, number>();
   for (const d of open_) atRisk.set(d.currency ?? "USD", (atRisk.get(d.currency ?? "USD") ?? 0) + (d.amount ?? 0));
   const [riskCurrency, riskTotal] = [...atRisk.entries()].sort((a, b) => b[1] - a[1])[0] ?? ["USD", 0];
@@ -58,7 +64,7 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
         <div className="flex flex-col gap-1.5">
           <h1 className="text-[24px] font-[480] tracking-[0.01em] text-fg">Disputes</h1>
           <p className="text-[14px] text-fg-muted">
-            {open_.length} open · <Amount amount={riskTotal} currency={riskCurrency} /> at risk · {waiting} waiting on you
+            {open_.length} open · <Amount amount={riskTotal} currency={riskCurrency} /> at risk · {needsYou} need your response
           </p>
         </div>
         {drafts > 0 && (
@@ -72,11 +78,11 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
         {(Object.keys(VIEWS) as View[]).map((key) => {
           const count = disputes.filter(VIEWS[key].match).length;
           const active = key === view;
-          if (count === 0 && !active && key !== "all") return null;
+          if (count === 0 && !active && key !== "all" && key !== "needs-response") return null;
           return (
             <Link
               key={key}
-              href={key === "all" ? "/disputes" : `/disputes?view=${key}`}
+              href={`/disputes?view=${key}`}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "-mb-px inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 text-[14px] whitespace-nowrap transition-colors",
