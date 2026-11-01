@@ -6,9 +6,9 @@ import { cn } from "@/lib/cn";
  * Sira's logo: two hand-drawn olive branches, overlapping, stacked above the "Sira" wordmark (the
  * hanging branch on top, the upright one under it, shifted right). Composed from the brand files in
  * public/brand (Sira.png, Left-hanging-olive-branch.png, Right-upright-olive-branch.png) into one
- * transparent image, sira-logo-stacked.png (919×698), following the design mockup's positions.
+ * transparent image, sira-logo-stacked-2.png (919×736), following the design mockup with a small gap between the branches.
  */
-const LOGO = { src: "/brand/sira-logo-stacked.png", width: 919, height: 698 };
+const LOGO = { src: "/brand/sira-logo-stacked-2.png", width: 919, height: 736 };
 
 /** The logo on its own, sized by height (width follows). */
 export function LogoMark({ className }: { className?: string }) {
