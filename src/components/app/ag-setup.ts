@@ -20,17 +20,17 @@ export const gridTheme = themeQuartz.withParams({
   headerFontSize: 12.5,
   headerFontWeight: 420,
   backgroundColor: "#ffffff",
-  foregroundColor: "#1e1e2a",
-  headerTextColor: "#70707d",
+  foregroundColor: "#1d2016",
+  headerTextColor: "#6f7364",
   headerBackgroundColor: "#ffffff",
-  borderColor: "#ececf1",
-  rowBorder: { color: "#f2f2f5" },
+  borderColor: "#e9eae3",
+  rowBorder: { color: "#f1f2ec" },
   columnBorder: false,
   wrapperBorder: true,
-  wrapperBorderRadius: 12,
-  accentColor: "#0070e0",
-  rowHoverColor: "#fafafc",
-  selectedRowBackgroundColor: "rgba(0, 112, 224, 0.06)",
+  wrapperBorderRadius: 8,
+  accentColor: "#5a6b2e",
+  rowHoverColor: "#fafaf7",
+  selectedRowBackgroundColor: "rgba(90, 107, 46, 0.07)",
   oddRowBackgroundColor: "#ffffff",
   spacing: 7,
   cellHorizontalPadding: 18,
@@ -44,14 +44,14 @@ export const gridTheme = themeQuartz.withParams({
  * Recommendation colours follow the entity, never its rank.
  */
 export const COLORS = {
-  ink: "#0070e0", // single-series bars (PayPal blue)
+  ink: "#5a6b2e", // single-series bars (olive)
   urgent: "#b42318", // status: due within 3 days (always paired with a text label)
   fight: "#3a5fa8",
   settle: "#d0703f",
   refund: "#1a9a7a",
-  text: "#1e1e2a",
-  muted: "#70707d",
-  grid: "#ececf1",
+  text: "#1d2016",
+  muted: "#6f7364",
+  grid: "#e9eae3",
   surface: "#ffffff",
 } as const;
 
@@ -80,7 +80,7 @@ export function baseChart(): Partial<AgChartOptions> {
         gridLineColor: COLORS.grid,
         backgroundColor: "transparent",
         chartBackgroundColor: "transparent",
-        tooltipBackgroundColor: "#1e1e2a",
+        tooltipBackgroundColor: "#1d2016",
         tooltipTextColor: "#ffffff",
         tooltipSubtleTextColor: "rgba(255,255,255,0.7)",
         tooltipBorderRadius: 8,

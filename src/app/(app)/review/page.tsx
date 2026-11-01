@@ -106,11 +106,11 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
               : "When Sira drafts a response, it lands here for you to approve. Nothing goes to PayPal until you do."}
           </p>
           <div className="mt-4 flex gap-2">
-            <Link href="/dashboard" className="inline-flex h-10 items-center rounded-full bg-fg px-[18px] text-[14px] text-white hover:bg-fg/90">
+            <Link href="/dashboard" className="inline-flex h-10 items-center rounded-md bg-fg px-[18px] text-[14px] text-white hover:bg-fg/90">
               Back to home
             </Link>
             {queue.length > 0 && (
-              <Link href="/review" className="inline-flex h-10 items-center rounded-full bg-muted px-[18px] text-[14px] text-fg hover:bg-inset">
+              <Link href="/review" className="inline-flex h-10 items-center rounded-md bg-muted px-[18px] text-[14px] text-fg hover:bg-inset">
                 Review again
               </Link>
             )}

@@ -200,7 +200,7 @@ export function DisputesGrid({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <label className="flex h-9 min-w-[220px] flex-1 items-center gap-2 rounded-[10px] border border-line bg-canvas px-3 focus-within:border-line-strong sm:max-w-[320px]">
+        <label className="flex h-9 min-w-[220px] flex-1 items-center gap-2 rounded-md border border-line bg-canvas px-3 focus-within:border-line-strong sm:max-w-[320px]">
           <span className="sr-only">Search disputes</span>
           <Search aria-hidden strokeWidth={1.8} className="size-[15px] text-fg-muted" />
           <input
@@ -252,7 +252,7 @@ export function DisputesGrid({
             if (key === "Enter" && e.data) openDispute(e.data.id);
           }}
           onModelUpdated={(e) => setShown(e.api.getDisplayedRowCount())}
-          overlayNoRowsTemplate='<span style="color:#70707d">No disputes match.</span>'
+          overlayNoRowsTemplate='<span style="color:#6f7364">No disputes match.</span>'
         />
       </div>
     </div>

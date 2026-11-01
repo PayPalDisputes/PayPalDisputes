@@ -6,6 +6,8 @@ import { DisputesGrid } from "@/components/app/DisputesGrid";
 import { Button } from "@/components/ui/Button";
 import { canAccessDispute, requireSession, sellerScope, sessionMode } from "@/lib/auth";
 import { getDisputeDetail, getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
+import { Suspense } from "react";
+import { SidePanelSkeleton } from "@/components/app/SidePanel";
 import { DisputePanel } from "./panel";
 import { cn } from "@/lib/cn";
 
@@ -39,11 +41,7 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
   await connection(); // always read fresh rows from Supabase, never a build-time snapshot
   const { view: rawView, open, q } = await searchParams;
   const session = await requireSession();
-  const canOpen = typeof open === "string" && (await canAccessDispute(open));
-  const [{ disputes }, opened] = await Promise.all([
-    getHomeDataCached(sellerScope(session)),
-    canOpen ? getDisputeDetail(open) : Promise.resolve(null),
-  ]);
+  const { disputes } = await getHomeDataCached(sellerScope(session));
   // Old links used ?view=approval for drafts; they now land on the merged tab.
   const requested = rawView === "approval" ? "needs-response" : rawView;
   const needsYou = disputes.filter(VIEWS["needs-response"].match).length;
@@ -110,7 +108,18 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
         <DisputesGrid rows={rows} listHref={listHref} csvName={`sira-disputes-${view}`} initialQuery={typeof q === "string" ? q : ""} />
       )}
 
-      {opened && <DisputePanel dispute={opened} listHref={listHref} mode={sessionMode(session)} />}
+      {/* The panel opens at once with a skeleton; the dispute streams in behind it */}
+      {typeof open === "string" && (
+        <Suspense key={open} fallback={<SidePanelSkeleton closeHref={listHref} fullHref={`/disputes/${encodeURIComponent(open)}`} />}>
+          <OpenDispute id={open} listHref={listHref} mode={sessionMode(session)} />
+        </Suspense>
+      )}
     </div>
   );
+}
+
+/** Loads one dispute for the side panel (only if this session may see it). */
+async function OpenDispute({ id, listHref, mode }: { id: string; listHref: string; mode: ReturnType<typeof sessionMode> }) {
+  const dispute = (await canAccessDispute(id)) ? await getDisputeDetail(id) : null;
+  return dispute ? <DisputePanel dispute={dispute} listHref={listHref} mode={mode} /> : null;
 }

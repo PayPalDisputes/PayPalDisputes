@@ -117,7 +117,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
             href={RESOLUTION_CENTER}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-[38px] items-center gap-2 rounded-full bg-muted px-4 text-[14px] text-fg transition-colors hover:bg-inset"
+            className="inline-flex h-[38px] items-center gap-2 rounded-md bg-muted px-4 text-[14px] text-fg transition-colors hover:bg-inset"
           >
             <ExternalLink aria-hidden strokeWidth={1.6} className="size-[15px]" />
             Open in PayPal

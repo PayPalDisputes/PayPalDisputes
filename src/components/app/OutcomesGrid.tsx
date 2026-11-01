@@ -132,7 +132,7 @@ export function OutcomesGrid({ rows }: { rows: OutcomeRow[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search buyer, dispute, outcome…"
-            className="h-9 w-full rounded-[10px] border border-line bg-canvas pr-4 pl-9 text-[13.5px] text-fg placeholder:text-fg-muted focus:border-line-strong focus:outline-none"
+            className="h-9 w-full rounded-md border border-line bg-canvas pr-4 pl-9 text-[13.5px] text-fg placeholder:text-fg-muted focus:border-line-strong focus:outline-none"
           />
         </label>
         <span className="text-[12.5px] text-fg-muted">

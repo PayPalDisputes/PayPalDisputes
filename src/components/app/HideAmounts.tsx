@@ -48,7 +48,7 @@ export function HideAmounts() {
       aria-pressed={hidden}
       aria-label={hidden ? "Show amounts" : "Hide amounts"}
       title={hidden ? "Show amounts" : "Hide amounts"}
-      className="inline-flex size-10 items-center justify-center rounded-full bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
+      className="inline-flex size-10 items-center justify-center rounded-md bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
     >
       {hidden ? <EyeOff strokeWidth={1.6} className="size-[17px]" /> : <Eye strokeWidth={1.6} className="size-[17px]" />}
     </button>

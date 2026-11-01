@@ -187,7 +187,7 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
                 href={RESOLUTION_CENTER}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-[38px] items-center rounded-full bg-muted px-4 text-[14px] text-fg hover:bg-inset"
+                className="inline-flex h-[38px] items-center rounded-md bg-muted px-4 text-[14px] text-fg hover:bg-inset"
               >
                 Open in PayPal
               </a>

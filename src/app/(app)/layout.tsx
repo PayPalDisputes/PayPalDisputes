@@ -76,7 +76,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </Link>
             {/* Search jumps to the disputes list, filtered */}
             <form action="/disputes" role="search" className="hidden max-w-[560px] flex-1 md:block">
-              <label className="flex h-10 items-center gap-2.5 rounded-[10px] border border-line bg-canvas px-3.5 focus-within:border-line-strong">
+              <label className="flex h-10 items-center gap-2.5 rounded-md border border-line bg-canvas px-3.5 focus-within:border-line-strong">
                 <Search aria-hidden strokeWidth={1.8} className="size-4 text-fg-muted" />
                 <span className="sr-only">Search disputes</span>
                 <input
@@ -92,7 +92,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               <Link
                 href="/disputes?view=needs-response"
                 aria-label={`${needsResponse} disputes need a response`}
-                className="relative inline-flex size-10 items-center justify-center rounded-full bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
+                className="relative inline-flex size-10 items-center justify-center rounded-md bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
               >
                 <Bell strokeWidth={1.6} className="size-[17px]" />
                 {needsResponse > 0 && <span className="absolute top-2 right-2.5 size-2 rounded-full border-2 border-muted bg-accent" />}
