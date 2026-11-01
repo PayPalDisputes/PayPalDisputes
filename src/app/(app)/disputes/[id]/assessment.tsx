@@ -2,6 +2,7 @@ import type { computeUrgency } from "@/lib/agent";
 import type { Decision } from "@/lib/dashboard";
 import type { ActionsMode } from "@/lib/respond";
 import { DRAFT_LABELS, EvidencePackLink, formatAmount, RECOMMENDATION } from "@/app/_components/dispute-ui";
+import { AlertTriangle, CheckCircle2, PenLine, XCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ChatPanel } from "./chat-panel";
 import { ReviewForm } from "./review";
@@ -28,10 +29,53 @@ const TOOL_LABELS: Record<string, string> = {
   list_transactions: "Transactions",
 };
 
+/**
+ * Where the response stands, as a coloured strip at the top of the drafts card, so a draft that
+ * still needs you never looks like one that already went to PayPal.
+ */
+function ResponseStatus({ decision }: { decision: Decision }) {
+  const sentAt = decision.actions.find((a) => a.success)?.createdAt;
+  const when = (iso?: string) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null);
+  const s =
+    decision.status === "submitted"
+      ? { icon: CheckCircle2, text: "Sent to PayPal", detail: when(sentAt), style: "border-ok/25 bg-ok-bg text-ok" }
+      : decision.status === "failed"
+        ? { icon: AlertTriangle, text: "Sending failed", detail: "Check the error below and try again", style: "border-bad/25 bg-bad-bg text-bad" }
+        : decision.status === "rejected"
+          ? { icon: XCircle, text: "You rejected this draft", detail: "Nothing was sent", style: "border-line bg-muted text-fg-body" }
+          : decision.status === "approved"
+            ? { icon: CheckCircle2, text: "Approved", detail: "Sending to PayPal", style: "border-line bg-muted text-fg-body" }
+            : { icon: PenLine, text: "Waiting for your review", detail: "Nothing has been sent to PayPal yet", style: "border-warn/25 bg-warn-bg text-warn" };
+  const Icon = s.icon;
+  return (
+    <p className={cn("-mx-6 -mt-5 mb-4 flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-t-xl border-b px-6 py-3 text-[13.5px]", s.style)}>
+      <Icon aria-hidden strokeWidth={1.8} className="size-4 shrink-0" />
+      <span className="font-medium">{s.text}</span>
+      {s.detail && <span className="opacity-80">· {s.detail}</span>}
+    </p>
+  );
+}
+
 /** A quiet white card with a blue section label: the dashboard's container for Sira's report. */
-function Block({ id, title, aside, children, className }: { id: string; title: string; aside?: React.ReactNode; children: React.ReactNode; className?: string }) {
+function Block({
+  id,
+  title,
+  aside,
+  banner,
+  children,
+  className,
+}: {
+  id: string;
+  title: string;
+  aside?: React.ReactNode;
+  /** Full-width strip along the card's top edge, above the title. */
+  banner?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <section aria-labelledby={id} className={cn("rounded-xl border border-line bg-canvas px-6 py-5", className)}>
+      {banner}
       <div className="mb-2 flex items-baseline justify-between gap-3">
         <h2 id={id} className="text-[13px] font-medium text-accent">
           {title}
@@ -176,7 +220,12 @@ export function AssessmentReport({
         </Block>
       )}
 
-      <Block id="drafts" title={reviewable ? "Your response" : a.drafts.length === 1 ? "Draft" : "Drafts"}>
+      <Block
+        id="drafts"
+        title={reviewable ? "Your response" : decision.status === "submitted" ? "What Sira sent" : a.drafts.length === 1 ? "Draft" : "Drafts"}
+        className={decision.status === "submitted" ? "border-ok/30" : reviewable ? "border-warn/30" : undefined}
+        banner={decision.current || decision.status === "submitted" ? <ResponseStatus decision={decision} /> : undefined}
+      >
         {reviewable ? (
           <>
             {mode === "demo" && <p className="mb-3 text-[13px] text-fg-muted">Demo mode: try Approve or Reject freely. Nothing is sent to PayPal or saved.</p>}
@@ -200,7 +249,14 @@ export function AssessmentReport({
                     {DRAFT_LABELS[d.action] ?? d.action} → {d.recipient === "paypal" ? "PayPal" : "buyer"}
                     {d.action === "provide_evidence" && <EvidencePackLink disputeId={disputeId} />}
                   </p>
-                  <p className="rounded-xl bg-muted/70 px-5 py-4 text-[15px] leading-[25px] whitespace-pre-wrap text-fg">{d.text}</p>
+                  <p
+                    className={cn(
+                      "rounded-xl px-5 py-4 text-[15px] leading-[25px] whitespace-pre-wrap text-fg",
+                      decision.status === "submitted" ? "border-l-2 border-ok bg-ok-bg/50" : "bg-muted/70",
+                    )}
+                  >
+                    {d.text}
+                  </p>
                 </div>
               ))}
             </div>

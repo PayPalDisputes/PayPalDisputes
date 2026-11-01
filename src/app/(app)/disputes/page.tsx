@@ -110,7 +110,7 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
         <DisputesGrid rows={rows} listHref={listHref} csvName={`sira-disputes-${view}`} initialQuery={typeof q === "string" ? q : ""} />
       )}
 
-      {opened && <DisputePanel dispute={opened} disputes={disputes} listHref={listHref} mode={sessionMode(session)} />}
+      {opened && <DisputePanel dispute={opened} listHref={listHref} mode={sessionMode(session)} />}
     </div>
   );
 }

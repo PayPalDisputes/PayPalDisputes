@@ -11,6 +11,19 @@ const SIGNAL: Record<BuyerSignal, { label: string; style: string }> = {
 };
 
 const SHOWN = 5;
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/** The pattern in a few facts ("5 other disputes · 3 in 30 days · …"); the full sentence goes to Ask Sira. */
+function facts(h: BuyerHistory): string {
+  const parts = [
+    h.otherDisputes.length === 0 ? "No other disputes with you" : plural(h.otherDisputes.length, "other dispute"),
+    h.otherDisputesLast30Days > 0 && h.otherDisputesLast30Days !== h.otherDisputes.length && `${h.otherDisputesLast30Days} in 30 days`,
+    h.otherDisputesLast30Days > 0 && h.otherDisputesLast30Days === h.otherDisputes.length && "all in 30 days",
+    h.notReceivedOnDeliveredParcels > 0 && `${h.notReceivedOnDeliveredParcels} "not received" on delivered parcels`,
+    h.recentPurchases !== null && `${plural(h.recentPurchases, "purchase")} last month`,
+  ];
+  return parts.filter(Boolean).join(" · ");
+}
 
 /** The buyer's track record with this seller. Describes the pattern, never judges the person. */
 export function BuyerHistoryCard({ history }: { history: BuyerHistory | null }) {
@@ -19,19 +32,19 @@ export function BuyerHistoryCard({ history }: { history: BuyerHistory | null }) 
   return (
     <div className="text-[14px]">
       <p className={`font-medium ${signal.style}`}>{signal.label}</p>
-      <p className="mt-1.5 leading-[22px] text-fg-body">{history.summary}</p>
+      <p className="mt-1.5 leading-[22px] text-fg-body">{facts(history)}</p>
 
       {history.otherDisputes.length > 0 && (
         <ul className="mt-3 space-y-1.5 border-t border-line-subtle pt-3">
           {history.otherDisputes.slice(0, SHOWN).map((d) => (
-            <li key={d.id} className="flex items-baseline justify-between gap-3">
-              <Link href={`/disputes/${d.id}`} className="font-mono text-[12px] text-accent hover:underline">
-                {d.id}
+            <li key={d.id}>
+              <Link href={`/disputes/${d.id}`} className="group flex items-baseline justify-between gap-3">
+                <span className="text-fg group-hover:underline">{reasonLabel(d.reason)}</span>
+                <span className="shrink-0 text-right text-[12.5px] text-fg-muted">
+                  {d.deliveredParcel && d.reason === "MERCHANDISE_OR_SERVICE_NOT_RECEIVED" && "Delivered · "}
+                  {d.openedAt ? new Date(d.openedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+                </span>
               </Link>
-              <span className="text-right text-[12.5px] text-fg-muted">
-                {reasonLabel(d.reason)}
-                {d.deliveredParcel && d.reason === "MERCHANDISE_OR_SERVICE_NOT_RECEIVED" && " · parcel was delivered"}
-              </span>
             </li>
           ))}
           {history.otherDisputes.length > SHOWN && (
@@ -41,7 +54,7 @@ export function BuyerHistoryCard({ history }: { history: BuyerHistory | null }) 
       )}
 
       <p className="mt-3 text-[12px] text-fg-muted">
-        PayPal decides on evidence, not history. This is context for you, and it&apos;s never shown to the buyer.
+        Context for you only. PayPal decides on evidence, not history.
       </p>
     </div>
   );
