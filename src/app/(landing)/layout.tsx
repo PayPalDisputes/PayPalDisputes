@@ -14,10 +14,10 @@ const footerColumns = [
   },
 ];
 
-/** Shell for the landing page: a nav that floats over the hero, white page and a column footer. Always light. */
+/** Shell for the landing page: a nav that floats over the hero, warm off-white page (as in the dashboard), mono digits and a column footer. Always light. */
 export default function LandingLayout({ children }: LayoutProps<"/">) {
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-white text-[#141312] [color-scheme:light]">
+    <div className="flex min-h-full flex-1 flex-col bg-[#fafaf7] text-[#141312] [color-scheme:light] [font-family:var(--font-digits),var(--font-geist-sans),system-ui,sans-serif]">
       <a
         href="#main"
         className="sr-only z-[60] rounded-md bg-[#141312] px-3 py-2 text-sm text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"

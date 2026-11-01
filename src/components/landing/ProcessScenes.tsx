@@ -20,7 +20,7 @@ const at = (ms: number, more?: Record<string, string>) => ({ "--d": `${ms}ms`, .
 
 function Ok() {
   return (
-    <span className="grid size-4 shrink-0 place-items-center rounded-full bg-[#0070E0] text-white">
+    <span className="grid size-4 shrink-0 place-items-center rounded-full bg-[#5a6b2e] text-white">
       <Check className="size-2.5" strokeWidth={3} />
     </span>
   );
@@ -48,7 +48,7 @@ const SyncScene: Scene = () => (
     <div className="flex items-center gap-3">
       <span className={cn(card, "px-3 py-1.5 text-[12px]")}>PayPal</span>
       <div className="relative h-px flex-1 border-t border-dashed border-[#141312]/25">
-        <span className="play-travel absolute -top-[5px] -ml-1.5 h-[9px] w-3 rounded-sm bg-[#0070E0]" style={at(200)} />
+        <span className="play-travel absolute -top-[5px] -ml-1.5 h-[9px] w-3 rounded-sm bg-[#5a6b2e]" style={at(200)} />
       </div>
       <span className="rounded-lg bg-[#141312] px-3 py-1.5 text-[12px] text-white">Sira</span>
     </div>
@@ -63,7 +63,7 @@ const SyncScene: Scene = () => (
       </div>
       <div className="relative h-[176px]">
         <div className="play-item play-flash absolute inset-x-0 top-0 flex h-11 items-center gap-3 px-4 text-[12.5px]" style={at(1000)}>
-          <span className="rounded bg-[#0070E0] px-1.5 py-0.5 font-mono text-[9px] tracking-[0.08em] text-white">NEW</span>
+          <span className="rounded bg-[#5a6b2e] px-1.5 py-0.5 font-mono text-[9px] tracking-[0.08em] text-white">NEW</span>
           <span className="flex-1 truncate font-medium">Item not received</span>
           <span className="tabular-nums">$2,875.50</span>
           <span className="w-14 text-right font-medium text-[#b4552f]">2 days</span>
@@ -154,10 +154,10 @@ const EvidenceScene: Scene = () => (
       <p className="mt-1 font-mono text-[10.5px] text-[#55524d]">9400 1118 9922 3456 7810 01</p>
       <ol className="relative mt-4 space-y-3.5 pl-5">
         <span className="absolute top-1.5 bottom-1.5 left-[5px] w-px bg-[#141312]/[0.08]" />
-        <span className="play-bar-y absolute top-1.5 bottom-1.5 left-[5px] w-px bg-[#0070E0]" style={at(200)} />
+        <span className="play-bar-y absolute top-1.5 bottom-1.5 left-[5px] w-px bg-[#5a6b2e]" style={at(200)} />
         {events.map(([e, when], i) => (
           <li key={e} className="play-item relative text-[12px]" style={at(250 + i * 280)}>
-            <span className={cn("absolute top-1 -left-5 size-[11px] rounded-full border-2 border-white", i === 3 ? "bg-[#0070E0]" : "bg-[#8FC3EE]")} />
+            <span className={cn("absolute top-1 -left-5 size-[11px] rounded-full border-2 border-white", i === 3 ? "bg-[#5a6b2e]" : "bg-[#b9c48f]")} />
             <p className={i === 3 ? "font-medium" : ""}>{e}</p>
             <p className="text-[10.5px] text-[#8a867f]">{when}</p>
           </li>
@@ -176,7 +176,7 @@ const EvidenceScene: Scene = () => (
             <p className="text-[10px] text-[#8a867f]">Where USPS delivered</p>
             <p>1824 Alder St, Portland, OR 97214</p>
           </div>
-          <p className="play-item flex items-center gap-2 pt-1 font-medium text-[#0070E0]" style={at(2000)}>
+          <p className="play-item flex items-center gap-2 pt-1 font-medium text-[#5a6b2e]" style={at(2000)}>
             <Ok /> Addresses match
           </p>
         </div>
@@ -215,7 +215,7 @@ const ProtectionScene: Scene = () => (
           </span>
           <span className={cn("flex-1", !r.ok && "text-[#55524d]")}>{r.rule}</span>
           <span className="play-item font-mono text-[9.5px] tracking-[0.08em] uppercase" style={at(380 + i * 420)}>
-            {r.ok ? <span className="text-[#0070E0]">Met</span> : <span className="text-[#b4552f]">Missing</span>}
+            {r.ok ? <span className="text-[#5a6b2e]">Met</span> : <span className="text-[#b4552f]">Missing</span>}
           </span>
         </li>
       ))}
@@ -247,14 +247,14 @@ const DecideScene: Scene = () => (
           <div className="flex items-center justify-between gap-3">
             <p className="text-[13px] font-medium">{o.name}</p>
             {o.pick && (
-              <span className="play-item rounded-full bg-[#0070E0] px-2 py-0.5 text-[10.5px] text-white" style={at(1900)}>
+              <span className="play-item rounded-full bg-[#5a6b2e] px-2 py-0.5 text-[10.5px] text-white" style={at(1900)}>
                 Recommended
               </span>
             )}
           </div>
           <p className="mt-0.5 text-[11.5px] text-[#77736c]">{o.note}</p>
           <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-[#141312]/[0.06]">
-            <span className="play-bar block h-full rounded-full bg-[#0070E0]" style={{ width: o.fit, ...at(600 + i * 220) }} />
+            <span className="play-bar block h-full rounded-full bg-[#5a6b2e]" style={{ width: o.fit, ...at(600 + i * 220) }} />
           </div>
         </div>
       </div>
@@ -262,7 +262,7 @@ const DecideScene: Scene = () => (
     <ul className="space-y-1.5 pt-2 text-[12px] text-[#55524d]">
       {["Delivered to the PayPal address, with tracking", "Claim opened nine days after delivery", "Add a delivery photo to cover the missing signature"].map((r, i) => (
         <li key={r} className="play-item flex gap-2" style={at(2100 + i * 160)}>
-          <span className="mt-[7px] size-1 shrink-0 rounded-full bg-[#0070E0]" />
+          <span className="mt-[7px] size-1 shrink-0 rounded-full bg-[#5a6b2e]" />
           {r}
         </li>
       ))}
@@ -296,7 +296,7 @@ function Typewriter({ text, on, delay = 300 }: { text: string; on: boolean; dela
   return (
     <p className="text-[12.5px] leading-relaxed text-[#2c2a27]">
       {text.slice(0, shown)}
-      {!reduced && shown < text.length && <span className="ml-px inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse bg-[#0070E0]" />}
+      {!reduced && shown < text.length && <span className="ml-px inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse bg-[#5a6b2e]" />}
     </p>
   );
 }
@@ -319,7 +319,7 @@ const DraftScene: Scene = ({ on }) => (
         { f: "delivery-photo.jpg", I: ImageIcon },
       ].map(({ f, I }, i) => (
         <span key={f} className="play-item inline-flex items-center gap-1.5 rounded-md border border-[#141312]/[0.08] px-2 py-1 text-[11px] text-[#55524d]" style={at(typedMs + 150 + i * 180)}>
-          <I className="size-3 text-[#0070E0]" strokeWidth={2} />
+          <I className="size-3 text-[#5a6b2e]" strokeWidth={2} />
           {f}
         </span>
       ))}
@@ -365,10 +365,10 @@ const ApproveScene: Scene = () => (
 
     <ol className="relative mt-6 grid grid-cols-4 gap-2">
       <span className="absolute top-[7px] right-[12.5%] left-[12.5%] h-px bg-[#141312]/[0.08]" />
-      <span className="play-bar absolute top-[7px] right-[12.5%] left-[12.5%] h-px bg-[#0070E0]" style={at(1500)} />
+      <span className="play-bar absolute top-[7px] right-[12.5%] left-[12.5%] h-px bg-[#5a6b2e]" style={at(1500)} />
       {pipeline.map(([s, sub], i) => (
         <li key={s} className="relative flex flex-col items-center text-center">
-          <span className="play-item relative grid size-[15px] place-items-center rounded-full border-2 border-white bg-[#0070E0]" style={at(1500 + i * 420)}>
+          <span className="play-item relative grid size-[15px] place-items-center rounded-full border-2 border-white bg-[#5a6b2e]" style={at(1500 + i * 420)}>
             {i === pipeline.length - 1 && <Check className="size-2 text-white" strokeWidth={4} />}
           </span>
           <p className="play-item mt-2 text-[11px] leading-tight font-medium" style={at(1550 + i * 420)}>

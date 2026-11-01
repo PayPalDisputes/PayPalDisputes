@@ -26,7 +26,7 @@ export function LandingHeader() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-40 border-b transition-[background-color,border-color] duration-300",
-        scrolled ? "border-[#141312]/[0.06] bg-white/90 backdrop-blur" : "border-transparent bg-transparent",
+        scrolled ? "border-[#141312]/[0.06] bg-[#fafaf7]/90 backdrop-blur" : "border-transparent bg-transparent",
       )}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
@@ -36,7 +36,7 @@ export function LandingHeader() {
         <nav className="flex items-center gap-1 text-[14px]">
           <Link
             href={site.appHref}
-            className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#0070E0] py-2 pr-3 pl-4 text-white hover:bg-[#0062c4]"
+            className="ml-2 inline-flex items-center gap-1 rounded-md bg-[#5a6b2e] py-2 pr-3 pl-4 text-white hover:bg-[#4a5824]"
           >
             Open dashboard
             <ChevronRight aria-hidden className="size-3.5" strokeWidth={2} />

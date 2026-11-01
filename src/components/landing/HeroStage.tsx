@@ -91,7 +91,7 @@ export function HeroStage() {
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[11px] transition-colors duration-500",
-                  sent ? "bg-[#0070E0] text-white" : "bg-[#141312]/[0.06] text-[#55524d]",
+                  sent ? "bg-[#5a6b2e] text-white" : "bg-[#141312]/[0.06] text-[#55524d]",
                 )}
               >
                 {sent ? "Responded" : "Open"}
@@ -108,7 +108,7 @@ export function HeroStage() {
                   <span
                     className={cn(
                       "grid size-4 shrink-0 place-items-center rounded-full",
-                      c.ok ? "bg-[#0070E0] text-white" : "border border-dashed border-[#141312]/35 text-[#77736c]",
+                      c.ok ? "bg-[#5a6b2e] text-white" : "border border-dashed border-[#141312]/35 text-[#77736c]",
                     )}
                   >
                     {c.ok ? <Check className="size-2.5" strokeWidth={3} /> : <Minus className="size-2.5" strokeWidth={3} />}
@@ -134,7 +134,7 @@ export function HeroStage() {
                   className={cn("flex gap-2", enter(s >= 5))}
                   style={{ transitionDelay: s >= 5 && s < 6 ? `${150 + i * 140}ms` : undefined }}
                 >
-                  <span aria-hidden className="mt-[7px] size-1 shrink-0 rounded-full bg-[#0070E0]" />
+                  <span aria-hidden className="mt-[7px] size-1 shrink-0 rounded-full bg-[#5a6b2e]" />
                   {r}
                 </li>
               ))}
@@ -150,8 +150,8 @@ export function HeroStage() {
             <div className="mt-4 flex gap-2 text-[12.5px]">
               <span
                 className={cn(
-                  "rounded-full bg-[#0070e0] px-4 py-1.5 text-white transition-transform duration-150",
-                  s === 7 && "scale-95 bg-[#0062c4]",
+                  "rounded-full bg-[#5a6b2e] px-4 py-1.5 text-white transition-transform duration-150",
+                  s === 7 && "scale-95 bg-[#4a5824]",
                 )}
               >
                 {sent ? "Approved" : "Approve"}
@@ -180,7 +180,7 @@ export function HeroStage() {
             sent ? "opacity-100 md:translate-y-0" : "opacity-0 md:translate-y-2",
           )}
         >
-          <span className="grid size-5 place-items-center rounded-full bg-[#0070E0]">
+          <span className="grid size-5 place-items-center rounded-full bg-[#5a6b2e]">
             <Check className="size-3" strokeWidth={3} />
           </span>
           Response sent to PayPal

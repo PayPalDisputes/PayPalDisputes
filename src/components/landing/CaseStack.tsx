@@ -11,7 +11,6 @@ import { cn } from "@/lib/cn";
  * highlight walks down the timeline. Case IDs, reasons and amounts are random placeholders.
  *
  * Plain canvas, no libraries. Paused offscreen; one still frame for reduced motion.
- * `theme="blue"` draws in white for the PayPal-blue hero; `theme="light"` is the original palette.
  */
 
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: "500" });
@@ -26,24 +25,16 @@ type Theme = {
   stages: [string, string, string, string]; // dot colours per slot (hex)
 };
 
-const THEMES: Record<"light" | "blue", Theme> = {
+// Olive, ripening down the stack: deep olive (new) → olive → sage → pale stone (settled).
+const THEMES: Record<"light", Theme> = {
   light: {
-    bg: "#ffffff", // plate fill matches the page behind it (the brief used #f5f7fa on a #f5f7fa page)
-    muted: "#8a94a6",
-    plate: "#c2c9d6",
-    cube: "#8fb6ec",
-    hl: "#0070e0",
+    bg: "#ffffff", // plates read as white paper on the warm off-white page
+    muted: "#7d8270",
+    plate: "#cfd2c2",
+    cube: "#a9b38a",
+    hl: "#5a6b2e",
     hlInk: "#ffffff",
-    stages: ["#003087", "#0070e0", "#009cde", "#b4c3d8"],
-  },
-  blue: {
-    bg: "#0062cc",
-    muted: "rgba(255,255,255,0.62)",
-    plate: "rgba(255,255,255,0.42)",
-    cube: "rgba(255,255,255,0.7)",
-    hl: "#ffffff",
-    hlInk: "#0062cc",
-    stages: ["#ffffff", "#cfe4ff", "#8fd0f5", "#5f95db"],
+    stages: ["#3a4520", "#5a6b2e", "#8d9a5b", "#bcc1a6"],
   },
 };
 
@@ -93,7 +84,7 @@ function makeFile(base: number): File {
   return { header: `${id}   ${reason}   ${amount}`, dots, base };
 }
 
-export function CaseStack({ theme = "blue", className }: { theme?: "light" | "blue"; className?: string }) {
+export function CaseStack({ theme = "light", className }: { theme?: "light"; className?: string }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLCanvasElement>(null);
 

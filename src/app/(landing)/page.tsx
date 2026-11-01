@@ -27,8 +27,8 @@ function PrimaryButton({ href, children, inverted }: { href: string; children: R
     <Link
       href={href}
       className={cn(
-        "inline-flex h-11 items-center gap-1.5 rounded-full pr-4 pl-5 text-[14.5px]",
-        inverted ? "bg-white font-medium text-[#0070E0] hover:bg-[#eaf3fe]" : "bg-[#0070E0] text-white hover:bg-[#0062c4]",
+        "inline-flex h-11 items-center gap-1.5 rounded-md pr-4 pl-5 text-[14.5px]",
+        inverted ? "bg-white font-medium text-[#5a6b2e] hover:bg-[#eef1e3]" : "bg-[#5a6b2e] text-white hover:bg-[#4a5824]",
       )}
     >
       {children}
@@ -42,7 +42,7 @@ function SecondaryButton({ href, children, inverted }: { href: string; children:
     <Link
       href={href}
       className={cn(
-        "inline-flex h-11 items-center rounded-full px-5 text-[14.5px]",
+        "inline-flex h-11 items-center rounded-md px-5 text-[14.5px]",
         inverted ? "bg-white/15 text-white hover:bg-white/25" : "border border-[#141312]/[0.12] hover:bg-[#f7f7f5]",
       )}
     >
@@ -57,8 +57,8 @@ export default function LandingPage() {
   return (
     <>
       {/* Hero: white, over a field of soft blue spring dots, with the case stack on the right */}
-      <section id="hero" className="relative isolate overflow-hidden bg-white">
-        <SpringDots color="0, 112, 224" opacity={0.32} className="-z-10" />
+      <section id="hero" className="relative isolate overflow-hidden bg-[#fafaf7]">
+        <SpringDots color="90, 107, 46" opacity={0.3} className="-z-10" />
         {/* Top padding includes the 64px nav, which floats over this section */}
         <div className={cn(wrap, "grid items-center gap-12 pt-36 pb-20 md:pt-44 md:pb-24 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16")}>
           <div className="max-w-[40rem]">
@@ -99,7 +99,7 @@ export default function LandingPage() {
         <p className="text-center text-[13px] text-[#9a968e]">{reasons.label}</p>
         <ul className="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-2">
           {reasons.items.map((r) => (
-            <li key={r} className="rounded-full border border-[#141312]/[0.08] px-3 py-1.5 text-[13px] text-[#55524d]">
+            <li key={r} className="rounded-md border border-[#141312]/[0.08] px-3 py-1.5 text-[13px] text-[#55524d]">
               {r}
             </li>
           ))}
@@ -173,7 +173,7 @@ export default function LandingPage() {
       </section>
 
       {/* Closing band */}
-      <section className="bg-[#0070E0] text-white">
+      <section className="bg-[#5a6b2e] text-white">
         <div className={cn(wrap, "flex flex-col gap-8 py-20 md:flex-row md:items-end md:justify-between")}>
           <div>
             <h2 className={h2}>{cta.title}</h2>

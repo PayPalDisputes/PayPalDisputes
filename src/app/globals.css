@@ -22,7 +22,9 @@
   --mk-line-subtle: rgba(55, 50, 47, 0.07);
   --mk-line-strong: rgba(55, 50, 47, 0.2);
 
-  --mk-accent: #c2623a;      /* copper: used sparingly for money + highlights */
+  --mk-accent: #5a6b2e;      /* olive: actions, links, highlights */
+  --mk-accent-hover: #4a5824;
+  --mk-accent-bg: #eef1e3;
 
   --mk-ok: #2f7d4f;
   --mk-ok-bg: #ecf6ef;
@@ -45,14 +47,14 @@
   --mk-btn-edge: rgba(55, 50, 47, 0.14);
   --mk-btn-radius: 9999px;
 
-  /* PayPal brand + dispute stages, shared with the landing page's case stack */
-  --mk-brand: #0070e0;       /* PayPal blue: selection, links, highlights */
-  --mk-brand-navy: #003087;
-  --mk-brand-bg: #eaf3fe;
-  --mk-stage-new: #003087;   /* New dispute */
-  --mk-stage-evidence: #0070e0; /* Evidence attached */
-  --mk-stage-filed: #009cde; /* Response filed */
-  --mk-stage-settled: #b4c3d8; /* Settled */
+  /* Brand + dispute stages (olive ripening to stone), shared with the landing page's case stack */
+  --mk-brand: #5a6b2e;       /* Sira olive: selection, links, highlights */
+  --mk-brand-navy: #3a4520;
+  --mk-brand-bg: #eef1e3;
+  --mk-stage-new: #3a4520;   /* New dispute: deep olive */
+  --mk-stage-evidence: #5a6b2e; /* Evidence attached: olive */
+  --mk-stage-filed: #8d9a5b; /* Response filed: sage */
+  --mk-stage-settled: #d3d6c4; /* Settled: pale stone */
 }
 
 /*
@@ -403,7 +405,7 @@ body {
 }
 /* A highlighter pen across a phrase. */
 .play-mark {
-  background-image: linear-gradient(rgba(0, 112, 224, 0.16), rgba(0, 112, 224, 0.16));
+  background-image: linear-gradient(rgba(90, 107, 46, 0.16), rgba(90, 107, 46, 0.16));
   background-repeat: no-repeat;
   background-size: 0% 100%;
   border-radius: 3px;
@@ -422,19 +424,19 @@ body {
 .play-travel { opacity: 0; }
 [data-play="on"] .play-travel { animation: mk-travel 900ms var(--mk-ease) var(--d, 0ms) both; }
 @keyframes mk-flash {
-  from { background-color: rgba(0, 112, 224, 0.12); }
+  from { background-color: rgba(90, 107, 46, 0.12); }
   to { background-color: transparent; }
 }
 [data-play="on"] .play-flash { animation: mk-flash 1800ms ease-out var(--d, 0ms) both; }
 /* Selection ring, and dimming for what wasn't chosen. */
 .play-ring {
-  box-shadow: 0 0 0 0 rgba(0, 112, 224, 0);
+  box-shadow: 0 0 0 0 rgba(90, 107, 46, 0);
   border: 1.5px solid transparent;
   transition: border-color 400ms ease, box-shadow 400ms ease;
 }
 [data-play="on"] .play-ring {
-  border-color: #0070e0;
-  box-shadow: 0 0 0 4px rgba(0, 112, 224, 0.12);
+  border-color: #5a6b2e;
+  box-shadow: 0 0 0 4px rgba(90, 107, 46, 0.12);
   transition-delay: var(--d, 0ms);
 }
 .play-dim { transition: opacity 400ms ease; }

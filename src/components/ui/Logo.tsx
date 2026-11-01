@@ -30,10 +30,10 @@ export function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden className={cn("size-6", className)}>
       <g stroke="#fff" strokeWidth="0.9" strokeLinejoin="round">
-        <path d={plate(12.6)} fill="var(--mk-stage-settled, #b4c3d8)" />
-        <path d={plate(9.2)} fill="var(--mk-stage-filed, #009cde)" />
-        <path d={plate(5.8)} fill="var(--mk-stage-evidence, #0070e0)" />
-        <path d={plate(2.4)} fill="var(--mk-stage-new, #003087)" />
+        <path d={plate(12.6)} fill="var(--mk-stage-settled, #d3d6c4)" />
+        <path d={plate(9.2)} fill="var(--mk-stage-filed, #8d9a5b)" />
+        <path d={plate(5.8)} fill="var(--mk-stage-evidence, #5a6b2e)" />
+        <path d={plate(2.4)} fill="var(--mk-stage-new, #3a4520)" />
       </g>
       <g fill="#fff">
         {DITHER.map(([x, y, r, o]) => (
