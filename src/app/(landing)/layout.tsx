@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { landingWrap } from "@/components/landing/container";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Logo } from "@/components/ui/Logo";
 import { footer, site } from "@/data/site";
@@ -28,7 +29,7 @@ export default function LandingLayout({ children }: LayoutProps<"/">) {
       <main id="main" className="flex-1">
         {children}
       </main>
-      <footer className="mx-auto w-full max-w-6xl px-5 pt-16 pb-10 sm:px-8">
+      <footer className={`${landingWrap} pt-16 pb-10`}>
         <div className="grid gap-10 sm:grid-cols-[2fr_1fr]">
           <div>
             <Logo />

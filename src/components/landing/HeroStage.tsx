@@ -81,7 +81,8 @@ export function HeroStage() {
 
       <p className="absolute top-5 left-6 font-mono text-[10.5px] tracking-[0.12em] text-[#77736c] uppercase">Example dispute</p>
 
-      <div className="relative mx-auto flex max-w-[780px] flex-col gap-6 px-5 pt-16 pb-10 md:block md:h-[440px] md:px-0 md:pt-0 md:pb-0">
+      {/* Laid out at 780×440, then scaled up on wide screens so it fills the panel there too */}
+      <div className="relative mx-auto flex max-w-[780px] flex-col gap-6 px-5 pt-16 pb-10 md:block md:h-[440px] md:px-0 md:pt-0 md:pb-0 xl:[zoom:1.15] 2xl:[zoom:1.35] min-[2200px]:[zoom:1.5]">
         {/* The case */}
         <div className={cn("relative md:absolute md:top-[72px] md:right-0 md:w-[330px]", enter(s >= 1))}>
           <CropMarks />

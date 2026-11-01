@@ -6,6 +6,7 @@ import { ChevronRight } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { site } from "@/data/site";
 import { cn } from "@/lib/cn";
+import { landingWrap } from "./container";
 
 /**
  * The landing page's nav. At the top it sits straight on the hero with no bar of its own, so the
@@ -29,7 +30,7 @@ export function LandingHeader() {
         scrolled ? "border-[#141312]/[0.06] bg-[#fafaf7]/90 backdrop-blur" : "border-transparent bg-transparent",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
+      <div className={cn(landingWrap, "flex h-16 items-center justify-between")}>
         <Link href="/" aria-label={`${site.name} home`}>
           <Logo />
         </Link>

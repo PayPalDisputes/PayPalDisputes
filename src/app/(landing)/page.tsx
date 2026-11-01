@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
 import { ActivityTicker } from "@/components/landing/ActivityTicker";
 import { CaseStack } from "@/components/landing/CaseStack";
+import { landingWrap } from "@/components/landing/container";
 import { HeroStage } from "@/components/landing/HeroStage";
 import { Process } from "@/components/landing/Process";
 import { SpringDots } from "@/components/landing/SpringDots";
@@ -18,8 +19,8 @@ export const metadata: Metadata = {
 const icons = { scale: Scale, pen: PenLine, timer: Timer };
 
 /** Page width and side margin shared by every section. */
-const wrap = "mx-auto w-full max-w-6xl px-5 sm:px-8";
-const h2 = "text-[clamp(1.75rem,3.2vw,2.5rem)] leading-[1.1] tracking-[-0.03em]";
+const wrap = landingWrap;
+const h2 = "text-[clamp(1.75rem,2.6vw,3.25rem)] leading-[1.1] tracking-[-0.03em]";
 const card = "rounded-2xl border border-[#141312]/[0.08] bg-white";
 
 function PrimaryButton({ href, children, inverted }: { href: string; children: React.ReactNode; inverted?: boolean }) {
@@ -56,21 +57,21 @@ export default function LandingPage() {
 
   return (
     <>
-      {/* Hero: white, over a field of soft blue spring dots, with the case stack on the right */}
-      <section id="hero" className="relative isolate overflow-hidden bg-[#fafaf7]">
+      {/* Hero: fills the first screen, copy on the left and the case stack across the right half */}
+      <section id="hero" className="relative isolate flex min-h-[100svh] items-center overflow-hidden bg-[#fafaf7]">
         <SpringDots color="90, 107, 46" opacity={0.3} className="-z-10" />
         {/* Top padding includes the 64px nav, which floats over this section */}
-        <div className={cn(wrap, "grid items-center gap-12 pt-36 pb-20 md:pt-44 md:pb-24 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16")}>
-          <div className="max-w-[40rem]">
+        <div className={cn(wrap, "grid items-center gap-12 pt-32 pb-16 md:pt-36 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-[clamp(2rem,4vw,6rem)]")}>
+          <div className="max-w-[min(52rem,100%)]">
             <p className="font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">{hero.eyebrow}</p>
-            <h1 className="mt-6 text-[clamp(2.75rem,5.6vw,4.75rem)] leading-[1.0] font-normal tracking-[-0.045em]">
+            <h1 className="mt-6 text-[clamp(2.75rem,5.4vw,7rem)] leading-[1.0] font-normal tracking-[-0.045em]">
               {hero.title.map((l) => (
                 <span key={l} className="block lg:whitespace-nowrap">
                   {l}
                 </span>
               ))}
             </h1>
-            <p className="mt-6 max-w-lg text-[18px] leading-relaxed text-[#77736c]">{hero.body}</p>
+            <p className="mt-6 max-w-[34em] text-[clamp(1.0625rem,1.1vw,1.375rem)] leading-relaxed text-[#77736c]">{hero.body}</p>
             <div className="mt-9 flex flex-wrap gap-3">
               <PrimaryButton href={hero.primary.href}>{hero.primary.label}</PrimaryButton>
               <SecondaryButton href={hero.secondary.href}>{hero.secondary.label}</SecondaryButton>
@@ -84,7 +85,8 @@ export default function LandingPage() {
               </span>
             </p>
           </div>
-          <CaseStack theme="light" />
+          {/* Grows with its half of the screen, but never taller than the window */}
+          <CaseStack theme="light" className="mx-auto max-w-[min(880px,calc((100svh-12rem)*0.82))] lg:mr-0" />
         </div>
       </section>
 
