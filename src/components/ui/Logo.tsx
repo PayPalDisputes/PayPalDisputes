@@ -3,11 +3,12 @@ import { site } from "@/data/site";
 import { cn } from "@/lib/cn";
 
 /**
- * Sira's logo: the "Sira" wordmark inside a wreath of two olive branches. Composed from the brand
- * files in public/brand (Sira.png, left-olive-branch.png, right-olive-branch.png) into one
- * transparent image, sira-logo.png (1362×980), following the design mockup's proportions.
+ * Sira's logo: two hand-drawn olive branches, overlapping, stacked above the "Sira" wordmark (the
+ * hanging branch on top, the upright one under it, shifted right). Composed from the brand files in
+ * public/brand (Sira.png, Left-hanging-olive-branch.png, Right-upright-olive-branch.png) into one
+ * transparent image, sira-logo-stacked.png (919×698), following the design mockup's positions.
  */
-const LOGO = { src: "/brand/sira-logo.png", width: 1362, height: 980 };
+const LOGO = { src: "/brand/sira-logo-stacked.png", width: 919, height: 698 };
 
 /** The logo on its own, sized by height (width follows). */
 export function LogoMark({ className }: { className?: string }) {
