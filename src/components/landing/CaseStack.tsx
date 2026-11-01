@@ -196,8 +196,11 @@ export function CaseStack({ theme = "light", className }: { theme?: "light"; cla
         }
       }
       ctx.translate(-0.86, -0.78);
-      ctx.scale(0.01, 0.01);
+      // Fit the line inside the plate (x -0.86 to 0.84): long reasons shrink instead of pushing
+      // the amount past the edge.
       ctx.font = `500 7.5px ${font}`;
+      const k = Math.min(0.01, 1.7 / ctx.measureText(f.header).width);
+      ctx.scale(k, k);
       ctx.textBaseline = "alphabetic";
       ctx.fillStyle = T.muted;
       ctx.fillText(f.header, 0, 0);
