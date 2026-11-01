@@ -79,8 +79,8 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
       {/* Headline numbers + actions */}
       <section aria-labelledby="overview" className="flex flex-col gap-[18px]">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 id="overview" className="sr-only">
-            Overview
+          <h1 id="overview" className="text-[24px] font-[480] tracking-[0.01em] text-fg">
+            Hello{session.kind === "seller" && session.name ? `, ${session.name.split(/\s+/)[0]}` : " there"}
           </h1>
           {sellers.length > 1 && <StoreSelector stores={sellers} current={store} />}
         </div>
@@ -135,24 +135,12 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
           <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-[13px] text-fg-body">
             <span>
               Last 30 days
-              {byCurrency.length > 1 && (
-                <span className="text-fg-muted">
-                  {" "}
-                  · also{" "}
-                  {byCurrency.slice(1).map(([c, t], i) => (
-                    <span key={c}>
-                      {i > 0 && ", "}
-                      <Amount amount={t} currency={c} />
-                    </span>
-                  ))}
-                </span>
-              )}
             </span>
             <span className="flex gap-4">
-              <span>
+              <span className="text-ok">
                 ↗ <Amount amount={kept30} currency={currency} /> kept
               </span>
-              <span>
+              <span className="text-bad">
                 ↘ <Amount amount={refunded30} currency={currency} /> refunded
               </span>
             </span>

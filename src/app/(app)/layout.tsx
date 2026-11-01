@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, Search, SlidersHorizontal } from "lucide-react";
 import { AccountMenu } from "@/components/app/AccountMenu";
 import { HideAmounts } from "@/components/app/HideAmounts";
+import { MobileNav } from "@/components/app/MobileNav";
 import { NavLink } from "@/components/app/NavLink";
 import { Logo } from "@/components/ui/Logo";
 import { requireSession, sellerScope, sessionMode } from "@/lib/auth";
@@ -103,34 +104,24 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               </div>
             </div>
           </div>
-          {/* Section tabs (mobile / tablet); scrolls sideways when they don't all fit */}
-          <nav aria-label="Workspace" className="flex gap-6 overflow-x-auto border-t border-line px-5 whitespace-nowrap [scrollbar-width:none] md:px-8 lg:hidden [&>*]:shrink-0">
-            <NavLink href="/dashboard" exact variant="tab">
-              Home
-            </NavLink>
-            <NavLink href="/disputes" variant="tab" badge={needsResponse}>
-              Disputes
-            </NavLink>
-            <NavLink href="/evidence" variant="tab">
-              Evidence
-            </NavLink>
-            <NavLink href="/insights" variant="tab">
-              Insights
-            </NavLink>
-            <NavLink href="/settings" variant="tab">
-              Settings
-            </NavLink>
-            {showInternal && (
-              <NavLink href="/evals" variant="tab">
-                Evals
-              </NavLink>
-            )}
-          </nav>
         </header>
 
-        <main id="main" className="flex-1">
+        {/* Bottom room on phones so the floating menu never covers the end of a page */}
+        <main id="main" className="flex-1 pb-24 lg:pb-0">
           {children}
         </main>
+
+        <MobileNav
+          accountName={accountName}
+          items={[
+            { href: "/dashboard", label: "Home", icon: "home", exact: true },
+            { href: "/disputes", label: "Disputes", icon: "disputes", badge: needsResponse },
+            { href: "/evidence", label: "Evidence", icon: "evidence" },
+            { href: "/insights", label: "Insights", icon: "insights" },
+            { href: "/settings", label: "Settings", icon: "settings" },
+            ...(showInternal ? [{ href: "/evals", label: "Evals", icon: "evals" as const }] : []),
+          ]}
+        />
       </div>
     </div>
   );
