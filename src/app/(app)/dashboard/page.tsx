@@ -18,6 +18,8 @@ const RESOLUTION_CENTER = (process.env.PAYPAL_API_BASE ?? "").includes("sandbox"
   : "https://www.paypal.com/disputes/";
 
 const DAY = 86_400_000;
+/** The demo account's stand-in name for the greeting. */
+const DEMO_FIRST_NAME = "John";
 const isOpen = (d: HomeDispute) => d.status !== "RESOLVED";
 const waitingOnSeller = (d: HomeDispute) => d.status === "WAITING_FOR_SELLER_RESPONSE";
 const draftReady = (d: HomeDispute) => isOpen(d) && d.report?.status === "pending_review" && d.report.current;
@@ -79,8 +81,8 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
       {/* Headline numbers + actions */}
       <section aria-labelledby="overview" className="flex flex-col gap-[18px]">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 id="overview" className="text-[24px] font-[480] tracking-[0.01em] text-fg">
-            Hello{session.kind === "seller" && session.name ? `, ${session.name.split(/\s+/)[0]}` : " there"}
+          <h1 id="overview" className="text-[24px] font-semibold tracking-[-0.01em] text-fg">
+            Hello, {session.kind === "seller" && session.name ? session.name.split(/\s+/)[0] : DEMO_FIRST_NAME}
           </h1>
           {sellers.length > 1 && <StoreSelector stores={sellers} current={store} />}
         </div>

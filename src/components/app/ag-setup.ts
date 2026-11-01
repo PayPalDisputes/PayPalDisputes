@@ -10,7 +10,7 @@ import { AllCommunityModule as ChartsCommunity, ModuleRegistry as ChartModules, 
 GridModules.registerModules([GridCommunity]);
 ChartModules.registerModules(ChartsCommunity);
 
-const FONT = "var(--font-inter), system-ui, sans-serif";
+const FONT = "var(--font-digits), var(--font-inter), system-ui, sans-serif"; // monospaced digits, Inter text
 
 /** Data grid in the dashboard's quiet style: white, ink text, hairline rows, no column lines. */
 export const gridTheme = themeQuartz.withParams({
@@ -57,11 +57,13 @@ export const COLORS = {
 
 export { BLUES } from "@/lib/palette";
 
-/** Charts draw on a canvas, which can't read CSS variables, so resolve the real Inter family name. */
+/** Charts draw on a canvas, which can't read CSS variables, so resolve the real family names (mono digits, then Inter). */
 function chartFont() {
   if (typeof window === "undefined") return "system-ui, sans-serif";
-  const inter = getComputedStyle(document.documentElement).getPropertyValue("--font-inter").trim();
-  return inter ? `${inter}, system-ui, sans-serif` : "system-ui, sans-serif";
+  const root = getComputedStyle(document.documentElement);
+  const digits = root.getPropertyValue("--font-digits").trim();
+  const inter = root.getPropertyValue("--font-inter").trim();
+  return [digits, inter, "system-ui", "sans-serif"].filter(Boolean).join(", ");
 }
 
 /** Shared base for every chart: transparent background, Inter type, recessive axes. */

@@ -40,7 +40,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             Disputes
           </NavLink>
           <NavLink href="/evidence" icon={<FileText strokeWidth={1.6} />}>
-            Evidence
+            Shipping proof
           </NavLink>
           <NavLink href="/insights" icon={<ChartNoAxesColumn strokeWidth={1.6} />}>
             Insights
@@ -116,7 +116,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           items={[
             { href: "/dashboard", label: "Home", icon: "home", exact: true },
             { href: "/disputes", label: "Disputes", icon: "disputes", badge: needsResponse },
-            { href: "/evidence", label: "Evidence", icon: "evidence" },
+            { href: "/evidence", label: "Shipping proof", icon: "evidence" },
             { href: "/insights", label: "Insights", icon: "insights" },
             { href: "/settings", label: "Settings", icon: "settings" },
             ...(showInternal ? [{ href: "/evals", label: "Evals", icon: "evals" as const }] : []),

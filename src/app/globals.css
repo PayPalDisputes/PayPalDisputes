@@ -106,7 +106,8 @@
   --radius-xl: 8px;
   --radius-2xl: 10px;
 
-  font-family: var(--font-inter), system-ui, sans-serif;
+  /* Digits come from Geist Mono (digits-only face), everything else from Inter */
+  font-family: var(--font-digits), var(--font-inter), system-ui, sans-serif;
   font-weight: 420;
   font-feature-settings: "cv11", "ss01";
 }

@@ -9,7 +9,7 @@ const footerColumns = [
     links: [
       { label: "Dashboard", href: "/dashboard" },
       { label: "Disputes", href: "/disputes" },
-      { label: "Evidence", href: "/evidence" },
+      { label: "Shipping proof", href: "/evidence" },
     ],
   },
 ];
