@@ -31,7 +31,7 @@ const WAVE_SPEED = [0.55, 0.38, 0.22];
 
 const INTERACTIVE = 'a, button, input, select, textarea, label, [role="button"], form, video';
 
-export function SpringDots({ color = "0, 48, 135", opacity = 0.28, className }: { color?: string; opacity?: number; className?: string }) {
+export function SpringDots({ color = "90, 107, 46", opacity = 0.28, className }: { color?: string; opacity?: number; className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

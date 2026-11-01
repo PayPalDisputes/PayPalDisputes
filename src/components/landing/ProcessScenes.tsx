@@ -50,7 +50,7 @@ const SyncScene: Scene = () => (
       <div className="relative h-px flex-1 border-t border-dashed border-[#141312]/25">
         <span className="play-travel absolute -top-[5px] -ml-1.5 h-[9px] w-3 rounded-sm bg-[#5a6b2e]" style={at(200)} />
       </div>
-      <span className="rounded-lg bg-[#141312] px-3 py-1.5 text-[12px] text-white">Sira</span>
+      <span className="rounded-lg bg-[#5a6b2e] px-3 py-1.5 text-[12px] text-white">Sira</span>
     </div>
     <p className="play-item mt-2 text-center font-mono text-[9.5px] tracking-[0.1em] text-[#8a867f] uppercase" style={at(300)}>
       CUSTOMER.DISPUTE.CREATED
@@ -106,7 +106,7 @@ const ReadScene: Scene = () => (
     <div className={cn(card, "space-y-3 p-4")}>
       <span className={label}>Messages</span>
       {thread.map((m, i) => (
-        <div key={i} className={cn("play-item rounded-lg px-3 py-2 text-[12px] leading-relaxed", m.mine ? "ml-5 bg-[#f6f6f3]" : "mr-5 bg-[#eef4fd]")} style={at(150 + i * 250)}>
+        <div key={i} className={cn("play-item rounded-lg px-3 py-2 text-[12px] leading-relaxed", m.mine ? "ml-5 bg-[#f6f6f3]" : "mr-5 bg-[#eef1e3]")} style={at(150 + i * 250)}>
           <p className="mb-0.5 text-[10px] text-[#8a867f]">
             {m.who} · {m.when}
           </p>
@@ -351,10 +351,10 @@ const ApproveScene: Scene = () => (
         ))}
       </div>
       <div className="mt-4 flex gap-2 text-[12px]">
-        <span className="play-press rounded-full bg-[#141312] px-4 py-1.5 text-white" style={at(1150)}>
+        <span className="play-press rounded-md bg-[#5a6b2e] px-4 py-1.5 text-white" style={at(1150)}>
           Approve and send
         </span>
-        <span className="rounded-full border border-[#141312]/[0.12] px-4 py-1.5">Edit</span>
+        <span className="rounded-md border border-[#141312]/[0.12] px-4 py-1.5">Edit</span>
       </div>
       <MousePointer2
         aria-hidden

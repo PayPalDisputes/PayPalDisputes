@@ -150,13 +150,13 @@ export function HeroStage() {
             <div className="mt-4 flex gap-2 text-[12.5px]">
               <span
                 className={cn(
-                  "rounded-full bg-[#5a6b2e] px-4 py-1.5 text-white transition-transform duration-150",
+                  "rounded-md bg-[#5a6b2e] px-4 py-1.5 text-white transition-transform duration-150",
                   s === 7 && "scale-95 bg-[#4a5824]",
                 )}
               >
                 {sent ? "Approved" : "Approve"}
               </span>
-              <span className="rounded-full border border-[#141312]/[0.12] px-4 py-1.5">Edit</span>
+              <span className="rounded-md border border-[#141312]/[0.12] px-4 py-1.5">Edit</span>
             </div>
           </div>
         </div>
@@ -175,12 +175,12 @@ export function HeroStage() {
         {/* Sent */}
         <div
           className={cn(
-            "flex w-fit items-center gap-2 self-center rounded-full bg-[#141312] py-2 pr-4 pl-2 text-[13px] text-white md:absolute md:bottom-6 md:left-1/2 md:-translate-x-1/2",
+            "flex w-fit items-center gap-2 self-center rounded-md bg-[#3a4520] py-2 pr-4 pl-2 text-[13px] text-white md:absolute md:bottom-6 md:left-1/2 md:-translate-x-1/2",
             "transition-[opacity,transform] duration-500",
             sent ? "opacity-100 md:translate-y-0" : "opacity-0 md:translate-y-2",
           )}
         >
-          <span className="grid size-5 place-items-center rounded-full bg-[#5a6b2e]">
+          <span className="grid size-5 place-items-center rounded-full bg-[#8d9a5b]">
             <Check className="size-3" strokeWidth={3} />
           </span>
           Response sent to PayPal
