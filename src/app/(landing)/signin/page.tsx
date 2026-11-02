@@ -54,7 +54,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
 
           <div className="mt-6 flex flex-col gap-2.5">
             {signedInAs && (
-              <Link href="/dashboard" className="inline-flex h-12 items-center justify-center gap-1.5 rounded-full bg-accent text-[15px] font-medium text-white hover:bg-[#0062c4]">
+              <Link href="/dashboard" className="inline-flex h-12 items-center justify-center gap-1.5 rounded-md bg-accent text-[15px] font-medium text-white hover:bg-[#4a5824]">
                 Go to dashboard <ArrowRight aria-hidden strokeWidth={1.8} className="size-4" />
               </Link>
             )}
@@ -62,7 +62,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
               // Plain links: these routes start a sign-in or set a cookie, so they must never be prefetched.
               <a
                 href="/api/auth/paypal/login"
-                className="inline-flex h-[50px] items-center justify-center gap-1.5 rounded-full bg-[#ffc439] text-[16px] text-[#111] hover:bg-[#f2ba36]"
+                className="inline-flex h-[50px] items-center justify-center gap-1.5 rounded-md bg-[#ffc439] text-[16px] text-[#111] hover:bg-[#f2ba36]"
               >
                 Log in with
                 <span className="font-bold italic">
@@ -80,7 +80,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
                 </div>
                 <a
                   href="/api/auth/demo"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-line-strong text-[15px] font-medium text-fg hover:bg-muted"
+                  className="inline-flex h-12 items-center justify-center rounded-md border border-line-strong text-[15px] font-medium text-fg hover:bg-muted"
                 >
                   Try the demo instead
                 </a>
@@ -89,7 +89,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/signin">)
             )}
             {signedInAs && (
               <form action="/api/auth/logout" method="post">
-                <button type="submit" className="h-10 w-full rounded-full text-[14px] text-fg-body hover:bg-muted hover:text-fg">
+                <button type="submit" className="h-10 w-full rounded-md text-[14px] text-fg-body hover:bg-muted hover:text-fg">
                   Sign out
                 </button>
               </form>

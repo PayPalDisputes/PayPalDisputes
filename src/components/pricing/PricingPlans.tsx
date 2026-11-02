@@ -40,7 +40,7 @@ export function PricingPlans({ plans }: { plans: Plan[] }) {
             <section
               key={p.id}
               aria-labelledby={`plan-${p.id}`}
-              className={cn("flex flex-col rounded-xl border bg-canvas p-7", featured ? "border-accent/40 shadow-[0_8px_30px_rgba(0,112,224,0.08)]" : "border-line")}
+              className={cn("flex flex-col rounded-xl border bg-canvas p-7", featured ? "border-accent/40 shadow-[0_8px_30px_rgba(90,107,46,0.10)]" : "border-line")}
             >
               <div className="flex items-baseline justify-between gap-3">
                 <h2 id={`plan-${p.id}`} className="text-[18px] font-[480] text-fg">
@@ -61,8 +61,8 @@ export function PricingPlans({ plans }: { plans: Plan[] }) {
               <Link
                 href={p.cta.href}
                 className={cn(
-                  "mt-6 inline-flex h-10 items-center justify-center rounded-full text-[14px] font-medium transition-colors",
-                  featured ? "bg-accent text-white hover:bg-[#0062c4]" : "bg-muted text-fg hover:bg-inset",
+                  "mt-6 inline-flex h-10 items-center justify-center rounded-md text-[14px] font-medium transition-colors",
+                  featured ? "bg-accent text-white hover:bg-[#4a5824]" : "bg-muted text-fg hover:bg-inset",
                 )}
               >
                 {p.cta.label}

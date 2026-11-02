@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { landingWrap } from "@/components/landing/container";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Logo } from "@/components/ui/Logo";
 import { footer, site } from "@/data/site";
@@ -9,22 +10,15 @@ const footerColumns = [
     links: [
       { label: "Dashboard", href: "/dashboard" },
       { label: "Disputes", href: "/disputes" },
-      { label: "Evidence", href: "/evidence" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "Pricing", href: "/pricing" },
-      { label: "Sign in", href: "/signin" },
+      { label: "Shipping proof", href: "/evidence" },
     ],
   },
 ];
 
-/** Shell for the landing page: a nav that floats over the hero, white page and a column footer. Always light. */
+/** Shell for the landing page: a nav that floats over the hero, warm off-white page (as in the dashboard), mono digits and a column footer. Always light. */
 export default function LandingLayout({ children }: LayoutProps<"/">) {
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-white text-[#141312] [color-scheme:light]">
+    <div className="flex min-h-full flex-1 flex-col bg-[#fafaf7] text-[#141312] [color-scheme:light] [font-family:var(--font-digits),var(--font-geist-sans),system-ui,sans-serif]">
       <a
         href="#main"
         className="sr-only z-[60] rounded-md bg-[#141312] px-3 py-2 text-sm text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -35,8 +29,8 @@ export default function LandingLayout({ children }: LayoutProps<"/">) {
       <main id="main" className="flex-1">
         {children}
       </main>
-      <footer className="mx-auto w-full max-w-6xl px-5 pt-16 pb-10 sm:px-8">
-        <div className="grid gap-10 sm:grid-cols-[1.5fr_1fr_1fr]">
+      <footer className={`${landingWrap} pt-16 pb-10`}>
+        <div className="grid gap-10 sm:grid-cols-[2fr_1fr]">
           <div>
             <Logo />
             <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-[#77736c]">{site.tagline}</p>

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, Search, SlidersHorizontal } from "lucide-react";
+import { AccountMenu } from "@/components/app/AccountMenu";
 import { HideAmounts } from "@/components/app/HideAmounts";
+import { MobileNav } from "@/components/app/MobileNav";
 import { NavLink } from "@/components/app/NavLink";
 import { Logo } from "@/components/ui/Logo";
 import { requireSession, sellerScope, sessionMode } from "@/lib/auth";
@@ -38,7 +40,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             Disputes
           </NavLink>
           <NavLink href="/evidence" icon={<FileText strokeWidth={1.6} />}>
-            Evidence
+            Shipping proof
           </NavLink>
           <NavLink href="/insights" icon={<ChartNoAxesColumn strokeWidth={1.6} />}>
             Insights
@@ -56,13 +58,13 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </nav>
         )}
 
-        <div className="mt-auto space-y-2 px-2.5">
-          <p className="text-[12px] leading-[18px] text-fg-muted">
+        <div className="mt-auto flex flex-col gap-3">
+          <p className="px-2.5 text-[12px] leading-[18px] text-fg-muted">
             {mode === "live" ? "Live · approvals reach PayPal" : "Demo mode · nothing is sent to PayPal"}
           </p>
-          <Link href="/" className="block text-[12px] text-fg-muted hover:text-fg">
-            ← sira.com
-          </Link>
+          <div className="border-t border-line pt-3">
+            <AccountMenu name={accountName} initials={initials} variant="sidebar" />
+          </div>
         </div>
       </aside>
 
@@ -75,7 +77,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </Link>
             {/* Search jumps to the disputes list, filtered */}
             <form action="/disputes" role="search" className="hidden max-w-[560px] flex-1 md:block">
-              <label className="flex h-10 items-center gap-2.5 rounded-[10px] border border-line bg-canvas px-3.5 focus-within:border-line-strong">
+              <label className="flex h-10 items-center gap-2.5 rounded-md border border-line bg-canvas px-3.5 focus-within:border-line-strong">
                 <Search aria-hidden strokeWidth={1.8} className="size-4 text-fg-muted" />
                 <span className="sr-only">Search disputes</span>
                 <input
@@ -91,53 +93,35 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               <Link
                 href="/disputes?view=needs-response"
                 aria-label={`${needsResponse} disputes need a response`}
-                className="relative inline-flex size-10 items-center justify-center rounded-full bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
+                className="relative inline-flex size-10 items-center justify-center rounded-md bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
               >
                 <Bell strokeWidth={1.6} className="size-[17px]" />
                 {needsResponse > 0 && <span className="absolute top-2 right-2.5 size-2 rounded-full border-2 border-muted bg-accent" />}
               </Link>
-              <span
-                title={accountName}
-                aria-label={`Signed in as ${accountName}`}
-                className="ml-1 inline-flex size-10 items-center justify-center rounded-full bg-inset text-[13px] font-medium text-fg-body"
-              >
-                {initials}
-              </span>
-              <form action="/api/auth/logout" method="post">
-                <button type="submit" className="rounded-full px-3 py-1.5 text-[13px] text-fg-muted transition-colors hover:bg-muted hover:text-fg">
-                  Sign out
-                </button>
-              </form>
+              {/* On desktop the account lives at the bottom of the sidebar */}
+              <div className="lg:hidden">
+                <AccountMenu name={accountName} initials={initials} variant="compact" />
+              </div>
             </div>
           </div>
-          {/* Section tabs (mobile / tablet); scrolls sideways when they don't all fit */}
-          <nav aria-label="Workspace" className="flex gap-6 overflow-x-auto border-t border-line px-5 whitespace-nowrap [scrollbar-width:none] md:px-8 lg:hidden [&>*]:shrink-0">
-            <NavLink href="/dashboard" exact variant="tab">
-              Home
-            </NavLink>
-            <NavLink href="/disputes" variant="tab" badge={needsResponse}>
-              Disputes
-            </NavLink>
-            <NavLink href="/evidence" variant="tab">
-              Evidence
-            </NavLink>
-            <NavLink href="/insights" variant="tab">
-              Insights
-            </NavLink>
-            <NavLink href="/settings" variant="tab">
-              Settings
-            </NavLink>
-            {showInternal && (
-              <NavLink href="/evals" variant="tab">
-                Evals
-              </NavLink>
-            )}
-          </nav>
         </header>
 
-        <main id="main" className="flex-1">
+        {/* Bottom room on phones so the floating menu never covers the end of a page */}
+        <main id="main" className="flex-1 pb-24 lg:pb-0">
           {children}
         </main>
+
+        <MobileNav
+          accountName={accountName}
+          items={[
+            { href: "/dashboard", label: "Home", icon: "home", exact: true },
+            { href: "/disputes", label: "Disputes", icon: "disputes", badge: needsResponse },
+            { href: "/evidence", label: "Shipping proof", icon: "evidence" },
+            { href: "/insights", label: "Insights", icon: "insights" },
+            { href: "/settings", label: "Settings", icon: "settings" },
+            ...(showInternal ? [{ href: "/evals", label: "Evals", icon: "evals" as const }] : []),
+          ]}
+        />
       </div>
     </div>
   );

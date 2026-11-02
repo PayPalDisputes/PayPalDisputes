@@ -125,7 +125,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
                   type="button"
                   onClick={() => recheck(d)}
                   disabled={checking === d.disputeId}
-                  className="inline-flex h-7 items-center gap-1 rounded-full bg-muted px-2.5 text-[12.5px] text-fg hover:bg-inset disabled:opacity-60"
+                  className="inline-flex h-7 items-center gap-1 rounded-md bg-muted px-2.5 text-[12.5px] text-fg hover:bg-inset disabled:opacity-60"
                 >
                   <RefreshCw aria-hidden strokeWidth={1.75} className={cn("size-3", checking === d.disputeId && "animate-spin-slow")} />
                   {checking === d.disputeId ? "Checking…" : "Re-check"}
@@ -170,7 +170,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
         <button
           type="button"
           onClick={() => setImporting((v) => !v)}
-          className="inline-flex h-[38px] items-center gap-1.5 rounded-full bg-accent px-4 text-[14px] font-medium text-white hover:bg-[#0062c4]"
+          className="inline-flex h-[38px] items-center gap-1.5 rounded-md bg-accent px-4 text-[14px] font-medium text-white hover:bg-accent-hover"
         >
           <Upload aria-hidden strokeWidth={1.75} className="size-3.5" />
           Import CSV

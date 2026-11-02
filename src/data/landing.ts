@@ -1,16 +1,15 @@
-/** Landing page copy. Edit text here rather than inside the page. Keep the numbers true (see `hero.stats` in home.ts). */
-import { hero as home } from "@/data/home";
+/** Landing page copy. Edit text here rather than inside the page. Keep claims factual: no speed or accuracy promises. */
 
 export const landing = {
   hero: {
-    title: ["Your disputes,", "settled in seconds"],
+    title: ["Your disputes,", "settled."],
     body: "An AI dispute desk for PayPal sellers. It reads every case, recommends what to do, and drafts the response for you to approve.",
     primary: { label: "Open dashboard", href: "/dashboard" },
-    secondary: { label: "View pricing", href: "/pricing" },
+    secondary: { label: "Try the demo", href: "/api/auth/demo" },
     /** Factual credit line under the buttons: Sira reads and answers cases through PayPal's Disputes API. */
     builtOn: { label: "Built on the", name: "PayPal", product: "Disputes API" },
-    /** The figure shown above the headline. From the eval set; see numbers.note. */
-    stat: { label: "Average decision time on our eval set", value: home.stats[0].value + home.stats[0].suffix },
+    /** Small label above the headline. */
+    eyebrow: "For PayPal sellers",
   },
 
   /** The ticker under the product stage: kinds of work Sira does on a case (illustrative, not live counts). */
@@ -68,13 +67,6 @@ export const landing = {
       href: "/dashboard",
     },
   ] as const,
-
-  numbers: {
-    title: "Measured, not promised.",
-    body: "Every prompt change is scored against the same set of real dispute scenarios.",
-    stats: home.stats.map((s) => ({ value: `${s.prefix}${s.value}${s.suffix}`, label: s.label })),
-    note: "Time and accuracy measured on our 14-case evaluation set (prompt v5).",
-  },
 
   how: {
     lead: "Sira",
@@ -146,6 +138,6 @@ export const landing = {
     title: "Start with your open disputes.",
     body: "Try it in demo mode without touching PayPal, or connect a sandbox account.",
     primary: { label: "Open dashboard", href: "/dashboard" },
-    secondary: { label: "Sign in", href: "/signin" },
+    secondary: { label: "Try the demo", href: "/api/auth/demo" },
   },
 };

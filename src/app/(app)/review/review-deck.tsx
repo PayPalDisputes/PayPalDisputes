@@ -202,7 +202,7 @@ export function ReviewDeck({
             )}
           </span>
           {finished ? (
-            <Link href={nextHref} className="inline-flex h-10 items-center rounded-full bg-accent px-5 text-[14px] font-medium text-white hover:bg-[#0062c4]">
+            <Link href={nextHref} className="inline-flex h-10 items-center rounded-md bg-accent px-5 text-[14px] font-medium text-white hover:bg-accent-hover">
               {upNext ? "Next draft" : "Finish"}
             </Link>
           ) : (
@@ -211,17 +211,17 @@ export function ReviewDeck({
                 type="submit"
                 formAction={reject}
                 disabled={busy}
-                className="h-10 rounded-full px-4 text-[14px] text-fg-muted hover:text-bad disabled:opacity-50"
+                className="h-10 rounded-md px-4 text-[14px] text-fg-muted hover:text-bad disabled:opacity-50"
               >
                 {rejecting ? "Rejecting…" : "Reject"}
               </button>
-              <Link href={nextHref} className="inline-flex h-10 items-center rounded-full px-4 text-[14px] text-fg-body hover:bg-muted">
+              <Link href={nextHref} className="inline-flex h-10 items-center rounded-md px-4 text-[14px] text-fg-body hover:bg-muted">
                 Skip
               </Link>
               <button
                 type="button"
                 onClick={() => setEditing((e) => !e)}
-                className="h-10 rounded-full bg-muted px-[18px] text-[14px] text-fg hover:bg-inset"
+                className="h-10 rounded-md bg-muted px-[18px] text-[14px] text-fg hover:bg-inset"
               >
                 {editing ? "Done editing" : "Edit message"}
               </button>
@@ -230,7 +230,7 @@ export function ReviewDeck({
                 formAction={approve}
                 onClick={confirmApprove}
                 disabled={busy}
-                className="h-10 rounded-full bg-accent px-5 text-[14px] font-medium text-white hover:bg-[#0062c4] disabled:opacity-50"
+                className="h-10 rounded-md bg-accent px-5 text-[14px] font-medium text-white hover:bg-accent-hover disabled:opacity-50"
               >
                 {approving ? "Sending…" : approveLabel}
               </button>

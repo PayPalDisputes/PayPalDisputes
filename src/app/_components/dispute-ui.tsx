@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import type { PayPalAction } from "@/lib/agent";
 import type { DisputeRow } from "@/lib/dashboard";
 
@@ -56,6 +57,23 @@ export function EvidencePackLink({ disputeId }: { disputeId: string }) {
       className="ml-2 font-normal text-accent hover:underline"
     >
       · Evidence pack (PDF)
+    </a>
+  );
+}
+
+/** Download button for the evidence pack PDF (the same file Sira attaches when you fight). */
+export function EvidencePackButton({ disputeId, className }: { disputeId: string; className?: string }) {
+  return (
+    <a
+      href={`/api/disputes/${encodeURIComponent(disputeId)}/evidence-pack`}
+      download={`evidence-pack-${disputeId.replace(/[^A-Za-z0-9-_]/g, "")}.pdf`}
+      className={
+        "inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-canvas px-3 text-[13.5px] text-fg transition-colors hover:border-line-strong " +
+        (className ?? "")
+      }
+    >
+      <Download aria-hidden strokeWidth={1.7} className="size-4 text-fg-muted" />
+      Evidence pack
     </a>
   );
 }

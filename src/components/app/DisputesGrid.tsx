@@ -8,7 +8,7 @@ import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { Search } from "lucide-react";
 import { formatAmount, reasonLabel } from "@/app/_components/dispute-ui";
 import type { HomeDispute } from "@/lib/dashboard";
-import { callLabel, dueLabel, stageLabel, stageStep } from "@/lib/dispute-stage";
+import { callLabel, dueLabel, stageLabel } from "@/lib/dispute-stage";
 import { cn } from "@/lib/cn";
 import { Amount, ProgressLine } from "./bits";
 import { gridTheme } from "./ag-setup";
@@ -37,7 +37,7 @@ function StageCell({ data: d }: Cell) {
   return (
     <span className="flex flex-col gap-1.5 leading-tight">
       <span className="text-fg-body">{stageLabel(d)}</span>
-      <ProgressLine step={stageStep(d)} />
+      <ProgressLine dispute={d} />
     </span>
   );
 }
@@ -84,7 +84,7 @@ function DisputeCard({ d, href }: { d: HomeDispute; href: string }) {
       <span className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[13px]">
         <span className="flex flex-col gap-1.5">
           <span className="text-fg-body">{stageLabel(d)}</span>
-          <ProgressLine step={stageStep(d)} />
+          <ProgressLine dispute={d} />
         </span>
         <span className="text-fg-body">{callLabel(d.report, d.currency) ?? ""}</span>
       </span>
@@ -200,7 +200,7 @@ export function DisputesGrid({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <label className="flex h-9 min-w-[220px] flex-1 items-center gap-2 rounded-[10px] border border-line bg-canvas px-3 focus-within:border-line-strong sm:max-w-[320px]">
+        <label className="flex h-9 min-w-[220px] flex-1 items-center gap-2 rounded-md border border-line bg-canvas px-3 focus-within:border-line-strong sm:max-w-[320px]">
           <span className="sr-only">Search disputes</span>
           <Search aria-hidden strokeWidth={1.8} className="size-[15px] text-fg-muted" />
           <input
@@ -252,7 +252,7 @@ export function DisputesGrid({
             if (key === "Enter" && e.data) openDispute(e.data.id);
           }}
           onModelUpdated={(e) => setShown(e.api.getDisplayedRowCount())}
-          overlayNoRowsTemplate='<span style="color:#70707d">No disputes match.</span>'
+          overlayNoRowsTemplate='<span style="color:#6f7364">No disputes match.</span>'
         />
       </div>
     </div>

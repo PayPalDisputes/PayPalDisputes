@@ -29,15 +29,24 @@ export async function POST(request: Request) {
     return new Response("Invalid JSON", { status: 400 });
   }
 
-  // Verification is skipped until PAYPAL_WEBHOOK_ID is set, so Webhooks Simulator
-  // events (which PayPal can't verify) still get through during setup.
+  // Every event must carry a valid PayPal signature. The only exception is local development
+  // without PAYPAL_WEBHOOK_ID, so Webhooks Simulator events (which PayPal can't verify) get through
+  // during setup. In production a missing id fails closed: nothing unverified is ever processed.
   let verified = false;
   if (process.env.PAYPAL_WEBHOOK_ID) {
-    verified = await verifyWebhookSignature(request.headers, event);
+    try {
+      verified = await verifyWebhookSignature(request.headers, event);
+    } catch (err) {
+      console.error("[paypal-webhook] could not reach PayPal to verify the signature", err);
+      return new Response("Verification unavailable", { status: 503 }); // PayPal retries later
+    }
     if (!verified) {
       console.warn(`[paypal-webhook] rejected unverified event ${event.id}`);
       return new Response("Signature verification failed", { status: 400 });
     }
+  } else if (process.env.NODE_ENV === "production") {
+    console.error("[paypal-webhook] PAYPAL_WEBHOOK_ID is not set; refusing unverified event");
+    return new Response("Webhook verification is not configured", { status: 503 });
   }
 
   const r = event.resource ?? {};

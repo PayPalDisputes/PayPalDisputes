@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
 import { ActivityTicker } from "@/components/landing/ActivityTicker";
-import { BandDots } from "@/components/landing/BandDots";
 import { CaseStack } from "@/components/landing/CaseStack";
+import { landingWrap } from "@/components/landing/container";
 import { HeroStage } from "@/components/landing/HeroStage";
 import { Process } from "@/components/landing/Process";
 import { SpringDots } from "@/components/landing/SpringDots";
@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 const icons = { scale: Scale, pen: PenLine, timer: Timer };
 
 /** Page width and side margin shared by every section. */
-const wrap = "mx-auto w-full max-w-6xl px-5 sm:px-8";
-const h2 = "text-[clamp(1.75rem,3.2vw,2.5rem)] leading-[1.1] tracking-[-0.03em]";
+const wrap = landingWrap;
+const h2 = "text-[clamp(1.75rem,2.6vw,3.25rem)] leading-[1.1] tracking-[-0.03em]";
 const card = "rounded-2xl border border-[#141312]/[0.08] bg-white";
 
 function PrimaryButton({ href, children, inverted }: { href: string; children: React.ReactNode; inverted?: boolean }) {
@@ -28,8 +28,8 @@ function PrimaryButton({ href, children, inverted }: { href: string; children: R
     <Link
       href={href}
       className={cn(
-        "inline-flex h-11 items-center gap-1.5 rounded-full pr-4 pl-5 text-[14.5px]",
-        inverted ? "bg-white font-medium text-[#0070E0] hover:bg-[#eaf3fe]" : "bg-[#0070E0] text-white hover:bg-[#0062c4]",
+        "inline-flex h-11 items-center gap-1.5 rounded-md pr-4 pl-5 text-[14.5px]",
+        inverted ? "bg-white font-medium text-[#5a6b2e] hover:bg-[#eef1e3]" : "bg-[#5a6b2e] text-white hover:bg-[#4a5824]",
       )}
     >
       {children}
@@ -43,7 +43,7 @@ function SecondaryButton({ href, children, inverted }: { href: string; children:
     <Link
       href={href}
       className={cn(
-        "inline-flex h-11 items-center rounded-full px-5 text-[14.5px]",
+        "inline-flex h-11 items-center rounded-md px-5 text-[14.5px]",
         inverted ? "bg-white/15 text-white hover:bg-white/25" : "border border-[#141312]/[0.12] hover:bg-[#f7f7f5]",
       )}
     >
@@ -53,30 +53,25 @@ function SecondaryButton({ href, children, inverted }: { href: string; children:
 }
 
 export default function LandingPage() {
-  const { hero, activity, reasons, jobs, numbers, how, rules, cta } = landing;
+  const { hero, activity, reasons, jobs, how, rules, cta } = landing;
 
   return (
     <>
-      {/* Hero: white, over a field of soft blue spring dots, with the case stack on the right */}
-      <section id="hero" className="relative isolate overflow-hidden bg-white">
-        <SpringDots color="0, 112, 224" opacity={0.32} className="-z-10" />
+      {/* Hero: fills the first screen, copy on the left and the case stack across the right half */}
+      <section id="hero" className="relative isolate flex min-h-[100svh] items-center overflow-hidden bg-[#fafaf7]">
+        <SpringDots color="90, 107, 46" opacity={0.3} className="-z-10" />
         {/* Top padding includes the 64px nav, which floats over this section */}
-        <div className={cn(wrap, "grid items-center gap-12 pt-36 pb-20 md:pt-44 md:pb-24 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-16")}>
-          <div className="max-w-[40rem]">
-            <p className="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">
-              {hero.stat.label}
-              <span className="rounded-md border border-[#141312]/[0.08] bg-white px-1.5 py-0.5 text-[12px] tracking-normal text-[#141312] normal-case tabular-nums">
-                {hero.stat.value}
-              </span>
-            </p>
-            <h1 className="mt-6 text-[clamp(2.75rem,5.6vw,4.75rem)] leading-[1.0] font-normal tracking-[-0.045em]">
+        <div className={cn(wrap, "grid items-center gap-12 pt-32 pb-16 md:pt-36 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-[clamp(2rem,4vw,6rem)]")}>
+          <div className="max-w-[min(52rem,100%)]">
+            <p className="font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">{hero.eyebrow}</p>
+            <h1 className="mt-6 text-[clamp(2.75rem,5.4vw,7rem)] leading-[1.0] font-normal tracking-[-0.045em]">
               {hero.title.map((l) => (
                 <span key={l} className="block lg:whitespace-nowrap">
                   {l}
                 </span>
               ))}
             </h1>
-            <p className="mt-6 max-w-lg text-[18px] leading-relaxed text-[#77736c]">{hero.body}</p>
+            <p className="mt-6 max-w-[34em] text-[clamp(1.0625rem,1.1vw,1.375rem)] leading-relaxed text-[#77736c]">{hero.body}</p>
             <div className="mt-9 flex flex-wrap gap-3">
               <PrimaryButton href={hero.primary.href}>{hero.primary.label}</PrimaryButton>
               <SecondaryButton href={hero.secondary.href}>{hero.secondary.label}</SecondaryButton>
@@ -90,7 +85,8 @@ export default function LandingPage() {
               </span>
             </p>
           </div>
-          <CaseStack theme="light" />
+          {/* Grows with its half of the screen, but never taller than the window */}
+          <CaseStack theme="light" className="mx-auto max-w-[min(880px,calc((100svh-12rem)*0.82))] lg:mr-0" />
         </div>
       </section>
 
@@ -105,7 +101,7 @@ export default function LandingPage() {
         <p className="text-center text-[13px] text-[#9a968e]">{reasons.label}</p>
         <ul className="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-2">
           {reasons.items.map((r) => (
-            <li key={r} className="rounded-full border border-[#141312]/[0.08] px-3 py-1.5 text-[13px] text-[#55524d]">
+            <li key={r} className="rounded-md border border-[#141312]/[0.08] px-3 py-1.5 text-[13px] text-[#55524d]">
               {r}
             </li>
           ))}
@@ -132,24 +128,6 @@ export default function LandingPage() {
               </Link>
             );
           })}
-        </div>
-      </section>
-
-      {/* Numbers band */}
-      <section className="relative isolate bg-[#f7f7f5] py-24">
-        <BandDots className="-z-10" />
-        <div className={cn(wrap, "text-center")}>
-          <h2 className={h2}>{numbers.title}</h2>
-          <p className="mt-3 text-[15px] text-[#77736c]">{numbers.body}</p>
-          <dl className="mx-auto mt-14 grid max-w-3xl sm:grid-cols-3 sm:divide-x sm:divide-[#141312]/[0.08]">
-            {numbers.stats.map((s) => (
-              <div key={s.label} className="flex flex-col-reverse gap-2 px-6 py-5 sm:py-0">
-                <dt className="font-mono text-[10.5px] tracking-[0.12em] text-[#77736c] uppercase">{s.label}</dt>
-                <dd className="text-[clamp(2.25rem,4vw,3rem)] leading-none tracking-[-0.04em] tabular-nums">{s.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-12 text-[12px] text-[#9a968e]">{numbers.note}</p>
         </div>
       </section>
 
@@ -197,7 +175,7 @@ export default function LandingPage() {
       </section>
 
       {/* Closing band */}
-      <section className="bg-[#0070E0] text-white">
+      <section className="bg-[#5a6b2e] text-white">
         <div className={cn(wrap, "flex flex-col gap-8 py-20 md:flex-row md:items-end md:justify-between")}>
           <div>
             <h2 className={h2}>{cta.title}</h2>

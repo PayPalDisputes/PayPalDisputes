@@ -36,7 +36,7 @@ export function Process({ steps }: { steps: Step[] }) {
         <span aria-hidden className="absolute top-3 bottom-3 left-[11px] w-px bg-[#141312]/[0.08]" />
         <span
           aria-hidden
-          className="absolute top-3 left-[11px] w-px origin-top bg-[#0070E0] transition-[height] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          className="absolute top-3 left-[11px] w-px origin-top bg-[#5a6b2e] transition-[height] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
           style={{ height: `calc((100% - 24px) * ${active / Math.max(steps.length - 1, 1)})` }}
         />
         {steps.map((s, i) => {
@@ -56,12 +56,12 @@ export function Process({ steps }: { steps: Step[] }) {
                   aria-hidden
                   className={cn(
                     "absolute -top-[3px] -left-11 grid size-[23px] place-items-center rounded-full border font-mono text-[9.5px] transition-colors duration-500",
-                    i <= active ? "border-[#0070E0] bg-[#0070E0] text-white" : "border-[#141312]/15 bg-white text-[#8a867f]",
+                    i <= active ? "border-[#5a6b2e] bg-[#5a6b2e] text-white" : "border-[#141312]/15 bg-white text-[#8a867f]",
                   )}
                 >
                   {pad(i + 1)}
                 </span>
-                <p className={cn("font-mono text-[10.5px] tracking-[0.12em] uppercase transition-colors duration-500", on ? "text-[#0070E0]" : "text-[#a29e97]")}>
+                <p className={cn("font-mono text-[10.5px] tracking-[0.12em] uppercase transition-colors duration-500", on ? "text-[#5a6b2e]" : "text-[#a29e97]")}>
                   {s.meta}
                 </p>
                 <h3 className={cn("mt-2 text-[clamp(1.4rem,2.3vw,1.9rem)] leading-[1.15] tracking-[-0.025em] transition-colors duration-500", on ? "text-[#141312]" : "text-[#b9b5ae]")}>
@@ -113,7 +113,7 @@ export function Process({ steps }: { steps: Step[] }) {
             <div className="absolute right-6 bottom-5 left-6 flex gap-1.5">
               {steps.map((s, i) => (
                 <span key={s.id} className="h-[3px] flex-1 overflow-hidden rounded-full bg-[#141312]/[0.08]">
-                  <span className={cn("block h-full origin-left bg-[#0070E0] transition-transform duration-500", i <= active ? "scale-x-100" : "scale-x-0")} />
+                  <span className={cn("block h-full origin-left bg-[#5a6b2e] transition-transform duration-500", i <= active ? "scale-x-100" : "scale-x-0")} />
                 </span>
               ))}
             </div>

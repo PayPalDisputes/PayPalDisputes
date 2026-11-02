@@ -9,7 +9,8 @@ import { canAccessDispute, requireSession, sessionMode } from "@/lib/auth";
 import { getDisputeDetail, type OrderEvidence, type PayPalDisputeDetail } from "@/lib/dashboard";
 import { dueLabel } from "@/lib/dispute-stage";
 import { getDisputeOutcome, type OutcomeRow } from "@/lib/outcomes";
-import { EvidencePackLink, formatAmount, humanize, reasonLabel } from "@/app/_components/dispute-ui";
+import { EvidencePackButton, formatAmount, humanize, reasonLabel } from "@/app/_components/dispute-ui";
+import { DueCountdown } from "@/components/app/DueCountdown";
 import { cn } from "@/lib/cn";
 import { AssessmentReport } from "./assessment";
 import { BuyerHistoryCard } from "./buyer-history";
@@ -163,7 +164,7 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
             Disputes
           </Link>
           <span aria-hidden>/</span>
-          <span className="font-mono text-[12px]">{dispute.id}</span>
+          <span>{item?.item_name ?? "Dispute"}</span>
         </nav>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-1.5">
@@ -173,15 +174,6 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
             </p>
             <p className="text-[13px] text-fg-muted">
               Opened {formatDate(raw.create_time)}
-              {due && (
-                <>
-                  {" · "}
-                  <span className={cn("font-medium", (dispute.daysLeft ?? 99) <= 0 ? "text-bad" : "text-fg")}>
-                    Your response is {due.toLowerCase()}
-                    {dispute.dueAt ? ` (${formatDate(dispute.dueAt)})` : ""}
-                  </span>
-                </>
-              )}
               {dispute.status === "WAITING_FOR_BUYER_RESPONSE" && raw.buyer_response_due_date && ` · Buyer has until ${formatDate(raw.buyer_response_due_date)}`}
               {" · "}
               {humanize(dispute.stage)} stage
@@ -195,10 +187,11 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
                 href={RESOLUTION_CENTER}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-[38px] items-center rounded-full bg-muted px-4 text-[14px] text-fg hover:bg-inset"
+                className="inline-flex h-[38px] items-center rounded-md bg-muted px-4 text-[14px] text-fg hover:bg-inset"
               >
                 Open in PayPal
               </a>
+              <EvidencePackButton disputeId={dispute.id} className="h-[38px]" />
               {draftReady && (
                 <Button href="/review" prefetch={false} className="h-[38px] px-4">
                   Review draft
@@ -207,6 +200,7 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
             </div>
           </div>
         </div>
+        {due && dispute.dueAt && <DueCountdown dueAt={dispute.dueAt} className="max-w-[560px]" />}
       </header>
 
       <div className="flex flex-wrap items-start gap-6">
@@ -309,10 +303,8 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
             </Facts>
           )}
           <Facts id="evidence" title="Evidence">
-            <p className="text-[14px] text-fg-body">
-              The PDF Sira attaches when you fight.
-              <EvidencePackLink disputeId={dispute.id} />
-            </p>
+            <p className="mb-3 text-[14px] text-fg-body">The PDF Sira attaches when you fight.</p>
+            <EvidencePackButton disputeId={dispute.id} />
           </Facts>
           <Facts id="allowed" title="PayPal allows right now">
             <p className="text-[14px] leading-[22px] text-fg-body">

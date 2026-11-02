@@ -81,7 +81,8 @@ export function HeroStage() {
 
       <p className="absolute top-5 left-6 font-mono text-[10.5px] tracking-[0.12em] text-[#77736c] uppercase">Example dispute</p>
 
-      <div className="relative mx-auto flex max-w-[780px] flex-col gap-6 px-5 pt-16 pb-10 md:block md:h-[440px] md:px-0 md:pt-0 md:pb-0">
+      {/* Laid out at 780×440, then scaled up on wide screens so it fills the panel there too */}
+      <div className="relative mx-auto flex max-w-[780px] flex-col gap-6 px-5 pt-16 pb-10 md:block md:h-[440px] md:px-0 md:pt-0 md:pb-0 xl:[zoom:1.15] 2xl:[zoom:1.35] min-[2200px]:[zoom:1.5]">
         {/* The case */}
         <div className={cn("relative md:absolute md:top-[72px] md:right-0 md:w-[330px]", enter(s >= 1))}>
           <CropMarks />
@@ -91,7 +92,7 @@ export function HeroStage() {
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[11px] transition-colors duration-500",
-                  sent ? "bg-[#0070E0] text-white" : "bg-[#141312]/[0.06] text-[#55524d]",
+                  sent ? "bg-[#5a6b2e] text-white" : "bg-[#141312]/[0.06] text-[#55524d]",
                 )}
               >
                 {sent ? "Responded" : "Open"}
@@ -108,7 +109,7 @@ export function HeroStage() {
                   <span
                     className={cn(
                       "grid size-4 shrink-0 place-items-center rounded-full",
-                      c.ok ? "bg-[#0070E0] text-white" : "border border-dashed border-[#141312]/35 text-[#77736c]",
+                      c.ok ? "bg-[#5a6b2e] text-white" : "border border-dashed border-[#141312]/35 text-[#77736c]",
                     )}
                   >
                     {c.ok ? <Check className="size-2.5" strokeWidth={3} /> : <Minus className="size-2.5" strokeWidth={3} />}
@@ -134,7 +135,7 @@ export function HeroStage() {
                   className={cn("flex gap-2", enter(s >= 5))}
                   style={{ transitionDelay: s >= 5 && s < 6 ? `${150 + i * 140}ms` : undefined }}
                 >
-                  <span aria-hidden className="mt-[7px] size-1 shrink-0 rounded-full bg-[#0070E0]" />
+                  <span aria-hidden className="mt-[7px] size-1 shrink-0 rounded-full bg-[#5a6b2e]" />
                   {r}
                 </li>
               ))}
@@ -150,13 +151,13 @@ export function HeroStage() {
             <div className="mt-4 flex gap-2 text-[12.5px]">
               <span
                 className={cn(
-                  "rounded-full bg-[#0070e0] px-4 py-1.5 text-white transition-transform duration-150",
-                  s === 7 && "scale-95 bg-[#0062c4]",
+                  "rounded-md bg-[#5a6b2e] px-4 py-1.5 text-white transition-transform duration-150",
+                  s === 7 && "scale-95 bg-[#4a5824]",
                 )}
               >
                 {sent ? "Approved" : "Approve"}
               </span>
-              <span className="rounded-full border border-[#141312]/[0.12] px-4 py-1.5">Edit</span>
+              <span className="rounded-md border border-[#141312]/[0.12] px-4 py-1.5">Edit</span>
             </div>
           </div>
         </div>
@@ -175,12 +176,12 @@ export function HeroStage() {
         {/* Sent */}
         <div
           className={cn(
-            "flex w-fit items-center gap-2 self-center rounded-full bg-[#141312] py-2 pr-4 pl-2 text-[13px] text-white md:absolute md:bottom-6 md:left-1/2 md:-translate-x-1/2",
+            "flex w-fit items-center gap-2 self-center rounded-md bg-[#3a4520] py-2 pr-4 pl-2 text-[13px] text-white md:absolute md:bottom-6 md:left-1/2 md:-translate-x-1/2",
             "transition-[opacity,transform] duration-500",
             sent ? "opacity-100 md:translate-y-0" : "opacity-0 md:translate-y-2",
           )}
         >
-          <span className="grid size-5 place-items-center rounded-full bg-[#0070E0]">
+          <span className="grid size-5 place-items-center rounded-full bg-[#8d9a5b]">
             <Check className="size-3" strokeWidth={3} />
           </span>
           Response sent to PayPal

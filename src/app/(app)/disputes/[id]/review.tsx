@@ -80,7 +80,7 @@ export function ReviewForm({
             formAction={approve}
             onClick={confirmApprove}
             disabled={busy}
-            className="h-10 rounded-full bg-accent px-5 text-[14px] font-medium text-white hover:bg-[#0062c4] disabled:opacity-50"
+            className="h-10 rounded-md bg-accent px-5 text-[14px] font-medium text-white hover:bg-accent-hover disabled:opacity-50"
           >
             {approving ? "Sending…" : "Approve & send"}
           </button>
@@ -88,7 +88,7 @@ export function ReviewForm({
             type="submit"
             formAction={reject}
             disabled={busy}
-            className="h-10 rounded-full bg-muted px-[18px] text-[14px] text-fg hover:bg-inset disabled:opacity-50"
+            className="h-10 rounded-md bg-muted px-[18px] text-[14px] text-fg hover:bg-inset disabled:opacity-50"
           >
             {rejecting ? "Rejecting…" : "Reject"}
           </button>

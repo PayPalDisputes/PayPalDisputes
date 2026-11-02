@@ -6,6 +6,7 @@ import { ChevronRight } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { site } from "@/data/site";
 import { cn } from "@/lib/cn";
+import { landingWrap } from "./container";
 
 /**
  * The landing page's nav. At the top it sits straight on the hero with no bar of its own, so the
@@ -26,23 +27,17 @@ export function LandingHeader() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-40 border-b transition-[background-color,border-color] duration-300",
-        scrolled ? "border-[#141312]/[0.06] bg-white/90 backdrop-blur" : "border-transparent bg-transparent",
+        scrolled ? "border-[#141312]/[0.06] bg-[#fafaf7]/90 backdrop-blur" : "border-transparent bg-transparent",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
+      <div className={cn(landingWrap, "flex h-16 items-center justify-between")}>
         <Link href="/" aria-label={`${site.name} home`}>
           <Logo />
         </Link>
         <nav className="flex items-center gap-1 text-[14px]">
-          <Link href="/pricing" className="hidden rounded-full px-3 py-2 text-[#55524d] hover:text-[#141312] sm:inline">
-            Pricing
-          </Link>
-          <Link href="/signin" className="rounded-full px-3 py-2 text-[#55524d] hover:text-[#141312]">
-            Sign in
-          </Link>
           <Link
             href={site.appHref}
-            className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#0070E0] py-2 pr-3 pl-4 text-white hover:bg-[#0062c4]"
+            className="ml-2 inline-flex items-center gap-1 rounded-md bg-[#5a6b2e] py-2 pr-3 pl-4 text-white hover:bg-[#4a5824]"
           >
             Open dashboard
             <ChevronRight aria-hidden className="size-3.5" strokeWidth={2} />

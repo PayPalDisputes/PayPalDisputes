@@ -21,6 +21,14 @@ export function stageStep(d: StageInput): number {
   return 1;
 }
 
+export type StageTone = "won" | "lost" | "closed" | "yours" | "theirs";
+
+/** Colour family for the progress line, so outcomes and whose turn it is read at a glance. */
+export function stageTone(d: StageInput): StageTone {
+  if (d.status === "RESOLVED") return d.outcome && WON.has(d.outcome) ? "won" : d.outcome && LOST.has(d.outcome) ? "lost" : "closed";
+  return d.status === "WAITING_FOR_BUYER_RESPONSE" || d.status === "UNDER_REVIEW" ? "theirs" : "yours";
+}
+
 /** "Your turn · draft ready", "Buyer's turn", "Won"… */
 export function stageLabel(d: StageInput): string {
   switch (d.status) {

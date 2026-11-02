@@ -5,7 +5,7 @@ import type { SellerPolicy } from "@/lib/seller-policy";
 import { saveSettings, type SettingsState } from "./actions";
 
 const field =
-  "w-full rounded-[10px] border border-line bg-canvas px-3.5 py-3 text-[14px] leading-[22px] text-fg outline-none focus:border-line-strong disabled:opacity-60";
+  "w-full rounded-md border border-line bg-canvas px-3.5 py-3 text-[14px] leading-[22px] text-fg outline-none focus:border-line-strong disabled:opacity-60";
 
 const TONE_EXAMPLE = {
   friendly: "“Hi Maya, I’m sorry about the chip in the glaze. I’d like to offer $40 so you can keep the lamp.”",
@@ -25,6 +25,9 @@ function Row({ title, htmlFor, description, children, last }: { title: string; h
   );
 }
 
+/** Demo account: every control is visibly switched off, not just unsaveable. */
+const lockedClass = "opacity-55 select-none [&_*]:cursor-not-allowed";
+
 /** Dispute policies form (Mock 2 layout). Read-only for the demo account. */
 export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readOnly: boolean }) {
   const [state, save, saving] = useActionState<SettingsState, FormData>(saveSettings, null);
@@ -35,7 +38,7 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
 
   return (
     <form action={save} className="flex flex-col gap-3">
-      <fieldset disabled={disabled} className="rounded-xl border border-line bg-canvas px-6">
+      <fieldset disabled={disabled} className={`rounded-xl border border-line bg-canvas px-6 ${readOnly ? lockedClass : ""}`}>
         <legend className="sr-only">Automatic decisions</legend>
         <Row title="Auto-refund small claims" description="Sira refunds small claims straight away, unless you already refunded the buyer or PayPal doesn't allow it. Everything else still waits for you.">
           <div className="flex flex-col gap-3.5">
@@ -57,7 +60,7 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
             </label>
             <label className="flex items-center gap-2.5 text-[14px] text-fg-body">
               Under
-              <span className="inline-flex h-[38px] w-[120px] items-center gap-1 rounded-[10px] border border-line bg-canvas px-3 focus-within:border-line-strong">
+              <span className="inline-flex h-[38px] w-[120px] items-center gap-1 rounded-md border border-line bg-canvas px-3 focus-within:border-line-strong">
                 <span className="text-fg-muted">$</span>
                 <input
                   type="number"
@@ -74,7 +77,7 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
           </div>
         </Row>
         <Row title="Message tone" description="How Sira writes to your buyers." last>
-          <div role="radiogroup" aria-label="Message tone" className="inline-flex rounded-[10px] bg-muted p-[3px]">
+          <div role="radiogroup" aria-label="Message tone" className="inline-flex rounded-md bg-muted p-[3px]">
             {(["friendly", "formal"] as const).map((t) => (
               <label
                 key={t}
@@ -89,7 +92,7 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
         </Row>
       </fieldset>
 
-      <fieldset disabled={disabled} className="rounded-xl border border-line bg-canvas px-6">
+      <fieldset disabled={disabled} className={`rounded-xl border border-line bg-canvas px-6 ${readOnly ? lockedClass : ""}`}>
         <legend className="sr-only">Policies</legend>
         <Row title="Return policy" htmlFor="returnPolicy" description="Sira quotes this when a buyer asks about returns, and weighs it in its advice.">
           <textarea
@@ -127,7 +130,7 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
             <button
               type="submit"
               disabled={saving}
-              className="h-[38px] rounded-full bg-accent px-[18px] text-[14px] font-medium text-white hover:bg-[#0062c4] disabled:opacity-50"
+              className="h-[38px] rounded-md bg-accent px-[18px] text-[14px] font-medium text-white hover:bg-accent-hover disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save changes"}
             </button>

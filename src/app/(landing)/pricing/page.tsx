@@ -146,10 +146,10 @@ export default function PricingPage() {
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           {/* A plain link: the demo route sets a cookie, so it must not be prefetched */}
-          <a href="/api/auth/demo" className="inline-flex h-11 items-center rounded-full bg-muted px-6 text-[15px] text-fg hover:bg-inset">
+          <a href="/api/auth/demo" className="inline-flex h-11 items-center rounded-md bg-muted px-6 text-[15px] text-fg hover:bg-inset">
             Try the demo
           </a>
-          <Link href="/signin" className="inline-flex h-11 items-center rounded-full bg-accent px-6 text-[15px] font-medium text-white hover:bg-[#0062c4]">
+          <Link href="/signin" className="inline-flex h-11 items-center rounded-md bg-accent px-6 text-[15px] font-medium text-white hover:bg-[#4a5824]">
             Log in with PayPal
           </Link>
         </div>

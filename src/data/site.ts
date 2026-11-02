@@ -4,7 +4,7 @@
  */
 export const site = {
   name: "Sira",
-  tagline: "Your disputes settled in seconds.",
+  tagline: "Your PayPal disputes, settled.",
   description:
     "Sira reads every PayPal dispute, recommends whether to fight, refund or settle, and drafts the response for you to approve.",
   appHref: "/dashboard",

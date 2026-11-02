@@ -20,8 +20,8 @@ export function ActivityTicker({ items, label, className }: { items: { action: s
     <div className={cn("flex items-center gap-6 overflow-hidden", className)}>
       <p className="flex shrink-0 items-center gap-2 font-mono text-[10.5px] tracking-[0.12em] text-[#141312] uppercase">
         <span aria-hidden className="relative flex size-2">
-          <span className="absolute inset-0 animate-ping rounded-full bg-[#0070E0]/40 motion-reduce:hidden" />
-          <span className="relative size-2 rounded-full bg-[#0070E0]" />
+          <span className="absolute inset-0 animate-ping rounded-full bg-[#5a6b2e]/40 motion-reduce:hidden" />
+          <span className="relative size-2 rounded-full bg-[#5a6b2e]" />
         </span>
         {label}
       </p>

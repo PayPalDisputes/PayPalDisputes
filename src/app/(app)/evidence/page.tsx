@@ -4,7 +4,7 @@ import { EvidenceGrid } from "@/components/app/EvidenceGrid";
 import { requireSession, sellerScope } from "@/lib/auth";
 import { getEvidenceRows } from "@/lib/evidence";
 
-export const metadata: Metadata = { title: "Evidence · Sira" };
+export const metadata: Metadata = { title: "Shipping proof · Sira" };
 
 const NEEDS_TRACKING = new Set(["MERCHANDISE_OR_SERVICE_NOT_RECEIVED", "UNAUTHORISED"]);
 
@@ -20,7 +20,7 @@ export default async function EvidencePage() {
   return (
     <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-5 pt-8 pb-20 md:px-10 md:pt-9">
       <header className="flex max-w-[680px] flex-col gap-1.5">
-        <h1 className="text-[24px] font-[480] tracking-[0.01em] text-fg">Evidence</h1>
+        <h1 className="text-[24px] font-[480] tracking-[0.01em] text-fg">Shipping proof</h1>
         <p className="text-[14.5px] leading-[22px] text-fg-body">
           Tracking and delivery proof for your open disputes. Sira uploads tracking to PayPal and attaches it to every response.
         </p>

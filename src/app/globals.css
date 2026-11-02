@@ -22,7 +22,9 @@
   --mk-line-subtle: rgba(55, 50, 47, 0.07);
   --mk-line-strong: rgba(55, 50, 47, 0.2);
 
-  --mk-accent: #c2623a;      /* copper: used sparingly for money + highlights */
+  --mk-accent: #5a6b2e;      /* olive: actions, links, highlights */
+  --mk-accent-hover: #4a5824;
+  --mk-accent-bg: #eef1e3;
 
   --mk-ok: #2f7d4f;
   --mk-ok-bg: #ecf6ef;
@@ -30,8 +32,8 @@
   --mk-warn-bg: #fbf3e4;
   --mk-bad: #b4372f;
   --mk-bad-bg: #fbecea;
-  --mk-info: #3a5fa8;
-  --mk-info-bg: #edf1fa;
+  --mk-info: #4a5824;
+  --mk-info-bg: #eef1e3;
 
   --mk-shadow-card: 0 1px 2px rgba(28, 25, 20, 0.04), 0 8px 30px rgba(28, 25, 20, 0.04);
   --mk-shadow-float: 0 1px 2px rgba(28, 25, 20, 0.06), 0 12px 40px -8px rgba(28, 25, 20, 0.12);
@@ -43,15 +45,16 @@
   --mk-btn-hover-from: #554e4a;
   --mk-btn-hover-to: #37322f;
   --mk-btn-edge: rgba(55, 50, 47, 0.14);
+  --mk-btn-radius: 9999px;
 
-  /* PayPal brand + dispute stages, shared with the landing page's case stack */
-  --mk-brand: #0070e0;       /* PayPal blue: selection, links, highlights */
-  --mk-brand-navy: #003087;
-  --mk-brand-bg: #eaf3fe;
-  --mk-stage-new: #003087;   /* New dispute */
-  --mk-stage-evidence: #0070e0; /* Evidence attached */
-  --mk-stage-filed: #009cde; /* Response filed */
-  --mk-stage-settled: #b4c3d8; /* Settled */
+  /* Brand + dispute stages (olive ripening to stone), shared with the landing page's case stack */
+  --mk-brand: #5a6b2e;       /* Sira olive: selection, links, highlights */
+  --mk-brand-navy: #3a4520;
+  --mk-brand-bg: #eef1e3;
+  --mk-stage-new: #3a4520;   /* New dispute: deep olive */
+  --mk-stage-evidence: #5a6b2e; /* Evidence attached: olive */
+  --mk-stage-filed: #8d9a5b; /* Response filed: sage */
+  --mk-stage-settled: #d3d6c4; /* Settled: pale stone */
 }
 
 /*
@@ -60,44 +63,62 @@
  * Scoped to the app shell so the marketing pages keep their own palette.
  */
 .theme-app {
+  /* Olive: laurel-leaf green accent on warm, slightly olive-tinted neutrals */
   --mk-bg: #ffffff;          /* cards */
-  --mk-bg-subtle: #fbfbfc;   /* page */
-  --mk-bg-muted: #f0f0f4;    /* quiet buttons, selected nav */
-  --mk-bg-inset: #e6e6ec;
+  --mk-bg-subtle: #fafaf7;   /* page */
+  --mk-bg-muted: #f1f2ec;    /* quiet buttons, selected nav */
+  --mk-bg-inset: #e5e7dd;
 
-  --mk-fg: #1e1e2a;
-  --mk-fg-heading: #1e1e2a;
-  --mk-fg-body: #3c3c48;
-  --mk-fg-muted: #70707d;
+  --mk-fg: #1d2016;
+  --mk-fg-heading: #1d2016;
+  --mk-fg-body: #3d4134;
+  --mk-fg-muted: #6f7364;
 
-  --mk-line: #ececf1;
-  --mk-line-subtle: #f2f2f5;
-  --mk-line-strong: #d9d9e1;
+  --mk-line: #e9eae3;
+  --mk-line-subtle: #f1f2ec;
+  --mk-line-strong: #d6d8cc;
 
-  --mk-accent: #0070e0;
+  --mk-accent: #5a6b2e;      /* olive */
+  --mk-accent-hover: #4a5824;
+  --mk-accent-bg: #eef1e3;
 
-  --mk-ok: #1f7a4d;
-  --mk-ok-bg: #e9f6ef;
-  --mk-warn: #a15c00;
-  --mk-warn-bg: #fdf3e2;
+  --mk-ok: #12795a;          /* emerald, kept apart from the olive accent */
+  --mk-ok-bg: #e6f4ee;
+  --mk-warn: #9a5b00;
+  --mk-warn-bg: #fbf2e1;
   --mk-bad: #b42318;
-  --mk-bad-bg: #fdecea;
-  --mk-info: #0062cc;
-  --mk-info-bg: #eaf3fe;
+  --mk-bad-bg: #fcebe9;
+  --mk-info: #4a5824;
+  --mk-info-bg: #eef1e3;
 
-  --mk-shadow-card: 0 1px 2px rgba(30, 30, 42, 0.04), 0 8px 30px rgba(30, 30, 42, 0.04);
-  --mk-shadow-float: 0 1px 2px rgba(30, 30, 42, 0.06), 0 12px 40px -8px rgba(30, 30, 42, 0.14);
+  --mk-shadow-card: 0 1px 2px rgba(29, 32, 22, 0.04), 0 8px 30px rgba(29, 32, 22, 0.04);
+  --mk-shadow-float: 0 1px 2px rgba(29, 32, 22, 0.06), 0 12px 40px -8px rgba(29, 32, 22, 0.14);
 
-  /* Primary button: solid PayPal blue */
-  --mk-btn-from: #0070e0;
-  --mk-btn-to: #0070e0;
-  --mk-btn-hover-from: #0062c4;
-  --mk-btn-hover-to: #0062c4;
+  /* Primary button: solid olive, squared off */
+  --mk-btn-from: #5a6b2e;
+  --mk-btn-to: #5a6b2e;
+  --mk-btn-hover-from: #4a5824;
+  --mk-btn-hover-to: #4a5824;
   --mk-btn-edge: transparent;
+  --mk-btn-radius: 6px;
 
-  font-family: var(--font-inter), system-ui, sans-serif;
+  /* Less curvy: tighter corners on cards, menus and inputs */
+  --radius-md: 5px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 10px;
+
+  /* Digits come from Geist Mono (digits-only face), everything else from Inter */
+  font-family: var(--font-digits), var(--font-inter), system-ui, sans-serif;
   font-weight: 420;
   font-feature-settings: "cv11", "ss01";
+}
+
+/* Numbers (money, counts, deadlines) in a monospaced face so columns and totals line up */
+.theme-app :is(.tabular-nums, .money, .num) {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-feature-settings: normal;
+  letter-spacing: -0.02em;
 }
 
 /* Data-grid column headers read as quiet labels, like the rest of the dashboard */
@@ -125,6 +146,8 @@
   --color-line-subtle: var(--mk-line-subtle);
   --color-line-strong: var(--mk-line-strong);
   --color-accent: var(--mk-accent);
+  --color-accent-hover: var(--mk-accent-hover, var(--mk-accent));
+  --color-accent-bg: var(--mk-accent-bg, var(--mk-bg-muted));
   --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
   --color-ok: var(--mk-ok);
   --color-ok-bg: var(--mk-ok-bg);
@@ -382,7 +405,7 @@ body {
 }
 /* A highlighter pen across a phrase. */
 .play-mark {
-  background-image: linear-gradient(rgba(0, 112, 224, 0.16), rgba(0, 112, 224, 0.16));
+  background-image: linear-gradient(rgba(90, 107, 46, 0.16), rgba(90, 107, 46, 0.16));
   background-repeat: no-repeat;
   background-size: 0% 100%;
   border-radius: 3px;
@@ -401,19 +424,19 @@ body {
 .play-travel { opacity: 0; }
 [data-play="on"] .play-travel { animation: mk-travel 900ms var(--mk-ease) var(--d, 0ms) both; }
 @keyframes mk-flash {
-  from { background-color: rgba(0, 112, 224, 0.12); }
+  from { background-color: rgba(90, 107, 46, 0.12); }
   to { background-color: transparent; }
 }
 [data-play="on"] .play-flash { animation: mk-flash 1800ms ease-out var(--d, 0ms) both; }
 /* Selection ring, and dimming for what wasn't chosen. */
 .play-ring {
-  box-shadow: 0 0 0 0 rgba(0, 112, 224, 0);
+  box-shadow: 0 0 0 0 rgba(90, 107, 46, 0);
   border: 1.5px solid transparent;
   transition: border-color 400ms ease, box-shadow 400ms ease;
 }
 [data-play="on"] .play-ring {
-  border-color: #0070e0;
-  box-shadow: 0 0 0 4px rgba(0, 112, 224, 0.12);
+  border-color: #5a6b2e;
+  box-shadow: 0 0 0 4px rgba(90, 107, 46, 0.12);
   transition-delay: var(--d, 0ms);
 }
 .play-dim { transition: opacity 400ms ease; }

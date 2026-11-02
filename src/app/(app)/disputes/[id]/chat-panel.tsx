@@ -100,10 +100,10 @@ export function ChatPanel({ disputeId }: { disputeId: string }) {
               Last time you asked: &ldquo;{loaded.lastAsked}&rdquo; · {loaded.lastAt ? when(loaded.lastAt) : ""}
             </p>
             <div className="mt-3 flex gap-2">
-              <button type="button" onClick={() => resume("continue")} className="h-8 rounded-full bg-accent px-3.5 text-[13px] font-medium text-white hover:bg-[#0062c4]">
+              <button type="button" onClick={() => resume("continue")} className="h-8 rounded-md bg-accent px-3.5 text-[13px] font-medium text-white hover:bg-accent-hover">
                 Continue
               </button>
-              <button type="button" onClick={() => resume("fresh")} className="h-8 rounded-full bg-canvas px-3.5 text-[13px] text-fg hover:bg-inset">
+              <button type="button" onClick={() => resume("fresh")} className="h-8 rounded-md bg-canvas px-3.5 text-[13px] text-fg hover:bg-inset">
                 Start fresh
               </button>
             </div>
@@ -115,7 +115,7 @@ export function ChatPanel({ disputeId }: { disputeId: string }) {
             <p className="text-fg-body">Ask about this dispute, or ask Sira to change the drafts.</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
-                <button key={s} type="button" onClick={() => send(s)} disabled={pending} className="h-[34px] rounded-full bg-muted px-3.5 text-[13.5px] text-fg hover:bg-inset disabled:opacity-50">
+                <button key={s} type="button" onClick={() => send(s)} disabled={pending} className="h-[34px] rounded-md bg-muted px-3.5 text-[13.5px] text-fg hover:bg-inset disabled:opacity-50">
                   {s}
                 </button>
               ))}
@@ -167,7 +167,7 @@ export function ChatPanel({ disputeId }: { disputeId: string }) {
               disabled={pending}
               className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-fg-muted"
             />
-            <button type="submit" disabled={pending || !text.trim()} className="h-8 rounded-lg bg-accent px-3.5 text-[13px] font-medium text-white hover:bg-[#0062c4] disabled:opacity-50">
+            <button type="submit" disabled={pending || !text.trim()} className="h-8 rounded-lg bg-accent px-3.5 text-[13px] font-medium text-white hover:bg-accent-hover disabled:opacity-50">
               Ask
             </button>
           </div>

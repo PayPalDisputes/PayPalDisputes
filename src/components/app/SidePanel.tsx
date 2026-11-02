@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Maximize2, X } from "lucide-react";
+import { PanelBodySkeleton } from "./Skeleton";
 
 /**
  * Right-hand drawer for reviewing a dispute without leaving the list.
@@ -76,7 +77,7 @@ export function SidePanel({
           <div className="ml-auto flex items-center gap-1">
             <Link
               href={fullHref}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-fg-body transition-colors hover:bg-muted hover:text-fg"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] text-fg-body transition-colors hover:bg-muted hover:text-fg"
             >
               <Maximize2 aria-hidden strokeWidth={1.75} className="size-3.5" />
               <span className="hidden sm:inline">Full page</span>
@@ -86,7 +87,7 @@ export function SidePanel({
                 href={nextHref}
                 replace
                 scroll={false}
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-fg px-3.5 text-[13px] font-medium whitespace-nowrap text-white transition-colors hover:bg-fg/85"
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-fg px-3.5 text-[13px] font-medium whitespace-nowrap text-white transition-colors hover:bg-fg/85"
               >
                 <span className="hidden sm:inline">{nextLabel ?? "Next"}</span>
                 <span className="sm:hidden">Next</span>
@@ -98,5 +99,14 @@ export function SidePanel({
         <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
       </div>
     </div>
+  );
+}
+
+/** The panel's frame with placeholder content, shown while a dispute loads. */
+export function SidePanelSkeleton({ closeHref, fullHref }: { closeHref: string; fullHref: string }) {
+  return (
+    <SidePanel title="Loading…" closeHref={closeHref} fullHref={fullHref}>
+      <PanelBodySkeleton />
+    </SidePanel>
   );
 }

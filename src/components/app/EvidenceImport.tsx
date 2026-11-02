@@ -309,7 +309,7 @@ export function EvidenceImport({ existing, onClose }: { existing: EvidenceRow[];
                   setFileName(null);
                 })
               }
-              className="inline-flex h-10 items-center rounded-full bg-fg px-5 text-[13.5px] font-medium text-white hover:bg-fg/85 disabled:opacity-50"
+              className="inline-flex h-10 items-center rounded-md bg-fg px-5 text-[13.5px] font-medium text-white hover:bg-fg/85 disabled:opacity-50"
             >
               {saving ? "Saving…" : `Save ${good.length} ready row${good.length === 1 ? "" : "s"}`}
             </button>
