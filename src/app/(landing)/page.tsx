@@ -4,7 +4,7 @@ import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
 import { ActivityTicker } from "@/components/landing/ActivityTicker";
 import { CaseStack } from "@/components/landing/CaseStack";
 import { landingWrap } from "@/components/landing/container";
-import { OfferingHand } from "@/components/landing/OfferingHand";
+import { SlideInHand } from "@/components/landing/SlideInHand";
 import { HeroStage } from "@/components/landing/HeroStage";
 import { Process } from "@/components/landing/Process";
 import { SpringDots } from "@/components/landing/SpringDots";
@@ -175,14 +175,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Closing band: the line on the left, a small olive hand sliding in on the right */}
+      {/* Closing band: the line on the left; on the right, one hand offers an olive branch and the other reaches in for it */}
       <section className="overflow-hidden bg-[#5a6b2e] text-white">
         <div className={cn(wrap, "flex flex-col gap-8 py-20 md:flex-row md:items-center md:justify-between")}>
           <div>
             <h2 className={h2}>{cta.title}</h2>
             <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/85">{cta.body}</p>
           </div>
-          <OfferingHand className="w-[260px] shrink-0 self-end md:w-[320px] md:self-center" />
+          <div className="flex shrink-0 items-center self-end md:self-center">
+            <SlideInHand hand="receiving" from="left" className="w-[150px] md:w-[280px]" />
+            <SlideInHand hand="offering" from="right" className="-ml-[6%] w-[160px] md:w-[320px]" />
+          </div>
         </div>
       </section>
     </>

@@ -4,13 +4,21 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
 
+const HANDS = {
+  /** Holding out the olive branch; slides in from the right. */
+  offering: { src: "/brand/olive-hand.webp", width: 1400, height: 607 },
+  /** Open, reaching for the branch; slides in from the left. */
+  receiving: { src: "/brand/receiving-hand.webp", width: 1200, height: 530 },
+} as const;
+
 /**
- * The closing band's illustration: a hand offering an olive branch. It is driven by scrolling only:
- * as the band scrolls up the screen, the hand slides in from the right towards its spot and slowly
- * fades in, then stops. Scrolling back reverses it. Shown in place for reduced motion.
+ * One of the closing band's two hands. Driven by scrolling only: as the band scrolls up the screen
+ * the hand slides in from its side (`from`) towards its spot and slowly fades in, then stops;
+ * scrolling back reverses it. Shown in place for reduced motion.
  */
-export function OfferingHand({ className }: { className?: string }) {
+export function SlideInHand({ hand, from, className }: { hand: keyof typeof HANDS; from: "left" | "right"; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const img = HANDS[hand];
 
   useEffect(() => {
     const el = ref.current;
@@ -47,12 +55,12 @@ export function OfferingHand({ className }: { className?: string }) {
       aria-hidden
       className={cn("pointer-events-none [--in:0]", className)}
       style={{
-        // starts 60% of its own width to the right and invisible; the fade lags the slide a little
-        transform: "translateX(calc((1 - var(--in)) * 60%))",
+        // starts 60% of its own width off to its side and invisible; the fade lags the slide a little
+        transform: `translateX(calc((1 - var(--in)) * ${from === "right" ? "60%" : "-60%"}))`,
         opacity: "calc(var(--in) * var(--in))",
       }}
     >
-      <Image src="/brand/olive-hand.webp" alt="" width={1400} height={607} sizes="320px" className="h-auto w-full" />
+      <Image src={img.src} alt="" width={img.width} height={img.height} sizes="320px" className="h-auto w-full" />
     </div>
   );
 }
