@@ -175,15 +175,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Closing band */}
-      {/* Closing band: the line on the left, a hand offering an olive branch rising on the right */}
-      <section className="relative overflow-hidden bg-[#5a6b2e] text-white">
-        <div className={cn(wrap, "grid items-end gap-6 pt-20 md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] md:pt-24")}>
-          <div className="pb-4 md:pb-28">
+      {/* Closing band: the line on the left, a small olive hand sliding in on the right */}
+      <section className="overflow-hidden bg-[#5a6b2e] text-white">
+        <div className={cn(wrap, "flex flex-col gap-8 py-20 md:flex-row md:items-center md:justify-between")}>
+          <div>
             <h2 className={h2}>{cta.title}</h2>
             <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/85">{cta.body}</p>
           </div>
-          <OfferingHand className="-mb-[6%] w-full max-w-[760px] justify-self-end" />
+          <OfferingHand className="w-[260px] shrink-0 self-end md:w-[320px] md:self-center" />
         </div>
       </section>
     </>
