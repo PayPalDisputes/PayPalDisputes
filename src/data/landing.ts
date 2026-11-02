@@ -137,7 +137,5 @@ export const landing = {
   cta: {
     title: "Start with your open disputes.",
     body: "Try it in demo mode without touching PayPal, or connect a sandbox account.",
-    primary: { label: "Open dashboard", href: "/dashboard" },
-    secondary: { label: "Try the demo", href: "/api/auth/demo" },
   },
 };

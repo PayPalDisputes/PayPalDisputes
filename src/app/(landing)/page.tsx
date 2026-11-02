@@ -4,6 +4,7 @@ import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
 import { ActivityTicker } from "@/components/landing/ActivityTicker";
 import { CaseStack } from "@/components/landing/CaseStack";
 import { landingWrap } from "@/components/landing/container";
+import { OfferingHand } from "@/components/landing/OfferingHand";
 import { HeroStage } from "@/components/landing/HeroStage";
 import { Process } from "@/components/landing/Process";
 import { SpringDots } from "@/components/landing/SpringDots";
@@ -175,20 +176,14 @@ export default function LandingPage() {
       </section>
 
       {/* Closing band */}
-      <section className="bg-[#5a6b2e] text-white">
-        <div className={cn(wrap, "flex flex-col gap-8 py-20 md:flex-row md:items-end md:justify-between")}>
-          <div>
+      {/* Closing band: the line on the left, a hand offering an olive branch rising on the right */}
+      <section className="relative overflow-hidden bg-[#5a6b2e] text-white">
+        <div className={cn(wrap, "grid items-end gap-6 pt-20 md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] md:pt-24")}>
+          <div className="pb-4 md:pb-28">
             <h2 className={h2}>{cta.title}</h2>
             <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/85">{cta.body}</p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <PrimaryButton href={cta.primary.href} inverted>
-              {cta.primary.label}
-            </PrimaryButton>
-            <SecondaryButton href={cta.secondary.href} inverted>
-              {cta.secondary.label}
-            </SecondaryButton>
-          </div>
+          <OfferingHand className="-mb-[6%] w-full max-w-[760px] justify-self-end" />
         </div>
       </section>
     </>

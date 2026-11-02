@@ -530,3 +530,9 @@ body {
   border-radius: 8px;
   pointer-events: none;
 }
+
+/* A slow bob, for illustrations at rest (the closing band's olive hand). */
+@keyframes mk-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-0.6deg); }
+}
