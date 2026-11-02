@@ -115,18 +115,11 @@ export default function LandingPage() {
           {jobs.map((j) => {
             const Icon = icons[j.icon];
             return (
-              <Link key={j.title} href={j.href} className={cn(card, "group p-6 transition-colors hover:border-[#141312]/20")}>
-                <div className="flex items-start justify-between">
-                  <Icon aria-hidden className="size-5" strokeWidth={1.6} />
-                  <ChevronRight
-                    aria-hidden
-                    className="size-4 text-[#9a968e] transition-transform group-hover:translate-x-0.5"
-                    strokeWidth={2}
-                  />
-                </div>
+              <div key={j.title} className={cn(card, "p-6")}>
+                <Icon aria-hidden className="size-5" strokeWidth={1.6} />
                 <h2 className="mt-8 text-[16px] font-medium">{j.title}</h2>
                 <p className="mt-1.5 text-[14px] leading-relaxed text-[#77736c]">{j.body}</p>
-              </Link>
+              </div>
             );
           })}
         </div>
