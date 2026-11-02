@@ -178,13 +178,14 @@ export default function LandingPage() {
       {/* Closing band: the line on the left; on the right, one hand offers an olive branch and the other reaches in for it */}
       <section className="overflow-hidden bg-[#5a6b2e] text-white">
         <div className={cn(wrap, "flex flex-col gap-8 py-20 md:flex-row md:items-center md:justify-between")}>
-          <div>
+          <div className="shrink-0">
             <h2 className={h2}>{cta.title}</h2>
             <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/85">{cta.body}</p>
           </div>
-          <div className="flex shrink-0 items-center self-end md:self-center">
-            <SlideInHand hand="receiving" from="left" className="w-[150px] md:w-[280px]" />
-            <SlideInHand hand="offering" from="right" className="-ml-[6%] w-[160px] md:w-[320px]" />
+          {/* The pair fills the band's right side and nearly its full height; the olive hand is the larger */}
+          <div className="flex min-w-0 items-center justify-end md:-my-12 md:flex-1 md:pl-8">
+            <SlideInHand hand="receiving" from="left" className="w-[42%] max-w-[460px] shrink-0" />
+            <SlideInHand hand="offering" from="right" className="-ml-[3%] w-[61%] max-w-[680px] shrink-0" />
           </div>
         </div>
       </section>

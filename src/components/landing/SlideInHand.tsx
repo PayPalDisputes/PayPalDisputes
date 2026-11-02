@@ -60,7 +60,7 @@ export function SlideInHand({ hand, from, className }: { hand: keyof typeof HAND
         opacity: "calc(var(--in) * var(--in))",
       }}
     >
-      <Image src={img.src} alt="" width={img.width} height={img.height} sizes="320px" className="h-auto w-full" />
+      <Image src={img.src} alt="" width={img.width} height={img.height} sizes="(min-width: 768px) 40vw, 60vw" className="h-auto w-full" />
     </div>
   );
 }
