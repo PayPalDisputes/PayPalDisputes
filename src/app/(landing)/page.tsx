@@ -184,7 +184,6 @@ export default function LandingPage() {
           </div>
           {/* The pair fills the band's right side and nearly its full height; the olive hand is the larger */}
           <div className="flex min-w-0 items-center justify-end md:-my-12 md:flex-1 md:pl-8">
-            <SlideInHand hand="receiving" from="left" className="w-[42%] max-w-[460px] shrink-0" />
             <SlideInHand hand="offering" from="right" className="-ml-[3%] w-[61%] max-w-[680px] shrink-0" />
           </div>
         </div>
