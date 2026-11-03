@@ -1,5 +1,6 @@
 import { paypalPost } from "@/lib/paypal";
 import { actionsMode } from "@/lib/respond";
+import { isSample } from "@/lib/sample";
 import { supabaseAdmin } from "@/lib/supabase";
 
 // Uploads shipment tracking to PayPal for orders that have actually shipped. With tracking on the
@@ -48,6 +49,7 @@ export async function syncTrackingToPayPal(): Promise<TrackingSyncResult> {
   if (error) throw error;
 
   const due = (orders as OrderRow[]).filter((o) => {
+    if (isSample(o.paypal_transaction_id)) return false; // sample history: no such PayPal transaction
     const status = payPalTrackingStatus(o.shipping_status);
     // A transaction on another seller's account will never accept our tracking; don't retry it every sync.
     if (/not authori[sz]ed/i.test(o.paypal_tracking_error ?? "")) return false;

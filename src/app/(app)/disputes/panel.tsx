@@ -28,6 +28,7 @@ export function DisputePanel({
   const claim = raw.messages?.find((m) => m.posted_by === "BUYER")?.content;
   const item = raw.disputed_transactions?.[0]?.items?.[0]?.item_name;
   const stage = stageLabel({
+    id: dispute.id,
     status: dispute.status,
     report: dispute.decision ? { recommendation: dispute.decision.assessment.recommendation, status: dispute.decision.status, current: dispute.decision.current } : null,
   });

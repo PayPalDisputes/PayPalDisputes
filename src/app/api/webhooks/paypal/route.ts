@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       const disputeId = r.dispute_id;
       after(async () => {
         try {
-          await upsertDispute(await getDispute<PayPalDispute>(disputeId));
+          if (!(await upsertDispute(await getDispute<PayPalDispute>(disputeId)))) return; // opened before DISPUTES_SINCE
           const outcome = await assessDispute(disputeId);
           console.log(`[paypal-webhook] assess ${disputeId}:`, outcome);
         } catch (err) {

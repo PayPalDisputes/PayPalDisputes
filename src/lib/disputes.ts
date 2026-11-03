@@ -17,8 +17,21 @@ export type PayPalDispute = {
   }[];
 };
 
-/** Inserts or updates a dispute row, linking it to the seller by PayPal merchant id. */
-export async function upsertDispute(dispute: PayPalDispute) {
+/**
+ * Disputes opened before DISPUTES_SINCE (an ISO date, optional) are never stored, so old sandbox
+ * test disputes stay out of Sira once deleted, even though PayPal still lists them.
+ */
+function openedBeforeCutoff(dispute: PayPalDispute) {
+  const since = process.env.DISPUTES_SINCE;
+  return !!since && !!dispute.create_time && new Date(dispute.create_time) < new Date(since);
+}
+
+/**
+ * Inserts or updates a dispute row, linking it to the seller by PayPal merchant id.
+ * Returns false when the dispute was skipped (opened before DISPUTES_SINCE).
+ */
+export async function upsertDispute(dispute: PayPalDispute): Promise<boolean> {
+  if (openedBeforeCutoff(dispute)) return false;
   const db = supabaseAdmin();
   const tx = dispute.disputed_transactions?.[0];
   const merchantId = tx?.seller?.merchant_id ?? null;
@@ -52,4 +65,5 @@ export async function upsertDispute(dispute: PayPalDispute) {
     synced_at: new Date().toISOString(),
   });
   if (error) throw error;
+  return true;
 }

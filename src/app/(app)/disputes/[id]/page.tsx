@@ -9,6 +9,7 @@ import { canAccessDispute, requireSession, sessionMode } from "@/lib/auth";
 import { getDisputeDetail, type OrderEvidence, type PayPalDisputeDetail } from "@/lib/dashboard";
 import { dueLabel } from "@/lib/dispute-stage";
 import { getDisputeOutcome, type OutcomeRow } from "@/lib/outcomes";
+import { isSample } from "@/lib/sample";
 import { EvidencePackButton, formatAmount, humanize, reasonLabel } from "@/app/_components/dispute-ui";
 import { DueCountdown } from "@/components/app/DueCountdown";
 import { cn } from "@/lib/cn";
@@ -149,12 +150,15 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
   const { raw, order } = dispute;
   const tx = raw.disputed_transactions?.[0];
   const item = tx?.items?.[0];
+  // PayPal leaves items off unauthorized claims; the store's order record still knows what was bought.
+  const itemName = item?.item_name ?? order?.itemDescription ?? null;
   const buyer = tx?.buyer?.name ?? "Buyer";
   const hold = raw.fund_movements?.find((f) => f.reason === "HOLD_PLACED");
   const allowed = (raw.links ?? []).filter((l) => l.method === "POST").map((l) => l.rel);
   const waiting = dispute.status === "WAITING_FOR_SELLER_RESPONSE";
   const draftReady = dispute.decision?.current && dispute.decision.status === "pending_review" && dispute.status !== "RESOLVED";
   const due = waiting ? dueLabel(dispute.daysLeft) : null;
+  const sample = isSample(dispute.id);
 
   return (
     <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-7 px-5 pt-7 pb-20 md:px-10">
@@ -164,13 +168,13 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
             Disputes
           </Link>
           <span aria-hidden>/</span>
-          <span>{item?.item_name ?? "Dispute"}</span>
+          <span>{itemName ?? "Dispute"}</span>
         </nav>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-1.5">
             <h1 className="text-[26px] font-[480] tracking-[0.01em] text-fg">{buyer}</h1>
             <p className="text-[15px] text-fg-body">
-              {item?.item_name ?? "Order"} · {reasonLabel(dispute.reason)}
+              {itemName ?? "Order"} · {reasonLabel(dispute.reason)}
             </p>
             <p className="text-[13px] text-fg-muted">
               Opened {formatDate(raw.create_time)}
@@ -179,18 +183,21 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
               {humanize(dispute.stage)} stage
               {dispute.sellerName ? ` · ${dispute.sellerName}` : ""}
             </p>
+            {sample && <p className="text-[13px] text-fg-muted">Sample history: an example past case to fill the insights. It was never a PayPal dispute.</p>}
           </div>
           <div className="flex flex-col items-end gap-3">
             <Money amount={dispute.amount} currency={dispute.currency} className="text-[26px] font-[480] text-fg" />
             <div className="flex gap-2">
-              <a
-                href={RESOLUTION_CENTER}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-[38px] items-center rounded-md bg-muted px-4 text-[14px] text-fg hover:bg-inset"
-              >
-                Open in PayPal
-              </a>
+              {!sample && (
+                <a
+                  href={RESOLUTION_CENTER}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-[38px] items-center rounded-md bg-muted px-4 text-[14px] text-fg hover:bg-inset"
+                >
+                  Open in PayPal
+                </a>
+              )}
               <EvidencePackButton disputeId={dispute.id} className="h-[38px]" />
               {draftReady && (
                 <Button href="/review" prefetch={false} className="h-[38px] px-4">

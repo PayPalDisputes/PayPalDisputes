@@ -28,7 +28,7 @@ const CASES: { say: string; expect: Expect; why: string }[] = [
 ];
 
 async function main() {
-  const disputeId = process.argv[2] ?? "PP-R-KGP-10191058";
+  const disputeId = process.argv[2] ?? "PP-R-CSE-10196067";
   let passed = 0;
   const owners: string[] = [];
   for (const c of CASES) {
