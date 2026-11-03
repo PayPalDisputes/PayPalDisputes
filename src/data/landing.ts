@@ -52,19 +52,16 @@ export const landing = {
       icon: "scale",
       title: "Decide every case",
       body: "Fight, refund or settle, with the reasoning and the Seller Protection check behind each call.",
-      href: "/disputes",
     },
     {
       icon: "pen",
       title: "Draft the response",
       body: "Evidence notes, buyer messages and offers written from your order data, ready to edit.",
-      href: "/disputes",
     },
     {
       icon: "timer",
       title: "Stay ahead of deadlines",
       body: "Cases sorted by PayPal's response date, with chargebacks and claims flagged first.",
-      href: "/dashboard",
     },
   ] as const,
 
@@ -137,7 +134,5 @@ export const landing = {
   cta: {
     title: "Start with your open disputes.",
     body: "Try it in demo mode without touching PayPal, or connect a sandbox account.",
-    primary: { label: "Open dashboard", href: "/dashboard" },
-    secondary: { label: "Try the demo", href: "/api/auth/demo" },
   },
 };

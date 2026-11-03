@@ -4,6 +4,7 @@ import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
 import { ActivityTicker } from "@/components/landing/ActivityTicker";
 import { CaseStack } from "@/components/landing/CaseStack";
 import { landingWrap } from "@/components/landing/container";
+import { SlideInHand } from "@/components/landing/SlideInHand";
 import { HeroStage } from "@/components/landing/HeroStage";
 import { Process } from "@/components/landing/Process";
 import { SpringDots } from "@/components/landing/SpringDots";
@@ -114,18 +115,11 @@ export default function LandingPage() {
           {jobs.map((j) => {
             const Icon = icons[j.icon];
             return (
-              <Link key={j.title} href={j.href} className={cn(card, "group p-6 transition-colors hover:border-[#141312]/20")}>
-                <div className="flex items-start justify-between">
-                  <Icon aria-hidden className="size-5" strokeWidth={1.6} />
-                  <ChevronRight
-                    aria-hidden
-                    className="size-4 text-[#9a968e] transition-transform group-hover:translate-x-0.5"
-                    strokeWidth={2}
-                  />
-                </div>
+              <div key={j.title} className={cn(card, "p-6")}>
+                <Icon aria-hidden className="size-5" strokeWidth={1.6} />
                 <h2 className="mt-8 text-[16px] font-medium">{j.title}</h2>
                 <p className="mt-1.5 text-[14px] leading-relaxed text-[#77736c]">{j.body}</p>
-              </Link>
+              </div>
             );
           })}
         </div>
@@ -174,20 +168,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Closing band */}
-      <section className="bg-[#5a6b2e] text-white">
-        <div className={cn(wrap, "flex flex-col gap-8 py-20 md:flex-row md:items-end md:justify-between")}>
-          <div>
+      {/* Closing band: the line on the left; on the right, one hand offers an olive branch and the other reaches in for it */}
+      <section className="overflow-hidden bg-[#5a6b2e] text-white">
+        <div className={cn(wrap, "flex flex-col gap-8 py-20 md:flex-row md:items-center md:justify-between")}>
+          <div className="shrink-0">
             <h2 className={h2}>{cta.title}</h2>
             <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/85">{cta.body}</p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <PrimaryButton href={cta.primary.href} inverted>
-              {cta.primary.label}
-            </PrimaryButton>
-            <SecondaryButton href={cta.secondary.href} inverted>
-              {cta.secondary.label}
-            </SecondaryButton>
+          {/* The pair fills the band's right side and nearly its full height; the olive hand is the larger */}
+          <div className="flex min-w-0 items-center justify-end md:-my-12 md:flex-1 md:pl-8">
+            <SlideInHand hand="offering" from="right" className="-ml-[3%] w-[61%] max-w-[680px] shrink-0" />
           </div>
         </div>
       </section>
