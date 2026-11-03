@@ -263,7 +263,7 @@ export async function getHomeData(sellerId?: string): Promise<{ disputes: HomeDi
   let disputesQuery = db
     .from("disputes")
     .select(
-      "id, seller_id, merchant_id, reason, status, lifecycle_stage, amount, currency, seller_response_due_at, paypal_created_at, paypal_updated_at, buyer:raw->disputed_transactions->0->buyer->>name, outcome:raw->dispute_outcome->>outcome_code, item:raw->disputed_transactions->0->items->0->>item_name",
+      "id, seller_id, merchant_id, reason, status, lifecycle_stage, amount, currency, seller_response_due_at, paypal_created_at, paypal_updated_at, buyer:raw->disputed_transactions->0->buyer->>name, outcome:raw->dispute_outcome->>outcome_code, item:raw->disputed_transactions->0->items->0->>item_name, tx:raw->disputed_transactions->0->>seller_transaction_id",
     )
     .order("paypal_updated_at", { ascending: false, nullsFirst: false });
   if (sellerId) disputesQuery = disputesQuery.eq("seller_id", sellerId);
@@ -280,6 +280,15 @@ export async function getHomeData(sellerId?: string): Promise<{ disputes: HomeDi
   if (disputes.error) throw disputes.error;
   if (sellers.error) throw sellers.error;
   if (decisions.error) throw decisions.error;
+
+  // PayPal leaves items off unauthorized claims: name those from the store's order record instead.
+  const noItem = disputes.data.filter((d) => !(d.item as string | null)?.trim() && d.tx).map((d) => d.tx as string);
+  const orderItems = new Map<string, string>();
+  if (noItem.length) {
+    const { data: orders, error: ordersError } = await db.from("orders").select("paypal_transaction_id, item_description").in("paypal_transaction_id", noItem);
+    if (ordersError && ordersError.code !== "PGRST205") throw ordersError;
+    for (const o of orders ?? []) if (o.item_description) orderItems.set(o.paypal_transaction_id, o.item_description);
+  }
 
   // Newest decision per dispute (rows are already newest first).
   const latest = new Map<string, (typeof decisions.data)[number]>();
@@ -308,7 +317,7 @@ export async function getHomeData(sellerId?: string): Promise<{ disputes: HomeDi
         updatedAt: d.paypal_updated_at,
         buyerName: (d.buyer as string | null) ?? null,
         outcome: (d.outcome as string | null) ?? null,
-        item: (d.item as string | null)?.trim() || null,
+        item: (d.item as string | null)?.trim() || orderItems.get(d.tx as string) || null,
         openedAt: d.paypal_created_at,
         report: reportSummary(latest.get(d.id), d.paypal_updated_at),
       };

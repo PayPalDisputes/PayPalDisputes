@@ -11,6 +11,7 @@
     "dispute": "tsx --env-file=.env.local scripts/dispute-actions.ts",
     "openai:check": "tsx --env-file=.env.local scripts/openai-check.ts",
     "seed:orders": "tsx --env-file=.env.local scripts/seed-orders.ts",
+    "seed:history": "tsx --env-file=.env.local scripts/seed-history.ts",
     "eval:seed": "tsx --env-file=.env.local scripts/eval-seed.ts",
     "eval": "tsx --env-file=.env.local scripts/eval.ts",
     "eval:chat": "tsx --conditions=react-server --env-file=.env.local scripts/eval-chat.ts",

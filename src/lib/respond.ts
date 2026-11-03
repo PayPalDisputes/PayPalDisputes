@@ -3,6 +3,7 @@ import { getOrder, type PayPalDisputeDetail } from "@/lib/dashboard";
 import { evidencePackFor, evidencePackName, refundIdsFromNotes } from "@/lib/evidence-pack";
 import { upsertDispute, type PayPalDispute } from "@/lib/disputes";
 import { getDispute, PayPalError, paypalPost } from "@/lib/paypal";
+import { isSample } from "@/lib/sample";
 import { supabaseAdmin } from "@/lib/supabase";
 
 /**
@@ -140,6 +141,7 @@ export async function approveDecision(
     .maybeSingle();
   if (error) throw error;
   if (!decision) return fail("This report no longer exists.");
+  if (isSample(decision.dispute_id)) return fail("This is sample history, so there's nothing to send to PayPal.");
   if (decision.status !== "pending_review" && decision.status !== "failed") {
     return fail(`This report was already ${decision.status.replace("_", " ")}.`);
   }

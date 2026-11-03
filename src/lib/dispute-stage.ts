@@ -1,9 +1,13 @@
 // Plain-language "where it stands" for a dispute, plus the 5-step progress line the dashboard shows
 // (Opened → Sira investigated → You responded → Other side's turn → Resolved). Pure: safe on client and server.
 
+import { isSample } from "@/lib/sample";
+
 export const STAGE_STEPS = ["Opened", "Sira investigated", "You responded", "Buyer or PayPal's turn", "Resolved"] as const;
 
 export type StageInput = {
+  /** The dispute id: sample history gets " · sample" after its outcome. */
+  id?: string;
   status: string | null;
   outcome?: string | null;
   report: { recommendation: "fight" | "refund" | "settle"; status: string; current: boolean } | null;
@@ -32,10 +36,10 @@ export function stageTone(d: StageInput): StageTone {
 /** "Your turn · draft ready", "Buyer's turn", "Won"… */
 export function stageLabel(d: StageInput): string {
   switch (d.status) {
-    case "RESOLVED":
-      if (d.outcome && WON.has(d.outcome)) return "Won";
-      if (d.outcome && LOST.has(d.outcome)) return "Refunded";
-      return "Closed";
+    case "RESOLVED": {
+      const label = d.outcome && WON.has(d.outcome) ? "Won" : d.outcome && LOST.has(d.outcome) ? "Refunded" : "Closed";
+      return isSample(d.id) ? `${label} · sample` : label;
+    }
     case "WAITING_FOR_SELLER_RESPONSE":
       return d.report?.status === "pending_review" && d.report.current ? "Your turn · draft ready" : "Your turn";
     case "WAITING_FOR_BUYER_RESPONSE":

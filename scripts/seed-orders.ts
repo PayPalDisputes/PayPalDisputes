@@ -32,7 +32,8 @@ type Scenario = {
   };
 };
 
-const ADDRESS = { usd: "742 Evergreen Terrace, Springfield, IL 62704, US", cad: "88 Queen St W, Toronto, ON M5H 2N2, CA" };
+// usd is the address on every US sandbox buyer account, so it matches the PayPal transaction.
+const ADDRESS = { usd: "2211 N First St, San Jose, CA 95131, US", cad: "88 Queen St W, Toronto, ON M5H 2N2, CA" };
 
 /** A parcel that was accepted, moved and delivered (with or without a signature). */
 function delivered({ usd, at }: Ctx, carrier: string, tracking: string, signed: boolean) {
@@ -58,7 +59,6 @@ const SCENARIOS = {
   deliveredSigned: {
     name: "delivered with signature",
     build: (ctx) => ({
-      // USD matches the UPS tracking already submitted to PayPal for PP-R-DUI-10190261.
       ...delivered(ctx, ctx.usd ? "UPS" : "Canada Post", ctx.usd ? "1Z999AA10123456784" : "7023210039414604", true),
       notes: "Signature on file from the carrier. Shipped to the address on the PayPal transaction.",
     }),
@@ -99,13 +99,19 @@ const SCENARIOS = {
       notes: "Item shipped matches the listing photos and description (wool knit sweater, size M, charcoal). Return policy on the listing: buyer pays return shipping for change-of-mind returns.",
     }),
   },
+  deliveredSizeUnclear: {
+    name: "delivered, size can't be proven",
+    build: (ctx) => ({
+      ...delivered(ctx, "USPS", "9400111899223197428537", false),
+      notes: "Packing slip says size 10, but sizes 9 and 10 share one shelf bin and no photo was taken of the box before shipping. Return policy: free exchanges within 30 days.",
+    }),
+  },
 } satisfies Record<string, Scenario>;
 
-/** Fixed scenario for the original sandbox disputes. */
-const BY_DISPUTE: Record<string, Scenario> = {
-  "PP-R-DUI-10190261": SCENARIOS.deliveredSigned, // $49.99 USD (Sandbox Seller 2)
-  "PP-R-XOR-10190262": SCENARIOS.deliveredUnsigned, // $25 CAD (Sandbox Test Seller)
-  "PP-R-NBP-10190260": SCENARIOS.labelOnly, // $10 CAD (Sandbox Test Seller)
+/** Fixed scenario (and item, when PayPal leaves it off) for disputes that can't be matched by item name. */
+const BY_DISPUTE: Record<string, { scenario: Scenario; item?: string }> = {
+  // Hannah Weiss's unauthorized claim: PayPal doesn't list items on unauthorized disputes.
+  "PP-R-XZL-10196072": { scenario: SCENARIOS.deliveredSigned, item: "2-person tent" },
 };
 
 /** The demo purchases (scripts/demo-orders.ts), matched by item name and dispute reason. */
@@ -121,6 +127,18 @@ function demoScenario(item: string | undefined): Scenario | null {
       return SCENARIOS.deliveredDamageClaim;
     case "Wool knit sweater":
       return SCENARIOS.deliveredAsListed; // fight
+    // Northbound Supply, batch 1 (paid by the US sandbox buyers)
+    case "Rain shell jacket":
+    case "2-person tent": // unauthorized: signed for at the PayPal address, so Seller Protection applies
+    case "Camp stove":
+      return SCENARIOS.deliveredSigned; // fight
+    case "40L backpack":
+    case "Trekking poles": // Lucas Moreau's second dispute
+      return SCENARIOS.deliveredUnsigned;
+    case "Hiking boots":
+      return SCENARIOS.deliveredSizeUnclear; // settle
+    case "Fleece pullover":
+      return SCENARIOS.labelOnly; // refund
     default:
       return null;
   }
@@ -144,6 +162,7 @@ async function main() {
   const real = new Set(existing.filter((o) => !o.simulated).map((o) => o.paypal_transaction_id));
 
   let i = 0;
+  const usedTracking = new Set<string>();
   for (const d of disputes) {
     const tx = (d.raw as PayPalDisputeDetail).disputed_transactions?.[0];
     const txId = tx?.seller_transaction_id;
@@ -157,7 +176,8 @@ async function main() {
     }
 
     const item = tx.items?.[0];
-    const scenario = BY_DISPUTE[d.id] ?? demoScenario(item?.item_name) ?? ROTATION[i++ % ROTATION.length];
+    const fixed = BY_DISPUTE[d.id];
+    const scenario = fixed?.scenario ?? demoScenario(item?.item_name) ?? ROTATION[i++ % ROTATION.length];
 
     // Spread the timeline over TIMELINE_DAYS after payment, squeezed to end before the dispute was
     // opened (and never after now): sandbox disputes are often opened minutes after paying.
@@ -167,21 +187,28 @@ async function main() {
     const at = (days: number) => new Date(paidAt + (days / TIMELINE_DAYS) * span).toISOString();
 
     const buyerName = tx.buyer?.name ?? "Sandbox Buyer";
+    const evidence = scenario.build({ usd: d.currency !== "CAD", at });
+    // Orders sharing a scenario would share its tracking number: make repeats unique per transaction.
+    if (evidence.tracking_number && usedTracking.has(evidence.tracking_number)) {
+      const digits = [...txId].map((c) => c.charCodeAt(0) % 10).join("").slice(-6);
+      evidence.tracking_number = evidence.tracking_number.slice(0, -6) + digits;
+    }
+    if (evidence.tracking_number) usedTracking.add(evidence.tracking_number);
     const { error: upsertError } = await db.from("orders").upsert(
       {
         seller_id: d.seller_id,
         paypal_transaction_id: txId,
         order_number: `ORD-${txId.slice(-6)}`,
-        item_description: item?.item_description ?? item?.item_name ?? null,
+        item_description: item?.item_description ?? item?.item_name ?? fixed?.item ?? null,
         ship_to_name: buyerName,
-        ...scenario.build({ usd: d.currency !== "CAD", at }),
+        ...evidence,
         simulated: true,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "paypal_transaction_id" },
     );
     if (upsertError) throw upsertError;
-    console.log(`✓ ${d.id} (${item?.item_name ?? "?"}): ${scenario.name}`);
+    console.log(`✓ ${d.id} (${item?.item_name ?? fixed?.item ?? "?"}): ${scenario.name}`);
   }
 }
 

@@ -12,11 +12,12 @@ import { syncTrackingToPayPal, type TrackingSyncResult } from "@/lib/tracking";
 export async function syncDisputes(days = 30, { assess = true } = {}) {
   const ids = await listDisputeIds(days);
   const failed: string[] = [];
+  const skipped: string[] = [];
   const assessed: string[] = [];
 
   for (const id of ids) {
     try {
-      await upsertDispute(await getDispute<PayPalDispute>(id));
+      if (!(await upsertDispute(await getDispute<PayPalDispute>(id)))) skipped.push(id);
     } catch (err) {
       console.error(`[sync] failed to sync dispute ${id}`, err);
       failed.push(id);
@@ -33,7 +34,7 @@ export async function syncDisputes(days = 30, { assess = true } = {}) {
   }
 
   if (assess) {
-    for (const id of ids.filter((i) => !failed.includes(i))) {
+    for (const id of ids.filter((i) => !failed.includes(i) && !skipped.includes(i))) {
       try {
         const outcome = await assessDispute(id);
         if (outcome.status === "assessed") assessed.push(id);
@@ -43,5 +44,5 @@ export async function syncDisputes(days = 30, { assess = true } = {}) {
       }
     }
   }
-  return { synced: ids.length - failed.length, failed, assessed, tracking };
+  return { synced: ids.length - failed.length - skipped.length, failed, skipped, assessed, tracking };
 }

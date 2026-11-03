@@ -1,11 +1,12 @@
 import { assessDispute } from "@/lib/assess";
+import { isSample } from "@/lib/sample";
 import { supabaseAdmin } from "@/lib/supabase";
 
 // Runs the agent on disputes already in the database and saves each report to `decisions`.
 // Usage:
-//   npm run assess -- PP-R-XOR-10190262            one dispute
+//   npm run assess -- PP-R-IXN-10196061            one dispute
 //   npm run assess -- --all                         every dispute that needs a new report
-//   npm run assess -- PP-R-XOR-10190262 --force     re-run even if it was already assessed
+//   npm run assess -- PP-R-IXN-10196061 --force     re-run even if it was already assessed
 
 async function main() {
   const args = process.argv.slice(2);
@@ -15,10 +16,10 @@ async function main() {
   if (args.includes("--all")) {
     const { data, error } = await supabaseAdmin().from("disputes").select("id").order("id");
     if (error) throw error;
-    ids = data.map((d) => d.id);
+    ids = data.map((d) => d.id).filter((id) => !isSample(id)); // sample history keeps its seeded reports
   }
   if (ids.length === 0) {
-    console.error("Give a dispute id, or --all. Example: npm run assess -- PP-R-XOR-10190262");
+    console.error("Give a dispute id, or --all. Example: npm run assess -- PP-R-IXN-10196061");
     process.exit(1);
   }
 
