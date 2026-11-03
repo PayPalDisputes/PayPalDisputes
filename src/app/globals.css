@@ -354,6 +354,16 @@ body {
   animation: mk-progress var(--progress-duration, 6s) linear both;
 }
 
+/* Loading bar that moves fast, then slows and holds near 90% until the real page replaces it. */
+@keyframes mk-creep {
+  from { transform: scaleX(0.04); }
+  to { transform: scaleX(0.9); }
+}
+.animate-creep {
+  transform-origin: left;
+  animation: mk-creep 9s cubic-bezier(0.08, 0.7, 0.2, 1) both;
+}
+
 /* Landing illustrations that act themselves out while [data-play="on"] (see Process, ProcessScenes).
    Each beat waits for its --d delay going in, and leaves together when the loop resets. */
 .play-item {
