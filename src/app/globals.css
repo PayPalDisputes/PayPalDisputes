@@ -177,6 +177,12 @@
   }
 }
 
+/* No rubber-band scrolling past the top or bottom of the page */
+html,
+body {
+  overscroll-behavior: none;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

@@ -87,7 +87,8 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
                 active ? "border-fg text-fg" : "border-transparent text-fg-body hover:text-fg",
               )}
             >
-              {VIEWS[key].label}
+              {/* Words in the label keep Inter's digits ("Over $200"); only the count is monospaced */}
+              <span className="font-[family-name:var(--font-inter)]">{VIEWS[key].label}</span>
               <span className="text-fg-muted tabular-nums">{count}</span>
             </Link>
           );
