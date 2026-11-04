@@ -100,3 +100,40 @@ export function DisputePageSkeleton() {
     </div>
   );
 }
+
+/**
+ * Shown for a moment before each draft on the Review page, laid out like the draft itself: the case,
+ * Sira's call, what it found and the message. A progress bar and a line of text say what's happening.
+ */
+export function ReviewDraftSkeleton({ label }: { label: string }) {
+  return (
+    <div role="status" aria-live="polite" className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-9 px-6 pt-12 pb-10 md:px-8">
+      <div className="flex flex-col gap-2">
+        <div className="h-1 w-full max-w-[320px] overflow-hidden rounded-full bg-muted">
+          <div className="animate-creep h-full w-full rounded-full bg-accent" />
+        </div>
+        <p className="text-[13px] text-fg-muted">{label}</p>
+      </div>
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-3.5 w-48" />
+        <div className="flex items-center justify-between gap-4">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-8 w-28" />
+        </div>
+        <Skeleton className="h-4 w-40" />
+      </div>
+      <div className="flex flex-col gap-3 border-t border-line pt-7">
+        <Skeleton className="h-3.5 w-28" />
+        <Skeleton className="h-7 w-64" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-4/5" />
+      </div>
+      <div className="flex flex-col gap-3">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-5 w-full" />
+        ))}
+      </div>
+      <Skeleton className="h-36 w-full rounded-xl" />
+    </div>
+  );
+}

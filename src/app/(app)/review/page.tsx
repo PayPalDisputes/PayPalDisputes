@@ -93,6 +93,7 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
           card={card}
           mode={mode}
           nextHref={`/review?i=${index + 1}`}
+          first={index === 0}
           upNext={next ? { name: next.buyerName ?? "Buyer", amount: formatAmount(next.amount, next.currency) } : null}
         />
       ) : (
