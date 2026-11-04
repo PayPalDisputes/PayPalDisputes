@@ -3,11 +3,10 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Amount } from "@/components/app/bits";
 import { OutcomeChart, type OutcomeBar } from "@/components/app/Charts";
-import { ReasonResultChart, ShippingProofChart, TrendChart, ValueBandChart, type ProofBar, type ReasonResult } from "@/components/app/InsightsCharts";
+import { ReasonChart, ShippingProofChart, TrendChart, ValueBandChart, type ProofBar, type ReasonCount } from "@/components/app/InsightsCharts";
 import { ItemsGrid } from "@/components/app/ItemsGrid";
 import { OutcomesGrid } from "@/components/app/OutcomesGrid";
 import { reasonLabel } from "@/app/_components/dispute-ui";
-import { BLUES } from "@/lib/palette";
 import { requireSession, sellerScope } from "@/lib/auth";
 import { getInsights, MANUAL_HOURS_PER_DISPUTE, SHIPPING_PROOF_LABEL, type InsightDispute, type ShippingProof } from "@/lib/insights";
 import type { OutcomeRow } from "@/lib/outcomes";
@@ -112,7 +111,7 @@ export default async function InsightsPage() {
           Why you get disputes
         </h2>
         <div className="grid gap-5 lg:grid-cols-2">
-          <ReasonResultChart rows={reasonResults(disputes)} />
+          <ReasonChart rows={reasonCounts(disputes)} />
           <ShippingProofChart bars={proofBars(disputes)} />
           <TrendChart weeks={weeklyCounts(disputes)} />
           <ValueBandChart bands={valueBands(disputes)} />
@@ -190,18 +189,11 @@ function outcomeBars(rows: OutcomeRow[]): OutcomeBar[] {
 
 /* Chart data, all from the same dispute rows. */
 
-function reasonResults(disputes: InsightDispute[]): ReasonResult[] {
-  const by = new Map<string, ReasonResult>();
-  for (const d of disputes) {
-    const label = reasonLabel(d.reason);
-    const row = by.get(label) ?? { label, open: 0, won: 0, settled: 0, lost: 0 };
-    if (d.result === null) row.open++;
-    else if (d.result === "won") row.won++;
-    else if (d.result === "settled") row.settled++;
-    else if (d.result === "lost") row.lost++;
-    by.set(label, row);
-  }
-  return [...by.values()].sort((a, b) => b.open + b.won + b.settled + b.lost - (a.open + a.won + a.settled + a.lost));
+/** Every dispute (open and resolved) by the reason the buyer gave, most common first. */
+function reasonCounts(disputes: InsightDispute[]): ReasonCount[] {
+  const by = new Map<string, number>();
+  for (const d of disputes) by.set(reasonLabel(d.reason), (by.get(reasonLabel(d.reason)) ?? 0) + 1);
+  return [...by.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
 }
 
 const PROOF_ORDER: ShippingProof[] = ["signed", "delivered", "not_delivered", "no_tracking", "no_record"];
@@ -213,9 +205,7 @@ function proofBars(disputes: InsightDispute[]): ProofBar[] {
     value: notReceived.filter((d) => d.proof === p).length,
     urgent: p === "not_delivered" || p === "no_tracking" || p === "no_record",
   }))
-    .filter((b) => b.value > 0)
-    // The preventable ones (no delivery proof) get the deepest blue; the rest step lighter.
-    .map((b, i) => ({ ...b, color: b.urgent ? BLUES[0] : BLUES[Math.min(1 + i, BLUES.length - 1)] }));
+    .filter((b) => b.value > 0);
 }
 
 function weeklyCounts(disputes: InsightDispute[]) {
@@ -231,14 +221,14 @@ function weeklyCounts(disputes: InsightDispute[]) {
         return t >= start && t < start + 7 * DAY;
       }).length,
     };
-  }).map((w) => ({ ...w, color: w.value >= 3 ? BLUES[0] : w.value === 2 ? BLUES[1] : BLUES[2] })); // busier weeks are deeper blue
+  });
 }
 
 function valueBands(disputes: InsightDispute[]) {
   return [
-    { label: "Under 25", test: (a: number) => a < 25 },
-    { label: "25–100", test: (a: number) => a >= 25 && a < 100 },
-    { label: "100–250", test: (a: number) => a >= 100 && a < 250 },
-    { label: "250+", test: (a: number) => a >= 250 },
-  ].map(({ label, test }, i) => ({ label, value: disputes.filter((d) => test(d.amount)).length, color: BLUES[i] }));
+    { label: "Under $25", test: (a: number) => a < 25 },
+    { label: "$25–100", test: (a: number) => a >= 25 && a < 100 },
+    { label: "$100–250", test: (a: number) => a >= 100 && a < 250 },
+    { label: "$250+", test: (a: number) => a >= 250 },
+  ].map(({ label, test }) => ({ label, value: disputes.filter((d) => test(d.amount)).length }));
 }

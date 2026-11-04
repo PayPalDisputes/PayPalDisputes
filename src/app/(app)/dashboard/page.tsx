@@ -214,7 +214,8 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
           <Card title="At risk" action={{ href: "/disputes", label: "View all" }}>
             <div className="px-6 pt-4 pb-3">
               <Money amount={atRisk} currency={currency} className="text-[30px] leading-none font-[480] text-fg" />
-              <p className="mt-2 text-[13px] text-fg-muted">Claimed on {open.length} open dispute{open.length === 1 ? "" : "s"}</p>
+              <p className="mt-2 text-[13px] leading-5 text-fg-body">What buyers are claiming on your {open.length} open dispute{open.length === 1 ? "" : "s"} today.</p>
+              <p className="mt-1 text-[12.5px] leading-[18px] text-fg-muted">The line shows that total each day for the last 30 days: it rises when a dispute opens and falls when one closes.</p>
               <div className="money mt-3">
                 <AtRiskChart points={points} currency={currency} />
               </div>
