@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, Search, SlidersHorizontal } from "lucide-react";
+import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, SlidersHorizontal } from "lucide-react";
 import { AccountMenu } from "@/components/app/AccountMenu";
 import { HideAmounts } from "@/components/app/HideAmounts";
 import { MobileNav } from "@/components/app/MobileNav";
@@ -75,19 +75,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <Link href="/dashboard" className="lg:hidden" aria-label="Sira dashboard home">
               <Logo />
             </Link>
-            {/* Search jumps to the disputes list, filtered */}
-            <form action="/disputes" role="search" className="hidden max-w-[560px] flex-1 md:block">
-              <label className="flex h-10 items-center gap-2.5 rounded-md border border-line bg-canvas px-3.5 focus-within:border-line-strong">
-                <Search aria-hidden strokeWidth={1.8} className="size-4 text-fg-muted" />
-                <span className="sr-only">Search disputes</span>
-                <input
-                  type="search"
-                  name="q"
-                  placeholder="Search buyer, item or dispute ID"
-                  className="h-full flex-1 bg-transparent text-[14px] text-fg outline-none placeholder:text-fg-muted"
-                />
-              </label>
-            </form>
             <div className="ml-auto flex items-center gap-2">
               <HideAmounts />
               <Link
