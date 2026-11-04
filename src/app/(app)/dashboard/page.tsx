@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { ArrowRight, ChevronDown, ExternalLink, Plus } from "lucide-react";
-import { Amount, Money, Panel, ProgressLine, SectionHead } from "@/components/app/bits";
+import { ArrowRight, ChevronDown, ChevronRight, CircleAlert, Copy, ExternalLink, PackageOpen, PackageSearch, PackageX, ReceiptText, ShieldAlert } from "lucide-react";
+import { Amount, Money, Panel, ProgressLine } from "@/components/app/bits";
+import { reasonLabel } from "@/app/_components/dispute-ui";
 import { AtRiskChart, type RiskPoint } from "@/components/app/HomeCharts";
 import { Button } from "@/components/ui/Button";
 import { requireSession } from "@/lib/auth";
@@ -81,45 +82,19 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
 
   const recent = [...disputes].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")).slice(0, 6);
 
+  // Things to do: every dispute waiting on the seller, soonest deadline first, then parcels that stopped moving.
+  const draftIds = new Set(drafts.map((d) => d.id));
+  const notMoving = deliveries.counts.not_moving;
+
   return (
-    <div className="mx-auto flex w-full max-w-[1080px] flex-col gap-7 px-5 pt-7 pb-20 md:px-8">
-      {/* Headline numbers + actions */}
-      <section aria-labelledby="overview" className="flex flex-col gap-[18px]">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 id="overview" className="text-[24px] font-semibold tracking-[-0.01em] text-fg">
-            {greeting ? `Hello, ${greeting}` : "Hello"}
-          </h1>
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-7 px-5 pt-8 pb-20 md:px-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-[28px] leading-tight font-semibold tracking-[-0.01em] text-fg">{greeting ? `Hello, ${greeting}` : "Hello"}</h1>
+          <p className="mt-1 text-[15px] text-fg-body">Here&apos;s what&apos;s going on today.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           {sellers.length > 1 && <StoreSelector stores={sellers} current={store} />}
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:max-w-[520px]">
-          <CountCard
-            href="/disputes?view=needs-response"
-            label="Need your response"
-            value={waiting.length}
-            hint={
-              waiting.length === 0
-                ? "Nothing needs you"
-                : overdue > 0
-                  ? `${overdue} overdue`
-                  : drafts.length > 0
-                    ? `${drafts.length} draft${drafts.length === 1 ? "" : "s"} ready`
-                    : "Sira is drafting"
-            }
-            tone={overdue > 0 ? "bad" : undefined}
-          />
-          <CountCard href="/disputes" label="Active disputes" value={open.length} hint="Open with PayPal" />
-        </div>
-        <div role="group" aria-label="Quick actions" className="flex flex-wrap gap-2">
-          {drafts.length > 0 && (
-            <Button href="/review" prefetch={false} size="md" className="h-[38px] px-4">
-              <ArrowRight aria-hidden strokeWidth={1.8} className="size-[15px]" />
-              Review {drafts.length} draft{drafts.length === 1 ? "" : "s"}
-            </Button>
-          )}
-          <Button href="/evidence" variant="soft" size="md" className="h-[38px] px-4 font-normal">
-            <Plus aria-hidden strokeWidth={1.6} className="size-[15px]" />
-            Add tracking
-          </Button>
           <a
             href={RESOLUTION_CENTER}
             target="_blank"
@@ -129,205 +104,238 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
             <ExternalLink aria-hidden strokeWidth={1.6} className="size-[15px]" />
             Open in PayPal
           </a>
-        </div>
-      </section>
-
-      {/* At risk + Waiting on you */}
-      <div className="flex flex-wrap gap-5">
-        <Panel aria-labelledby="atrisk" className="flex min-w-0 flex-[1.2_1_380px] flex-col px-6 pt-6 pb-3">
-          <h2 id="atrisk" className="text-[14px] text-fg-muted">
-            At risk
-          </h2>
-          <Money amount={atRisk} currency={currency} className="mt-2 text-[34px] leading-none font-[480] text-fg" />
-          <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-[13px] text-fg-body">
-            <span>
-              Last 30 days
-            </span>
-            <span className="flex gap-4">
-              <span className="text-ok">
-                ↗ <Amount amount={kept30} currency={currency} /> kept
-              </span>
-              <span className="text-bad">
-                ↘ <Amount amount={refunded30} currency={currency} /> refunded
-              </span>
-            </span>
-          </div>
-          <div className="money mt-2">
-            <AtRiskChart points={points} currency={currency} />
-          </div>
-        </Panel>
-
-        <Panel aria-labelledby="waiting" className="min-w-0 flex-[1_1_340px] px-6 pt-6 pb-3">
-          <SectionHead
-            id="waiting"
-            title="Waiting on you"
-            aside={
-              <Link href="/disputes?view=needs-response" className="text-[13px] text-fg-muted hover:text-fg">
-                View all
-              </Link>
-            }
-          />
-          {waiting.length === 0 ? (
-            <p className="py-10 text-center text-[14px] text-fg-muted">Nothing is waiting on you.</p>
-          ) : (
-            <ul className="mt-3">
-              {waiting.slice(0, 5).map((d) => (
-                <li key={d.id}>
-                  <Link href={`/disputes/${d.id}`} className="flex items-center gap-3 border-t border-line-subtle py-3">
-                    <Initials name={d.buyerName} />
-                    <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
-                      <span className="truncate text-[14px] text-fg">{d.buyerName ?? "Buyer"}</span>
-                      <span className="truncate text-[13px] text-fg-muted">{d.item ?? "Order"}</span>
-                    </span>
-                    <span className="flex flex-col items-end gap-[3px]">
-                      <Amount amount={d.amount} currency={d.currency} className="text-[14px] text-fg" />
-                      <span className={cn("text-[12.5px]", (d.daysLeft ?? 99) <= 0 ? "font-medium text-bad" : "text-fg-muted")}>
-                        {dueLabel(d.daysLeft)}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          {drafts.length > 0 && (
+            <Button href="/review" prefetch={false} size="md" className="h-[38px] px-4">
+              <ArrowRight aria-hidden strokeWidth={1.8} className="size-[15px]" />
+              Review {drafts.length} draft{drafts.length === 1 ? "" : "s"}
+            </Button>
           )}
-        </Panel>
+        </div>
+      </header>
+
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Main column */}
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card title="Things to do" count={waiting.length + (notMoving > 0 ? 1 : 0)} action={{ href: "/disputes?view=needs-response", label: "View all" }}>
+            {waiting.length === 0 && notMoving === 0 ? (
+              <p className="px-6 py-10 text-center text-[14px] text-fg-muted">You&apos;re all caught up. Nothing needs you right now.</p>
+            ) : (
+              <ul>
+                {waiting.slice(0, 6).map((d) => {
+                  const due = dueLabel(d.daysLeft);
+                  const overdue = (d.daysLeft ?? 99) < 0;
+                  return (
+                    <TodoRow
+                      key={d.id}
+                      href={`/disputes/${d.id}`}
+                      icon={REASON_ICON[d.reason ?? ""] ?? CircleAlert}
+                      tone={overdue || (d.daysLeft ?? 99) <= 3 ? "bad" : "accent"}
+                      title={`Respond to ${d.buyerName ?? "the buyer"}`}
+                      detail={
+                        <>
+                          {reasonLabel(d.reason)} · <Amount amount={d.amount} currency={d.currency} /> ·{" "}
+                          {draftIds.has(d.id) ? "Sira's response is ready to review" : "Sira is preparing a response"}
+                        </>
+                      }
+                      when={due}
+                      whenTone={overdue ? "bad" : undefined}
+                    />
+                  );
+                })}
+                {notMoving > 0 && (
+                  <TodoRow
+                    href="/evidence"
+                    icon={PackageSearch}
+                    tone="warn"
+                    title={`Check ${notMoving} parcel${notMoving === 1 ? "" : "s"} that aren't moving`}
+                    detail="A label was printed but the carrier never scanned it. Without a scan there's no proof of shipment."
+                  />
+                )}
+              </ul>
+            )}
+            {waiting.length > 6 && (
+              <p className="border-t border-line-subtle px-6 py-3 text-[13px] text-fg-muted">
+                And {waiting.length - 6} more in{" "}
+                <Link href="/disputes?view=needs-response" className="text-accent hover:underline">
+                  Disputes
+                </Link>
+                .
+              </p>
+            )}
+          </Card>
+
+          <Deliveries {...deliveries} />
+
+          <Card title="Recent disputes" action={{ href: "/disputes", label: "View all" }}>
+            {recent.length === 0 ? (
+              <p className="px-6 py-10 text-center text-[14px] text-fg-muted">No disputes yet. They appear here as soon as PayPal sends them.</p>
+            ) : (
+              <div className="overflow-x-auto px-6 pb-2">
+                <table className="w-full min-w-[600px] border-collapse text-left text-[14px]">
+                  <thead>
+                    <tr className="text-[12.5px] text-fg-muted">
+                      <th scope="col" className="py-2.5 font-[420]">Buyer</th>
+                      <th scope="col" className="py-2.5 font-[420]">Where it stands</th>
+                      <th scope="col" className="py-2.5 font-[420]">Sira&apos;s call</th>
+                      <th scope="col" className="py-2.5 text-right font-[420]">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recent.map((d) => (
+                      <tr key={d.id} className="group relative border-t border-line-subtle">
+                        <td className="py-3 pr-4">
+                          {/* the whole row is clickable through this stretched link */}
+                          <Link href={`/disputes/${d.id}`} className="flex flex-col gap-[3px] after:absolute after:inset-0">
+                            <span className="text-fg group-hover:underline">{d.buyerName ?? "Buyer"}</span>
+                            <span className="text-[13px] text-fg-muted">{d.item ?? "Order"}</span>
+                          </Link>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className="flex flex-col gap-1.5">
+                            <span className="text-fg-body">{stageLabel(d)}</span>
+                            <ProgressLine dispute={d} className="w-[150px]" />
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4 text-fg-body">{callLabel(d.report, d.currency) ?? <span className="text-fg-muted">Not assessed</span>}</td>
+                        <td className="py-3 text-right">
+                          <Amount amount={d.amount} currency={d.currency} className="text-fg" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Summary column */}
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card title="At risk" action={{ href: "/disputes", label: "View all" }}>
+            <div className="px-6 pt-4 pb-3">
+              <Money amount={atRisk} currency={currency} className="text-[30px] leading-none font-[480] text-fg" />
+              <p className="mt-2 text-[13px] text-fg-muted">Claimed on {open.length} open dispute{open.length === 1 ? "" : "s"}</p>
+              <div className="money mt-3">
+                <AtRiskChart points={points} currency={currency} />
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Your disputes">
+            <SummaryRow href="/disputes?view=needs-response" label="Need your response" value={waiting.length} tone={overdue > 0 ? "bad" : undefined} hint={overdue > 0 ? `${overdue} overdue` : undefined} />
+            <SummaryRow href="/review" label="Drafts ready to review" value={drafts.length} />
+            <SummaryRow href="/disputes" label="Active with PayPal" value={open.length} last />
+          </Card>
+
+          <Card title="Last 30 days" action={{ href: "/insights", label: "Insights" }}>
+            <SummaryRow label="Kept" value={<Amount amount={kept30} currency={currency} className={kept30 > 0 ? "text-ok" : undefined} />} hint={`${keptRows.length} dispute${keptRows.length === 1 ? "" : "s"}`} />
+            <SummaryRow label="Refunded" value={<Amount amount={refunded30} currency={currency} className={refunded30 > 0 ? "text-bad" : undefined} />} hint={`${refundRows.length} dispute${refundRows.length === 1 ? "" : "s"}`} />
+            <SummaryRow
+              label="Handled by Sira"
+              value={insights.impact.handled}
+              hint={`about ${Number.isInteger(insights.impact.hoursSaved) ? insights.impact.hoursSaved : insights.impact.hoursSaved.toFixed(1)} hours saved`}
+              last
+            />
+            {outcomes.resolved === 0 && <p className="px-6 pb-4 text-[13px] text-fg-muted">Results appear here as disputes close.</p>}
+          </Card>
+        </div>
       </div>
-
-      <Deliveries {...deliveries} />
-
-      {/* Dispute activity, like Mercury's money movement */}
-      <section aria-labelledby="activity" className="flex flex-col gap-3.5">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 id="activity" className="text-[20px] font-[480] tracking-[0.01em] text-fg">
-            Dispute activity
-          </h2>
-          <span className="text-[14px] text-fg-body">Last 30 days</span>
-          <span className="flex-1" />
-          <span className="text-[13px] text-fg-body">
-            {insights.impact.handled} handled by Sira · about {Number.isInteger(insights.impact.hoursSaved) ? insights.impact.hoursSaved : insights.impact.hoursSaved.toFixed(1)} hours saved
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-5">
-          <ActivityCard title="Kept" subtitle="Won or closed by the buyer" total={keptRows.reduce((s, r) => s + r.kept, 0)} count={keptRows.length} currency={currency} tone="kept" />
-          <ActivityCard title="Refunded" subtitle="Refunded or settled" total={refundRows.reduce((s, r) => s + r.refunded, 0)} count={refundRows.length} currency={currency} tone="refunded" />
-        </div>
-        {outcomes.resolved === 0 && <p className="text-[13px] text-fg-muted">Results appear here as disputes close.</p>}
-      </section>
-
-      {/* Recent disputes */}
-      <Panel aria-labelledby="recent" className="px-6 pt-5 pb-2">
-        <SectionHead
-          id="recent"
-          title="Recent disputes"
-          aside={
-            <Link href="/disputes" className="text-[13px] text-fg-muted hover:text-fg">
-              View all
-            </Link>
-          }
-        />
-        {recent.length === 0 ? (
-          <p className="py-10 text-center text-[14px] text-fg-muted">No disputes yet. They appear here as soon as PayPal sends them.</p>
-        ) : (
-          <div className="mt-2.5 overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-left text-[14px]">
-              <thead>
-                <tr className="text-[12.5px] text-fg-muted">
-                  <th scope="col" className="py-2 font-[420]">Buyer</th>
-                  <th scope="col" className="py-2 font-[420]">Where it stands</th>
-                  <th scope="col" className="py-2 font-[420]">Sira&apos;s call</th>
-                  <th scope="col" className="py-2 text-right font-[420]">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recent.map((d) => (
-                  <tr key={d.id} className="group relative border-t border-line-subtle">
-                    <td className="py-3 pr-4">
-                      {/* the whole row is clickable through this stretched link */}
-                      <Link href={`/disputes/${d.id}`} className="flex flex-col gap-[3px] after:absolute after:inset-0">
-                        <span className="text-fg group-hover:underline">{d.buyerName ?? "Buyer"}</span>
-                        <span className="text-[13px] text-fg-muted">{d.item ?? "Order"}</span>
-                      </Link>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span className="flex flex-col gap-1.5">
-                        <span className="text-fg-body">{stageLabel(d)}</span>
-                        <ProgressLine dispute={d} className="w-[150px]" />
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4 text-fg-body">{callLabel(d.report, d.currency) ?? <span className="text-fg-muted">Not assessed</span>}</td>
-                    <td className="py-3 text-right">
-                      <Amount amount={d.amount} currency={d.currency} className="text-fg" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Panel>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
 
-/** A headline count at the top of Home, linking to the disputes it counts. */
-function CountCard({ href, label, value, hint, tone }: { href: string; label: string; value: number; hint: string; tone?: "bad" }) {
+/** A white card with a title row, an optional count and "View all ›", then its content under a divider. */
+function Card({ title, count, action, children }: { title: string; count?: number; action?: { href: string; label: string }; children: React.ReactNode }) {
+  const id = `card-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
-    <Link href={href} className="group flex flex-col gap-2 rounded-xl border border-line bg-canvas px-5 py-4 transition-colors hover:border-line-strong">
-      <span className="text-[13px] text-fg-body">{label}</span>
-      <span className="text-[32px] leading-none font-[480] text-fg tabular-nums">{value}</span>
-      <span className={cn("text-[12.5px]", tone === "bad" ? "font-medium text-bad" : "text-fg-muted")}>{hint}</span>
-    </Link>
-  );
-}
-
-function ActivityCard({
-  title,
-  subtitle,
-  total,
-  count,
-  currency,
-  tone,
-}: {
-  title: string;
-  subtitle: string;
-  total: number;
-  count: number;
-  currency: string;
-  tone: "kept" | "refunded";
-}) {
-  // Refunds read in red, but only when there's something refunded; nothing to show stays neutral.
-  const color = total === 0 ? "text-fg" : tone === "kept" ? "text-ok" : "text-bad";
-  return (
-    <Panel className="flex-[1_1_320px] p-6">
-      <h3 className="text-[14px] text-fg-muted">{title}</h3>
-      <Money amount={total} currency={currency} className={cn("mt-2 block text-[26px] leading-none font-[480]", color)} centsClassName={cn(color, "opacity-80")} />
-      <p className="mt-3 text-[13px] text-fg-muted">
-        {subtitle} · {count === 0 ? "none yet" : `${count} dispute${count === 1 ? "" : "s"}`}
-      </p>
+    <Panel aria-labelledby={id} className="overflow-hidden">
+      <div className="flex items-center justify-between gap-3 border-b border-line-subtle px-6 py-4">
+        <h2 id={id} className="text-[17px] font-[480] text-fg">
+          {title}
+          {count !== undefined && <span className="ml-1.5 text-[14px] font-normal text-fg-muted tabular-nums">({count})</span>}
+        </h2>
+        {action && (
+          <Link href={action.href} className="inline-flex items-center gap-0.5 text-[14px] text-accent hover:underline">
+            {action.label}
+            <ChevronRight aria-hidden strokeWidth={1.8} className="size-4" />
+          </Link>
+        )}
+      </div>
+      {children}
     </Panel>
   );
 }
 
-function Initials({ name, size = "md" }: { name: string | null; size?: "sm" | "md" }) {
-  const initials =
-    (name ?? "")
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase())
-      .join("") || "?";
+const TILE_TONE = {
+  accent: "bg-accent-bg text-accent",
+  bad: "bg-bad-bg text-bad",
+  warn: "bg-warn-bg text-warn",
+} as const;
+
+const REASON_ICON: Record<string, typeof CircleAlert> = {
+  MERCHANDISE_OR_SERVICE_NOT_RECEIVED: PackageX,
+  MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED: PackageOpen,
+  UNAUTHORISED: ShieldAlert,
+  DUPLICATE_TRANSACTION: Copy,
+  CREDIT_NOT_PROCESSED: ReceiptText,
+};
+
+/** One thing to do: an icon tile, what to do and why, and when it's due. */
+function TodoRow({
+  href,
+  icon: Icon,
+  tone,
+  title,
+  detail,
+  when,
+  whenTone,
+}: {
+  href: string;
+  icon: typeof CircleAlert;
+  tone: keyof typeof TILE_TONE;
+  title: string;
+  detail: React.ReactNode;
+  when?: string | null;
+  whenTone?: "bad";
+}) {
   return (
-    <span
-      aria-hidden
-      className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full border border-line font-medium text-fg-body",
-        size === "sm" ? "size-7 text-[11px]" : "size-8 text-[11.5px]",
-      )}
-    >
-      {initials}
-    </span>
+    <li className="border-b border-line-subtle last:border-b-0">
+      <Link href={href} className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-subtle sm:px-6">
+        <span className={cn("inline-flex size-11 shrink-0 items-center justify-center rounded-lg", TILE_TONE[tone])}>
+          <Icon aria-hidden strokeWidth={1.7} className="size-5" />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="text-[15px] font-[480] text-fg">{title}</span>
+          <span className="text-[13.5px] leading-5 text-fg-body">{detail}</span>
+          {/* On phones the date goes under the text instead of squeezing it */}
+          {when && <span className={cn("text-[13px] sm:hidden", whenTone === "bad" ? "font-medium text-bad" : "text-fg-muted")}>{when}</span>}
+        </span>
+        {when && <span className={cn("hidden shrink-0 text-[13px] sm:block", whenTone === "bad" ? "font-medium text-bad" : "text-fg-muted")}>{when}</span>}
+      </Link>
+    </li>
+  );
+}
+
+/** A label and its number, one per line, in the summary column. */
+function SummaryRow({ href, label, value, hint, tone, last }: { href?: string; label: string; value: React.ReactNode; hint?: string; tone?: "bad"; last?: boolean }) {
+  const body = (
+    <>
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-[14px] text-fg">{label}</span>
+        {hint && <span className={cn("text-[12.5px]", tone === "bad" ? "font-medium text-bad" : "text-fg-muted")}>{hint}</span>}
+      </span>
+      <span className="text-[16px] font-[480] text-fg tabular-nums">{value}</span>
+    </>
+  );
+  const cls = cn("flex items-center justify-between gap-3 px-6 py-3.5", !last && "border-b border-line-subtle");
+  return href ? (
+    <Link href={href} className={cn(cls, "transition-colors hover:bg-subtle")}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
   );
 }
 
@@ -374,21 +382,13 @@ function Deliveries({ deliveries, counts, total }: Awaited<ReturnType<typeof get
     { label: "Returned", value: counts.returned, tone: counts.returned > 0 ? "text-bad" : undefined },
   ];
   return (
-    <Panel aria-labelledby="deliveries" className="px-6 pt-5 pb-2">
-      <SectionHead
-        id="deliveries"
-        title="Deliveries"
-        aside={
-          <Link href="/evidence" className="text-[13px] text-fg-muted hover:text-fg">
-            Add tracking
-          </Link>
-        }
-      />
+    <Card title="Deliveries" count={total} action={{ href: "/evidence", label: "Add tracking" }}>
+      <div className="px-6 pb-2">
       {total === 0 ? (
         <p className="py-10 text-center text-[14px] text-fg-muted">No orders yet. Add tracking and every parcel shows up here.</p>
       ) : (
         <>
-          <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {summary.map((x) => (
               <div key={x.label} className="rounded-lg bg-muted/60 px-4 py-3">
                 <dt className="text-[12.5px] text-fg-muted">{x.label}</dt>
@@ -416,7 +416,8 @@ function Deliveries({ deliveries, counts, total }: Awaited<ReturnType<typeof get
           {total > deliveries.length && <p className="py-2.5 text-[13px] text-fg-muted">Showing {deliveries.length} of {total} orders.</p>}
         </>
       )}
-    </Panel>
+      </div>
+    </Card>
   );
 }
 

@@ -10,8 +10,8 @@ import { requireSession, sellerScope, sessionMode } from "@/lib/auth";
 import { getHomeDataCached } from "@/lib/dashboard";
 
 /**
- * Seller workspace shell in the quiet, Mercury-style look (Mock 2): a white sidebar, a top bar with
- * search and a hide-amounts toggle, and pages on a near-white canvas.
+ * Seller workspace shell: one top bar (logo, section tabs, then amounts toggle, notifications and the
+ * account on the right) over pages on a near-white canvas. Phones get the floating menu instead of tabs.
  */
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   await connection(); // counts come from live Supabase rows
@@ -21,95 +21,77 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const initials = accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "S";
   const needsResponse = disputes.filter((d) => d.status === "WAITING_FOR_SELLER_RESPONSE").length;
   const mode = sessionMode(session);
-  // Team-only tools (Evals) stay out of the seller's sidebar unless SHOW_INTERNAL_TOOLS=true.
+  // Team-only tools (Evals) stay out of the seller's navigation unless SHOW_INTERNAL_TOOLS=true.
   const showInternal = process.env.SHOW_INTERNAL_TOOLS === "true";
 
   return (
-    <div className="theme-app flex min-h-full flex-1 bg-subtle text-fg [color-scheme:light]">
-      {/* Sidebar (desktop) */}
-      <aside className="sticky top-0 hidden h-dvh w-[240px] shrink-0 flex-col border-r border-line bg-canvas px-3.5 pt-5 pb-5 lg:flex">
-        <Link href="/dashboard" className="px-2.5" aria-label="Sira dashboard home">
-          <Logo />
-        </Link>
+    <div className="theme-app flex min-h-full flex-1 flex-col bg-subtle text-fg [color-scheme:light]">
+      <header className="sticky top-0 z-30 border-b border-line bg-canvas/95 backdrop-blur-md">
+        <div className="flex h-[68px] items-center gap-6 px-5 md:px-8">
+          <Link href="/dashboard" className="shrink-0" aria-label="Sira dashboard home">
+            <Logo imageClassName="h-12" />
+          </Link>
 
-        <nav aria-label="Workspace" className="mt-7 flex flex-col gap-0.5">
-          <NavLink href="/dashboard" exact icon={<House strokeWidth={1.6} />}>
-            Home
-          </NavLink>
-          <NavLink href="/disputes" icon={<Inbox strokeWidth={1.6} />} badge={needsResponse}>
-            Disputes
-          </NavLink>
-          <NavLink href="/evidence" icon={<FileText strokeWidth={1.6} />}>
-            Shipping proof
-          </NavLink>
-          <NavLink href="/insights" icon={<ChartNoAxesColumn strokeWidth={1.6} />}>
-            Insights
-          </NavLink>
-          <NavLink href="/settings" icon={<SlidersHorizontal strokeWidth={1.6} />}>
-            Settings
-          </NavLink>
-        </nav>
-
-        {showInternal && (
-          <nav aria-label="Internal" className="mt-6 flex flex-col gap-0.5 border-t border-line pt-4">
-            <NavLink href="/evals" icon={<FlaskConical strokeWidth={1.6} />}>
-              Evals
+          <nav aria-label="Workspace" className="hidden items-center gap-1 lg:flex">
+            <NavLink variant="top" href="/dashboard" exact icon={<House strokeWidth={1.7} />}>
+              Home
             </NavLink>
+            <NavLink variant="top" href="/disputes" icon={<Inbox strokeWidth={1.7} />} badge={needsResponse}>
+              Disputes
+            </NavLink>
+            <NavLink variant="top" href="/evidence" icon={<FileText strokeWidth={1.7} />}>
+              Shipping proof
+            </NavLink>
+            <NavLink variant="top" href="/insights" icon={<ChartNoAxesColumn strokeWidth={1.7} />}>
+              Insights
+            </NavLink>
+            <NavLink variant="top" href="/settings" icon={<SlidersHorizontal strokeWidth={1.7} />}>
+              Settings
+            </NavLink>
+            {showInternal && (
+              <NavLink variant="top" href="/evals" icon={<FlaskConical strokeWidth={1.7} />}>
+                Evals
+              </NavLink>
+            )}
           </nav>
-        )}
 
-        <div className="mt-auto flex flex-col gap-3">
-          <p className="px-2.5 text-[12px] leading-[18px] text-fg-muted">
-            {mode === "live" ? "Live · approvals reach PayPal" : "Demo mode · nothing is sent to PayPal"}
-          </p>
-          <div className="border-t border-line pt-3">
-            <AccountMenu name={accountName} initials={initials} variant="sidebar" />
+          <div className="ml-auto flex items-center gap-2">
+            <span
+              title={mode === "live" ? "Approvals reach PayPal" : "Nothing is sent to PayPal"}
+              className="mr-1 hidden rounded-full bg-muted px-2.5 py-1 text-[12px] text-fg-body xl:inline"
+            >
+              {mode === "live" ? "Live" : "Demo mode"}
+            </span>
+            <HideAmounts />
+            <Link
+              href="/disputes?view=needs-response"
+              aria-label={`${needsResponse} disputes need a response`}
+              className="relative inline-flex size-10 items-center justify-center rounded-md bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
+            >
+              <Bell strokeWidth={1.6} className="size-[17px]" />
+              {needsResponse > 0 && <span className="absolute top-2 right-2.5 size-2 rounded-full border-2 border-muted bg-accent" />}
+            </Link>
+            <AccountMenu name={accountName} initials={initials} variant="compact" />
           </div>
         </div>
-      </aside>
+      </header>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 border-b border-line bg-subtle/90 backdrop-blur-md">
-          <div className="flex h-16 items-center gap-3 px-5 md:px-8">
-            <Link href="/dashboard" className="lg:hidden" aria-label="Sira dashboard home">
-              <Logo />
-            </Link>
-            <div className="ml-auto flex items-center gap-2">
-              <HideAmounts />
-              <Link
-                href="/disputes?view=needs-response"
-                aria-label={`${needsResponse} disputes need a response`}
-                className="relative inline-flex size-10 items-center justify-center rounded-md bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
-              >
-                <Bell strokeWidth={1.6} className="size-[17px]" />
-                {needsResponse > 0 && <span className="absolute top-2 right-2.5 size-2 rounded-full border-2 border-muted bg-accent" />}
-              </Link>
-              {/* On desktop the account lives at the bottom of the sidebar */}
-              <div className="lg:hidden">
-                <AccountMenu name={accountName} initials={initials} variant="compact" />
-              </div>
-            </div>
-          </div>
-        </header>
+      {/* Bottom room on phones so the floating menu never covers the end of a page */}
+      <main id="main" className="flex-1 pb-24 lg:pb-0">
+        {children}
+      </main>
 
-        {/* Bottom room on phones so the floating menu never covers the end of a page */}
-        <main id="main" className="flex-1 pb-24 lg:pb-0">
-          {children}
-        </main>
-
-        <MobileNav
-          accountName={accountName}
-          items={[
-            { href: "/dashboard", label: "Home", icon: "home", exact: true },
-            { href: "/disputes", label: "Disputes", icon: "disputes", badge: needsResponse },
-            { href: "/evidence", label: "Shipping proof", icon: "evidence" },
-            { href: "/insights", label: "Insights", icon: "insights" },
-            { href: "/settings", label: "Settings", icon: "settings" },
-            ...(showInternal ? [{ href: "/evals", label: "Evals", icon: "evals" as const }] : []),
-          ]}
-        />
-      </div>
+      <MobileNav
+        accountName={accountName}
+        items={[
+          { href: "/dashboard", label: "Home", icon: "home", exact: true },
+          { href: "/disputes", label: "Disputes", icon: "disputes", badge: needsResponse },
+          { href: "/evidence", label: "Shipping proof", icon: "evidence" },
+          { href: "/insights", label: "Insights", icon: "insights" },
+          { href: "/settings", label: "Settings", icon: "settings" },
+          ...(showInternal ? [{ href: "/evals", label: "Evals", icon: "evals" as const }] : []),
+        ]}
+      />
     </div>
   );
 }
