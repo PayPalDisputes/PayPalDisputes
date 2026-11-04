@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import { MAX_POLICY_TEXT, saveSellerPolicy, type SellerPolicy } from "@/lib/seller-policy";
+import { MAX_TEMPLATE_TEXT, TEMPLATES, templateText, type TemplateOverrides } from "@/lib/templates";
 import { getSession } from "@/lib/session";
 
 export type SettingsState = { ok: boolean; message: string } | null;
@@ -15,9 +16,17 @@ export async function saveSettings(_prev: SettingsState, formData: FormData): Pr
 
   const under = Number(formData.get("autoRefundUnder"));
   const text = (name: string) => String(formData.get(name) ?? "").trim();
+  const templates: TemplateOverrides = {};
+  for (const t of TEMPLATES) {
+    const own = text(`template_${t.id}`);
+    // Saving the default unchanged keeps it a default, so later improvements to it still apply.
+    if (own && own !== templateText(t.id, "friendly").trim() && own !== templateText(t.id, "formal").trim()) templates[t.id] = own;
+  }
   const policy: SellerPolicy = {
     autoRefundEnabled: formData.get("autoRefundEnabled") === "on",
     autoRefundUnder: Number.isFinite(under) ? Math.round(under * 100) / 100 : NaN,
+    easyClaimsAuto: formData.get("easyClaimsAuto") === "on",
+    templates,
     returnPolicy: text("returnPolicy"),
     tone: formData.get("tone") === "formal" ? "formal" : "friendly",
     guidelines: text("guidelines"),
@@ -28,6 +37,9 @@ export async function saveSettings(_prev: SettingsState, formData: FormData): Pr
   }
   if (policy.returnPolicy.length > MAX_POLICY_TEXT || policy.guidelines.length > MAX_POLICY_TEXT) {
     return { ok: false, message: `Keep each text box under ${MAX_POLICY_TEXT} characters.` };
+  }
+  if (Object.values(templates).some((t) => t.length > MAX_TEMPLATE_TEXT)) {
+    return { ok: false, message: `Keep each template under ${MAX_TEMPLATE_TEXT} characters, so the filled-in text fits PayPal's limit.` };
   }
 
   try {

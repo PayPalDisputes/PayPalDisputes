@@ -64,6 +64,7 @@ export async function reassess(disputeId: string): Promise<{ ok: true; recommend
     refresh();
     if (outcome.status === "assessed") return { ok: true, recommendation: outcome.recommendation };
     if (outcome.status === "auto_refunded") return { ok: true, recommendation: "refund" };
+    if (outcome.status === "easy_claim") return { ok: true, recommendation: "fight" };
     return { ok: false, error: outcome.reason };
   } catch (err) {
     console.error("[evidence] reassess failed", err);

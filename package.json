@@ -14,6 +14,7 @@
     "seed:history": "tsx --env-file=.env.local scripts/seed-history.ts",
     "eval:seed": "tsx --env-file=.env.local scripts/eval-seed.ts",
     "eval": "tsx --env-file=.env.local scripts/eval.ts",
+    "experiment": "tsx scripts/experiment.ts",
     "eval:chat": "tsx --conditions=react-server --env-file=.env.local scripts/eval-chat.ts",
     "assess": "tsx --env-file=.env.local scripts/assess.ts",
     "tracking:push": "tsx --env-file=.env.local scripts/push-tracking.ts",
