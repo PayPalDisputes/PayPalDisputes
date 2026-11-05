@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { ArrowRight, ChevronDown, ChevronRight, CircleAlert, Copy, ExternalLink, PackageOpen, PackageSearch, PackageX, ReceiptText, ShieldAlert } from "lucide-react";
 import { Amount, Money, Panel } from "@/components/app/bits";
 import { reasonLabel } from "@/app/_components/dispute-ui";
-import { AtRiskChart, type RiskPoint } from "@/components/app/HomeCharts";
+import { MoneyChart, type MoneyPoint } from "@/components/app/HomeCharts";
 import { Button } from "@/components/ui/Button";
 import { requireSession } from "@/lib/auth";
 import { getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
@@ -60,18 +60,11 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
   const kept30 = last30.reduce((s, r) => s + r.kept, 0);
   const refunded30 = last30.reduce((s, r) => s + r.refunded, 0);
 
-  // Amount at risk on each of the last 30 days: disputes opened by then and not yet resolved.
-  const resolvedAt = new Map(resolvedRows.map((r) => [r.disputeId, r.resolvedAt] as const));
-  const points: RiskPoint[] = Array.from({ length: 31 }, (_, i) => {
+  // Money kept, added up day by day over the last 30 days: it only climbs, stepping up on each dispute you keep.
+  const keptRows = last30.filter((r) => r.kept > 0);
+  const points: MoneyPoint[] = Array.from({ length: 31 }, (_, i) => {
     const day = now - (30 - i) * DAY;
-    const value = disputes
-      .filter((d) => (d.currency ?? "USD") === currency)
-      .filter((d) => d.openedAt && new Date(d.openedAt).getTime() <= day)
-      .filter((d) => {
-        const r = d.status === "RESOLVED" ? resolvedAt.get(d.id) : null;
-        return !r || new Date(r).getTime() > day;
-      })
-      .reduce((s, d) => s + (d.amount ?? 0), 0);
+    const value = keptRows.filter((r) => new Date(r.resolvedAt!).getTime() <= day).reduce((s, r) => s + r.kept, 0);
     return { label: i === 30 ? "Today" : new Date(day).toLocaleDateString("en-US", { month: "short", day: "numeric" }), value };
   });
 
@@ -107,23 +100,22 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* At risk and Your disputes share one header style and one height, so the row reads as a pair */}
-        <Card title="At risk" className="flex flex-col">
+        {/* Money kept is the hero: a line that only climbs, like a revenue chart. Both cards share one header style and height. */}
+        <Card title="Money kept" className="flex flex-col">
           <div className="flex flex-1 flex-col px-6 pt-4 pb-2">
-            <Money amount={atRisk} currency={currency} className="text-[28px] leading-none font-[480] text-fg" />
+            <Money amount={kept30} currency={currency} className={cn("text-[28px] leading-none font-[480]", kept30 > 0 ? "text-ok" : "text-fg")} />
             <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[13px] text-fg-body">
-              <span>Last 30 days</span>
-              <span className="flex gap-4">
-                <span className="text-ok">
-                  ↗ <Amount amount={kept30} currency={currency} /> kept
-                </span>
-                <span className="text-bad">
-                  ↘ <Amount amount={refunded30} currency={currency} /> refunded
-                </span>
+              <span>
+                Last 30 days · {keptRows.length === 0 ? "none yet" : `${keptRows.length} dispute${keptRows.length === 1 ? "" : "s"} won or closed by the buyer`}
               </span>
+              {refunded30 > 0 && (
+                <span className="text-fg-muted">
+                  <Amount amount={refunded30} currency={currency} /> refunded
+                </span>
+              )}
             </div>
             <div className="money mt-2 h-[104px] overflow-hidden">
-              <AtRiskChart points={points} currency={currency} height="100%" />
+              <MoneyChart points={points} currency={currency} name="Kept" height="100%" />
             </div>
           </div>
         </Card>
@@ -133,7 +125,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
           <div className="grid flex-1 grid-cols-2">
             <StatTile href="/disputes?view=needs-response" label="Need your response" value={waiting.length} hint={overdue > 0 ? `${overdue} overdue` : undefined} tone={overdue > 0 ? "bad" : undefined} className="border-r border-b" />
             <StatTile href="/review" label="Drafts to review" value={drafts.length} className="border-b" />
-            <StatTile href="/disputes" label="Open disputes" value={open.length} className="border-r" />
+            <StatTile href="/disputes" label="At risk now" value={<Amount amount={atRisk} currency={currency} />} hint={`across ${open.length} open dispute${open.length === 1 ? "" : "s"}`} className="border-r" />
             <StatTile label="Handled by Sira" value={insights.impact.handled} hint={`about ${Math.round(insights.impact.hoursSaved)} hours saved`} />
           </div>
         </Card>
