@@ -24,23 +24,6 @@ export function PageSkeleton() {
   );
 }
 
-/** Placeholder for the dispute side panel's body. */
-export function PanelBodySkeleton() {
-  return (
-    <div role="status" aria-label="Loading dispute" className="flex flex-col gap-5 px-5 py-6 sm:px-7">
-      <div className="flex items-baseline justify-between gap-3">
-        <Skeleton className="h-7 w-44" />
-        <Skeleton className="h-7 w-24" />
-      </div>
-      <Skeleton className="h-4 w-64" />
-      <Skeleton className="h-[50px]" />
-      <Skeleton className="h-[76px]" />
-      <Skeleton className="h-[220px]" />
-      <Skeleton className="h-[140px]" />
-    </div>
-  );
-}
-
 /**
  * Placeholder for a full dispute page (/disputes/[id]), laid out like the real page: header with the
  * amount and buttons, the deadline, then Sira's report on the left and the details on the right.

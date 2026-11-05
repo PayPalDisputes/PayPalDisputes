@@ -73,7 +73,7 @@ function AmountCell({ data: d }: Cell) {
 /** Phone layout: one tappable card per dispute instead of a wide grid. */
 function DisputeCard({ d, href }: { d: HomeDispute; href: string }) {
   return (
-    <Link href={href} scroll={false} className="block rounded-xl border border-line bg-canvas p-4 transition-colors active:bg-subtle">
+    <Link href={href} className="block rounded-xl border border-line bg-canvas p-4 transition-colors active:bg-subtle">
       <span className="flex items-start justify-between gap-3">
         <span className="min-w-0">
           <span className="block truncate text-[15px] text-fg">{d.buyerName ?? "Unknown buyer"}</span>
@@ -122,20 +122,18 @@ const deadlineComparator = (a: number | null, b: number | null) => (a ?? Infinit
  */
 export function DisputesGrid({
   rows,
-  listHref,
   csvName = "disputes",
   initialQuery = "",
 }: {
   rows: HomeDispute[];
-  /** The current list URL; opening a dispute adds `open=<id>` to it so the side panel shows over the list. */
-  listHref: string;
   csvName?: string;
   /** Pre-filled search, e.g. from the top bar (`?q=`). */
   initialQuery?: string;
 }) {
   const router = useRouter();
-  const openHref = (id: string) => `${listHref}${listHref.includes("?") ? "&" : "?"}open=${encodeURIComponent(id)}`;
-  const openDispute = (id: string) => router.push(openHref(id), { scroll: false });
+  // Opening a dispute goes straight to its full page (no side panel first).
+  const openHref = (id: string) => `/disputes/${encodeURIComponent(id)}`;
+  const openDispute = (id: string) => router.push(openHref(id));
   const gridRef = useRef<AgGridReact<HomeDispute>>(null);
   const [query, setQuery] = useState(initialQuery);
   const [shown, setShown] = useState(rows.length);

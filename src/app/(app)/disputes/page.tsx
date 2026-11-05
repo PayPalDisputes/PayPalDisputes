@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { DisputesGrid } from "@/components/app/DisputesGrid";
 import { Button } from "@/components/ui/Button";
-import { canAccessDispute, requireSession, sellerScope, sessionMode } from "@/lib/auth";
-import { getDisputeDetail, getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
-import { Suspense } from "react";
-import { SidePanelSkeleton } from "@/components/app/SidePanel";
-import { DisputePanel } from "./panel";
+import { requireSession, sellerScope } from "@/lib/auth";
+import { getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
 import { cn } from "@/lib/cn";
 
 export const metadata: Metadata = { title: "Disputes · Sira" };
@@ -37,6 +35,8 @@ const byUrgency = (a: HomeDispute, b: HomeDispute) =>
 export default async function DisputesPage({ searchParams }: PageProps<"/disputes">) {
   await connection(); // always read fresh rows from Supabase, never a build-time snapshot
   const { view: rawView, open, q } = await searchParams;
+  // Old links opened a side panel with ?open=<id>; disputes now always open on their own page.
+  if (typeof open === "string") redirect(`/disputes/${encodeURIComponent(open)}`);
   const session = await requireSession();
   const { disputes } = await getHomeDataCached(sellerScope(session));
   // Old links used ?view=approval for drafts; they now land on the merged tab.
@@ -44,7 +44,6 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
   const needsYou = disputes.filter(VIEWS["needs-response"].match).length;
   const view: View =
     typeof requested === "string" && requested in VIEWS ? (requested as View) : needsYou > 0 ? "needs-response" : "all";
-  const listHref = `/disputes?view=${view}`;
   const rows = disputes.filter(VIEWS[view].match).sort(byUrgency);
 
   const drafts = disputes.filter(draftReady).length;
@@ -91,21 +90,9 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
           )}
         </p>
       ) : (
-        <DisputesGrid rows={rows} listHref={listHref} csvName={`sira-disputes-${view}`} initialQuery={typeof q === "string" ? q : ""} />
+        <DisputesGrid rows={rows} csvName={`sira-disputes-${view}`} initialQuery={typeof q === "string" ? q : ""} />
       )}
 
-      {/* The panel opens at once with a skeleton; the dispute streams in behind it */}
-      {typeof open === "string" && (
-        <Suspense key={open} fallback={<SidePanelSkeleton closeHref={listHref} fullHref={`/disputes/${encodeURIComponent(open)}`} />}>
-          <OpenDispute id={open} listHref={listHref} mode={sessionMode(session)} />
-        </Suspense>
-      )}
     </div>
   );
-}
-
-/** Loads one dispute for the side panel (only if this session may see it). */
-async function OpenDispute({ id, listHref, mode }: { id: string; listHref: string; mode: ReturnType<typeof sessionMode> }) {
-  const dispute = (await canAccessDispute(id)) ? await getDisputeDetail(id) : null;
-  return dispute ? <DisputePanel dispute={dispute} listHref={listHref} mode={mode} /> : null;
 }

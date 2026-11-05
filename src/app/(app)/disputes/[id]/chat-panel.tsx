@@ -21,7 +21,7 @@ const when = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "sh
  * `inline` sits in the page (the side panel); `floating` is a chat button in the bottom-right corner
  * that opens a chat window above it, with a one-time nudge bubble (the full dispute page).
  */
-export function ChatPanel({ disputeId, variant = "inline" }: { disputeId: string; variant?: "inline" | "floating" }) {
+export function ChatPanel({ disputeId, variant = "inline", raised = false }: { disputeId: string; variant?: "inline" | "floating"; /** Sit above a bar pinned to the bottom (Review drafts). */ raised?: boolean }) {
   const [open, setOpen] = useState(false);
   // The nudge bubble appears a moment after the page opens, until the seller opens the chat or dismisses it.
   const [nudge, setNudge] = useState(false);
@@ -173,7 +173,7 @@ export function ChatPanel({ disputeId, variant = "inline" }: { disputeId: string
 
   if (variant === "floating") {
     return (
-      <div className="fixed right-4 bottom-24 z-40 flex flex-col items-end gap-3 sm:right-6 lg:bottom-6">
+      <div className={cn("fixed right-4 bottom-24 z-40 flex flex-col items-end gap-3 sm:right-6", raised ? "lg:bottom-24" : "lg:bottom-6")}>
         {open && (
           <section
             aria-label="Ask Sira"
