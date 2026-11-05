@@ -109,9 +109,9 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
       <div className="grid gap-6 lg:grid-cols-2">
         {/* At risk and Your disputes share one header style and one height, so the row reads as a pair */}
         <Card title="At risk" className="flex flex-col">
-          <div className="flex flex-1 flex-col px-6 pt-5 pb-3">
-            <Money amount={atRisk} currency={currency} className="text-[32px] leading-none font-[480] text-fg" />
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[13px] text-fg-body">
+          <div className="flex flex-1 flex-col px-6 pt-4 pb-2">
+            <Money amount={atRisk} currency={currency} className="text-[28px] leading-none font-[480] text-fg" />
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[13px] text-fg-body">
               <span>
                 Claimed on your {open.length} open dispute{open.length === 1 ? "" : "s"}
               </span>
@@ -124,24 +124,19 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
                 </span>
               </span>
             </div>
-            <div className="money mt-3 min-h-[150px] flex-1">
+            <div className="money mt-2 h-[104px] overflow-hidden">
               <AtRiskChart points={points} currency={currency} height="100%" />
             </div>
           </div>
         </Card>
 
         <Card title="Your disputes" className="flex flex-col">
-          {/* The rows share the card's height, so it lines up with At risk */}
-          <div className="flex flex-1 flex-col *:flex-1">
-            <SummaryRow href="/disputes?view=needs-response" label="Need your response" value={waiting.length} tone={overdue > 0 ? "bad" : undefined} hint={overdue > 0 ? `${overdue} overdue` : undefined} />
-            <SummaryRow href="/review" label="Drafts ready to review" value={drafts.length} />
-            <SummaryRow href="/disputes" label="Open disputes" value={open.length} />
-            <SummaryRow
-              label="Handled by Sira"
-              value={insights.impact.handled}
-              hint={`since you started · about ${Math.round(insights.impact.hoursSaved)} hours saved`}
-              last
-            />
+          {/* Four numbers as a 2×2 grid: compact, and the tiles share the card's height so it lines up with At risk */}
+          <div className="grid flex-1 grid-cols-2">
+            <StatTile href="/disputes?view=needs-response" label="Need your response" value={waiting.length} hint={overdue > 0 ? `${overdue} overdue` : undefined} tone={overdue > 0 ? "bad" : undefined} className="border-r border-b" />
+            <StatTile href="/review" label="Drafts to review" value={drafts.length} className="border-b" />
+            <StatTile href="/disputes" label="Open disputes" value={open.length} className="border-r" />
+            <StatTile label="Handled by Sira" value={insights.impact.handled} hint={`about ${Math.round(insights.impact.hoursSaved)} hours saved`} />
           </div>
         </Card>
       </div>
@@ -277,18 +272,16 @@ function TodoRow({
   );
 }
 
-/** A label and its number, one per line, in the summary column. */
-function SummaryRow({ href, label, value, hint, tone, last }: { href?: string; label: string; value: React.ReactNode; hint?: string; tone?: "bad"; last?: boolean }) {
+/** One number in the Your disputes grid: label, the number, and an optional hint under it. */
+function StatTile({ href, label, value, hint, tone, className }: { href?: string; label: string; value: React.ReactNode; hint?: string; tone?: "bad"; className?: string }) {
   const body = (
     <>
-      <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[14px] text-fg">{label}</span>
-        {hint && <span className={cn("text-[12.5px]", tone === "bad" ? "font-medium text-bad" : "text-fg-muted")}>{hint}</span>}
-      </span>
-      <span className="text-[16px] font-[480] text-fg tabular-nums">{value}</span>
+      <span className="text-[13px] text-fg-muted">{label}</span>
+      <span className="text-[24px] leading-none font-[480] text-fg tabular-nums">{value}</span>
+      {hint && <span className={cn("text-[12px]", tone === "bad" ? "font-medium text-bad" : "text-fg-muted")}>{hint}</span>}
     </>
   );
-  const cls = cn("flex items-center justify-between gap-3 px-6 py-3.5", !last && "border-b border-line-subtle");
+  const cls = cn("flex flex-col justify-center gap-1.5 border-line-subtle px-6 py-3", className);
   return href ? (
     <Link href={href} className={cn(cls, "transition-colors hover:bg-subtle")}>
       {body}
