@@ -187,6 +187,9 @@ export function AssessmentReport({
             </a>
           </p>
         )}
+        {a.rule === "easy_claim" && (
+          <p className="mb-2 text-[13.5px] text-fg-body">Easy claim: the facts settle it, so Sira filled in your template straight away.</p>
+        )}
         <p className="text-[22px] font-[480] text-fg">{call}</p>
         <p className="mt-2 text-[15px] leading-6 text-fg-body">{a.reasoning}</p>
         <div className="mt-4 flex flex-wrap gap-x-7 gap-y-2 border-t border-line-subtle pt-3.5 text-[13.5px]">
@@ -207,6 +210,25 @@ export function AssessmentReport({
           {a.risk_reason} {urgency.reason}
         </p>
       </Block>
+
+      {a.settlement && (
+        <Block id="formula" title="How Sira worked it out">
+          <Rows
+            rows={[
+              { label: "Chance you lose a fight", value: `${Math.round(a.settlement.lossOdds * 100)}%. ${a.settlement.basis}.` },
+              { label: "Cost of fighting", value: `${formatAmount(a.settlement.costOfFighting, currency)}: what you'd expect to lose, counting PayPal's dispute fee.` },
+              ...(a.recommendation === "settle" && a.settle_amount != null
+                ? [
+                    {
+                      label: "Offer",
+                      value: `${formatAmount(a.settle_amount, currency)}, halfway between what the buyer could expect from PayPal (${formatAmount(a.settlement.buyerFairShare, currency)}) and your cost of fighting. Both of you come out ahead of waiting for PayPal.`,
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </Block>
+      )}
 
       {checked.length > 0 && (
         <Block id="checked" title="What Sira checked">

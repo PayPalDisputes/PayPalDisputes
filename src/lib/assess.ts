@@ -1,9 +1,11 @@
-import { analyzeDispute, computeUrgency, findEarlierRefund, PROMPT_VERSION, type Assessment } from "@/lib/agent";
+import { ACTION_RECIPIENT, analyzeDispute, computeUrgency, findEarlierRefund, PROMPT_VERSION, type Assessment } from "@/lib/agent";
 import { getBuyerHistory } from "@/lib/buyer-history";
+import { easyClaimAssessment, easyClaimKind } from "@/lib/easy-claims";
 import { liveTools } from "@/lib/investigate";
 import { actionsMode, approveDecision } from "@/lib/respond";
 import { getSellerPolicy, type SellerPolicy } from "@/lib/seller-policy";
-import { getOrder, type PayPalDisputeDetail } from "@/lib/dashboard";
+import { getOrder, type OrderEvidence, type PayPalDisputeDetail } from "@/lib/dashboard";
+import { buildDrafts, templateValues } from "@/lib/templates";
 import { supabaseAdmin } from "@/lib/supabase";
 
 /** Our recommendation → the `decisions.action` values (named after the PayPal action that carries it out). */
@@ -16,6 +18,7 @@ const DECISION_ACTION: Record<Assessment["recommendation"], "fight" | "accept" |
 export type AssessOutcome =
   | { status: "assessed"; decisionId: string; recommendation: string }
   | { status: "auto_refunded"; decisionId: string; sent: boolean }
+  | { status: "easy_claim"; decisionId: string; kind: string; sent: boolean }
   | { status: "skipped"; reason: string };
 
 /**
@@ -58,10 +61,11 @@ export async function assessDispute(disputeId: string, { force = false } = {}): 
 
   const raw = dispute.raw as PayPalDisputeDetail & Record<string, unknown>;
   const asOf = new Date().toISOString();
-  const [order, buyerHistory, policy] = await Promise.all([
+  const [order, buyerHistory, policy, storeName] = await Promise.all([
     getOrder(raw.disputed_transactions?.[0]?.seller_transaction_id),
     getBuyerHistory(disputeId, asOf),
     getSellerPolicy(dispute.seller_id),
+    sellerName(dispute.seller_id),
   ]);
 
   // The seller's auto-refund rule, checked before spending anything on the model.
@@ -76,19 +80,34 @@ export async function assessDispute(disputeId: string, { force = false } = {}): 
     allowed.has("accept_claim") &&
     !findEarlierRefund(order).found
   ) {
-    const a = autoRefundAssessment(raw, asOf, amount, dispute.currency, policy);
+    const a = autoRefundAssessment(raw, asOf, amount, dispute.currency, policy, order, storeName);
     const decisionId = await saveDecision(disputeId, a, "rule:auto_refund", dispute.paypal_updated_at, 0, 0);
     if (actionsMode() !== "live") return { status: "auto_refunded", decisionId, sent: false };
     const result = await approveDecision(decisionId, []);
     return { status: "auto_refunded", decisionId, sent: result.ok };
   }
 
-  const { assessment: a, model, inputTokens, outputTokens } = await analyzeDispute(
-    { asOf, dispute: raw, order, buyerHistory, sellerPolicy: policy },
-    { tools: liveTools() },
-  );
+  const input = { asOf, dispute: raw, order, buyerHistory, sellerPolicy: policy, storeName };
+
+  // Easy claims: the facts settle them, so the templates are filled in without calling the model.
+  const kind = easyClaimKind(input);
+  if (kind) {
+    const decisionId = await saveDecision(disputeId, easyClaimAssessment(input, kind), "rule:easy_claim", dispute.paypal_updated_at, 0, 0);
+    if (!policy.easyClaimsAuto || actionsMode() !== "live") return { status: "easy_claim", decisionId, kind, sent: false };
+    const result = await approveDecision(decisionId, []);
+    return { status: "easy_claim", decisionId, kind, sent: result.ok };
+  }
+
+  const { assessment: a, model, inputTokens, outputTokens } = await analyzeDispute(input, { tools: liveTools() });
   const decisionId = await saveDecision(disputeId, a, model, dispute.paypal_updated_at, inputTokens, outputTokens);
   return { status: "assessed", decisionId, recommendation: a.recommendation };
+}
+
+async function sellerName(sellerId: string | null): Promise<string | null> {
+  if (!sellerId) return null;
+  const { data, error } = await supabaseAdmin().from("sellers").select("name").eq("id", sellerId).maybeSingle();
+  if (error) throw error;
+  return (data?.name as string | null) ?? null;
 }
 
 const money = (amount: number, currency: string | null) =>
@@ -101,6 +120,8 @@ function autoRefundAssessment(
   amount: number,
   currency: string | null,
   policy: SellerPolicy,
+  order: OrderEvidence | null,
+  storeName: string | null,
 ): Assessment {
   const urgency = computeUrgency(raw as Parameters<typeof computeUrgency>[0], asOf);
   const limit = money(policy.autoRefundUnder ?? 0, currency);
@@ -115,13 +136,10 @@ function autoRefundAssessment(
     alternatives: [],
     key_evidence: [`Dispute amount ${money(amount, currency)} is under your auto-refund limit of ${limit}.`],
     missing_evidence: [],
-    drafts: [
-      {
-        action: "accept_claim",
-        recipient: "paypal",
-        text: `We accept this claim and authorise a full refund of ${money(amount, currency)} to the buyer, under our policy of refunding small disputes promptly.`,
-      },
-    ],
+    drafts: buildDrafts(["accept"], templateValues({ dispute: raw, order, storeName, asOf }), policy.tone, policy.templates).map((d) => ({
+      ...d,
+      recipient: ACTION_RECIPIENT[d.action],
+    })),
     urgency: urgency.urgency,
     urgency_reason: urgency.reason,
     investigation: [],

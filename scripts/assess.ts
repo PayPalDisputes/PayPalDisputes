@@ -30,7 +30,9 @@ async function main() {
         ? `✓ ${id}: ${outcome.recommendation} (decision ${outcome.decisionId})`
         : outcome.status === "auto_refunded"
           ? `✓ ${id}: auto-refunded by the seller's rule${outcome.sent ? " (sent to PayPal)" : " (demo mode: not sent)"}`
-          : `- ${id}: skipped, ${outcome.reason}`,
+          : outcome.status === "easy_claim"
+            ? `✓ ${id}: easy claim (${outcome.kind}), no model call${outcome.sent ? " (sent to PayPal)" : ""}`
+            : `- ${id}: skipped, ${outcome.reason}`,
     );
   }
 }

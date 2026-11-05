@@ -57,6 +57,13 @@ export const COLORS = {
 
 export { BLUES } from "@/lib/palette";
 
+/**
+ * How a dispute ended, in stack order. Validated with the dataviz palette validator (light surface
+ * #ffffff, adjacent pairs: CVD ΔE ≥ 21, normal-vision ΔE ≥ 21, contrast ≥ 3:1); the legend and data
+ * table carry the names too, so colour is never the only cue.
+ */
+export const OUTCOME = { won: "#5f7a1f", settled: "#3a6fb0", lost: "#b42318" } as const;
+
 /** Charts draw on a canvas, which can't read CSS variables, so resolve the real family names (mono digits, then Inter). */
 function chartFont() {
   if (typeof window === "undefined") return "system-ui, sans-serif";

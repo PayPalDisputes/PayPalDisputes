@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import type { SellerPolicy } from "@/lib/seller-policy";
+import type { SellerPolicy, Tone } from "@/lib/seller-policy";
+import { EASY_CLAIM_KINDS } from "@/lib/easy-claim-kinds";
+import { TEMPLATES, templateText, type TemplateId, type TemplateInfo } from "@/lib/templates";
 import { saveSettings, type SettingsState } from "./actions";
 
 const field =
@@ -25,6 +27,20 @@ function Row({ title, htmlFor, description, children, last }: { title: string; h
   );
 }
 
+/** A real checkbox, drawn as a switch. */
+function Switch({ name, checked, onChange }: { name: string; checked: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-3 self-start text-[14px] text-fg">
+      <input type="checkbox" role="switch" name={name} checked={checked} onChange={(e) => onChange(e.target.checked)} className="peer sr-only" />
+      <span
+        aria-hidden
+        className="relative h-6 w-10 rounded-full bg-inset transition-colors peer-checked:bg-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent after:absolute after:top-[3px] after:left-[3px] after:size-[18px] after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"
+      />
+      {checked ? "On" : "Off"}
+    </label>
+  );
+}
+
 /** Demo account: every control is visibly switched off, not just unsaveable. */
 const lockedClass = "opacity-55 select-none [&_*]:cursor-not-allowed";
 
@@ -32,6 +48,7 @@ const lockedClass = "opacity-55 select-none [&_*]:cursor-not-allowed";
 export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readOnly: boolean }) {
   const [state, save, saving] = useActionState<SettingsState, FormData>(saveSettings, null);
   const [auto, setAuto] = useState(policy.autoRefundEnabled);
+  const [easyAuto, setEasyAuto] = useState(policy.easyClaimsAuto);
   const [tone, setTone] = useState<keyof typeof TONE_EXAMPLE>(policy.tone);
   const [guidelines, setGuidelines] = useState(policy.guidelines);
   const disabled = readOnly || saving;
@@ -39,25 +56,23 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
   return (
     <form action={save} className="flex flex-col gap-3">
       <fieldset disabled={disabled} className={`rounded-xl border border-line bg-canvas px-6 ${readOnly ? lockedClass : ""}`}>
-        <legend className="sr-only">Automatic decisions</legend>
+        <legend className="sr-only">Easy claims</legend>
+        <Row
+          title="Send easy claims automatically"
+          description="Easy claims are ones the facts settle on their own. Sira always prepares them instantly from your templates; turn this on and it sends them too. Anything else waits for you."
+        >
+          <div className="flex flex-col gap-3">
+            <Switch name="easyClaimsAuto" checked={easyAuto} onChange={setEasyAuto} />
+            <ul className="list-disc space-y-1 pl-5 text-[13.5px] leading-[21px] text-fg-body">
+              {Object.values(EASY_CLAIM_KINDS).map((k) => (
+                <li key={k}>{k}</li>
+              ))}
+            </ul>
+          </div>
+        </Row>
         <Row title="Auto-refund small claims" description="Sira refunds small claims straight away, unless you already refunded the buyer or PayPal doesn't allow it. Everything else still waits for you.">
           <div className="flex flex-col gap-3.5">
-            {/* A real checkbox, drawn as a switch */}
-            <label className="inline-flex cursor-pointer items-center gap-3 self-start text-[14px] text-fg">
-              <input
-                type="checkbox"
-                role="switch"
-                name="autoRefundEnabled"
-                checked={auto}
-                onChange={(e) => setAuto(e.target.checked)}
-                className="peer sr-only"
-              />
-              <span
-                aria-hidden
-                className="relative h-6 w-10 rounded-full bg-inset transition-colors peer-checked:bg-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent after:absolute after:top-[3px] after:left-[3px] after:size-[18px] after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"
-              />
-              {auto ? "On" : "Off"}
-            </label>
+            <Switch name="autoRefundEnabled" checked={auto} onChange={setAuto} />
             <label className="flex items-center gap-2.5 text-[14px] text-fg-body">
               Under
               <span className="inline-flex h-[38px] w-[120px] items-center gap-1 rounded-md border border-line bg-canvas px-3 focus-within:border-line-strong">
@@ -90,6 +105,20 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
           </div>
           <p className="mt-2.5 text-[13.5px] leading-[21px] text-fg-body">{TONE_EXAMPLE[tone]}</p>
         </Row>
+      </fieldset>
+
+      <fieldset disabled={disabled} className={`rounded-xl border border-line bg-canvas px-6 ${readOnly ? lockedClass : ""}`}>
+        <legend className="sr-only">Response templates</legend>
+        <div className="border-b border-line-subtle py-5">
+          <h3 className="text-[15px] font-[480] text-fg">Response templates</h3>
+          <p className="mt-1 text-[13.5px] leading-[21px] text-fg-body">
+            Everything Sira sends to PayPal or your buyers comes from these, filled in with the case&apos;s facts. Words in {"{braces}"} are filled in for you; a line
+            whose fact this order doesn&apos;t have is left out. You can still edit the text on each dispute before it&apos;s sent.
+          </p>
+        </div>
+        {TEMPLATES.map((t, i) => (
+          <TemplateEditor key={t.id} template={t} tone={tone} own={policy.templates[t.id]} last={i === TEMPLATES.length - 1} />
+        ))}
       </fieldset>
 
       <fieldset disabled={disabled} className={`rounded-xl border border-line bg-canvas px-6 ${readOnly ? lockedClass : ""}`}>
@@ -138,5 +167,38 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
         </div>
       </div>
     </form>
+  );
+}
+
+/** One template: collapsed to its title, opens to an editable text box with a reset to Sira's default. */
+function TemplateEditor({ template: t, tone, own, last }: { template: TemplateInfo; tone: Tone; own?: string; last?: boolean }) {
+  const [text, setText] = useState<string | null>(own ?? null);
+  // Until the seller edits it, the box shows the default for the current tone.
+  const value = text ?? templateText(t.id as TemplateId, tone);
+  const custom = text !== null && text.trim() !== templateText(t.id as TemplateId, tone).trim();
+  return (
+    <details className={`group py-4 ${last ? "" : "border-b border-line-subtle"}`}>
+      <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4 [&::-webkit-details-marker]:hidden">
+        <span>
+          <span className="text-[14.5px] font-[480] text-fg">{t.title}</span>
+          <span className="ml-2 text-[12.5px] text-fg-muted">→ {t.action === "send_message" || t.action === "make_offer" ? "buyer" : "PayPal"}</span>
+        </span>
+        <span className="shrink-0 text-[12.5px] text-fg-muted">{custom ? "Edited" : "Default"}</span>
+      </summary>
+      <p className="mt-1.5 text-[13px] text-fg-body">{t.when}</p>
+      <textarea
+        name={`template_${t.id}`}
+        rows={value.split("\n").length + 1}
+        maxLength={1500}
+        value={value}
+        onChange={(e) => setText(e.target.value)}
+        className={`${field} mt-3 resize-y font-[inherit]`}
+      />
+      {custom && (
+        <button type="button" onClick={() => setText(null)} className="mt-2 text-[13px] text-accent hover:underline">
+          Reset to Sira&apos;s default
+        </button>
+      )}
+    </details>
   );
 }

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { TEMPLATES, type TemplateId, type TemplateOverrides } from "@/lib/templates";
 
 // Each seller's dispute policies, set on the Settings page and stored in sellers.policy (jsonb).
 // New keys sit alongside the older ones there (auto_submit, min_confidence, ...), which are left alone.
@@ -10,6 +11,10 @@ export type SellerPolicy = {
   autoRefundEnabled: boolean;
   /** Disputes for less than this amount (in the dispute's currency) are refunded automatically. */
   autoRefundUnder: number | null;
+  /** Send easy claims (see src/lib/easy-claims.ts) without waiting for the seller. Off unless turned on. */
+  easyClaimsAuto: boolean;
+  /** The seller's own versions of the response templates, by id. */
+  templates: TemplateOverrides;
   returnPolicy: string;
   tone: Tone;
   /** Anything else the agent should follow, in the seller's own words. */
@@ -21,6 +26,8 @@ export const MAX_POLICY_TEXT = 1000;
 export const DEFAULT_POLICY: SellerPolicy = {
   autoRefundEnabled: false,
   autoRefundUnder: 15,
+  easyClaimsAuto: false,
+  templates: {},
   returnPolicy: "",
   tone: "friendly",
   guidelines: "",
@@ -29,9 +36,17 @@ export const DEFAULT_POLICY: SellerPolicy = {
 function fromRow(policy: Record<string, unknown> | null): SellerPolicy {
   const p = policy ?? {};
   const under = Number(p.auto_refund_under);
+  const saved = (p.templates ?? {}) as Record<string, unknown>;
+  const templates: TemplateOverrides = {};
+  for (const t of TEMPLATES) {
+    const text = saved[t.id];
+    if (typeof text === "string" && text.trim()) templates[t.id as TemplateId] = text;
+  }
   return {
     autoRefundEnabled: p.auto_refund_enabled === true,
     autoRefundUnder: Number.isFinite(under) && under > 0 ? under : DEFAULT_POLICY.autoRefundUnder,
+    easyClaimsAuto: p.easy_claims_auto === true,
+    templates,
     returnPolicy: typeof p.return_policy === "string" ? p.return_policy : "",
     tone: p.tone === "formal" ? "formal" : "friendly",
     guidelines: typeof p.guidelines === "string" ? p.guidelines : "",
@@ -55,6 +70,8 @@ export async function saveSellerPolicy(sellerId: string, policy: SellerPolicy) {
     ...((data.policy as Record<string, unknown> | null) ?? {}),
     auto_refund_enabled: policy.autoRefundEnabled,
     auto_refund_under: policy.autoRefundUnder,
+    easy_claims_auto: policy.easyClaimsAuto,
+    templates: policy.templates,
     return_policy: policy.returnPolicy,
     tone: policy.tone,
     guidelines: policy.guidelines,

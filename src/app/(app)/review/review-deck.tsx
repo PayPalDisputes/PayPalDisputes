@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState, useSyncExternalStore } from "react";
+import { useActionState, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import type { PayPalAction } from "@/lib/agent";
 import { Money } from "@/components/app/bits";
+import { ReviewDraftSkeleton } from "@/components/app/Skeleton";
 import { DRAFT_LABELS, EvidencePackLink } from "@/app/_components/dispute-ui";
 import { approveAction, rejectAction, type ReviewState } from "../disputes/[id]/actions";
 
@@ -25,6 +26,8 @@ export type ReviewCard = {
 };
 
 const MAX_DRAFT_LENGTH = 2000; // PayPal's limit on note/message fields
+/** How long the loading screen shows before each draft, so moving between drafts reads as a step. */
+const LOADING_MS = 1100;
 const noSubscribe = () => () => {};
 
 /** What approving actually does, in one sentence. */
@@ -54,13 +57,23 @@ export function ReviewDeck({
   mode,
   nextHref,
   upNext,
+  first,
 }: {
   card: ReviewCard;
   mode: "live" | "demo";
   nextHref: string;
+  /** The first draft of the session, so the loading screen says "your drafts" rather than "the next draft". */
+  first: boolean;
   upNext: { name: string; amount: string } | null;
 }) {
   const [editing, setEditing] = useState(false);
+  // A short loading screen before each draft (the deck is keyed by draft, so this runs per draft),
+  // and again straight away when the seller skips or moves on, while the next one loads.
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), LOADING_MS);
+    return () => clearTimeout(t);
+  }, []);
   const [approveState, approve, approving] = useActionState<ReviewState, FormData>(approveAction, null);
   const [rejectState, reject, rejecting] = useActionState<ReviewState, FormData>(rejectAction, null);
   // Until hydrated, a click would submit natively and skip the refund confirmation.
@@ -76,6 +89,14 @@ export function ReviewDeck({
     if (lines.length === 0) return;
     const prefix = mode === "demo" ? "Demo mode, nothing is really sent. " : "";
     if (!window.confirm(`${prefix}This will ${lines.join(" and ")}. Continue?`)) e.preventDefault();
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <ReviewDraftSkeleton label={first ? "Loading your drafts…" : "Loading the next draft…"} />
+      </div>
+    );
   }
 
   const approveLabel =
@@ -202,7 +223,11 @@ export function ReviewDeck({
             )}
           </span>
           {finished ? (
-            <Link href={nextHref} className="inline-flex h-10 items-center rounded-md bg-accent px-5 text-[14px] font-medium text-white hover:bg-accent-hover">
+            <Link
+              href={nextHref}
+              onClick={() => setLoading(true)}
+              className="inline-flex h-10 items-center rounded-md bg-accent px-5 text-[14px] font-medium text-white hover:bg-accent-hover"
+            >
               {upNext ? "Next draft" : "Finish"}
             </Link>
           ) : (
@@ -215,7 +240,7 @@ export function ReviewDeck({
               >
                 {rejecting ? "Rejecting…" : "Reject"}
               </button>
-              <Link href={nextHref} className="inline-flex h-10 items-center rounded-md px-4 text-[14px] text-fg-body hover:bg-muted">
+              <Link href={nextHref} onClick={() => setLoading(true)} className="inline-flex h-10 items-center rounded-md px-4 text-[14px] text-fg-body hover:bg-muted">
                 Skip
               </Link>
               <button

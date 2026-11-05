@@ -1,4 +1,5 @@
 import { PDFDocument, rgb, StandardFonts, type PDFFont, type PDFPage } from "pdf-lib";
+import { refundIdsFromNotes } from "@/lib/agent";
 import { getDisputeDetail, type OrderEvidence } from "@/lib/dashboard";
 
 // Builds the PDF evidence pack attached when a seller approves "fight": the order, the shipping
@@ -9,10 +10,7 @@ import { getDisputeDetail, type OrderEvidence } from "@/lib/dashboard";
 /** PayPal's document names allow letters, digits, dashes, underscores, commas and spaces, then an extension. */
 export const evidencePackName = (disputeId: string) => `evidence-pack-${disputeId.replace(/[^A-Za-z0-9-_]/g, "")}.pdf`;
 
-/** Refund ids the seller's notes mention, e.g. "refund id 3XL51238A9876543P". */
-export function refundIdsFromNotes(notes: string | null): string[] {
-  return [...(notes ?? "").matchAll(/refund id[:\s]+([A-Z0-9]{10,})/gi)].map((m) => m[1]);
-}
+export { refundIdsFromNotes };
 
 type PackInput = {
   disputeId: string;

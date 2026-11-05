@@ -3,7 +3,7 @@
 import { AgCharts } from "ag-charts-react";
 import type { AgCartesianChartOptions } from "ag-charts-community";
 import { cn } from "@/lib/cn";
-import { baseChart, BLUES, COLORS } from "./ag-setup";
+import { baseChart, COLORS, OUTCOME } from "./ag-setup";
 
 /* ------------------------------------------------------------------ */
 /* Card shell: title, one-line explainer, chart, and a data table      */
@@ -11,12 +11,16 @@ import { baseChart, BLUES, COLORS } from "./ag-setup";
 
 export function ChartCard({
   title,
+  takeaway,
   description,
   table,
   className,
   children,
 }: {
   title: string;
+  /** The answer in one sentence, read before the chart. */
+  takeaway?: string;
+  /** What the chart shows: the measure and what the colours mean. */
   description: string;
   /** Rows for the "Show data" table, so values are never colour- or hover-only. */
   table: { label: string; value: string }[];
@@ -25,8 +29,9 @@ export function ChartCard({
 }) {
   return (
     <section className={cn("flex flex-col rounded-xl border border-line bg-canvas p-6", className)}>
-      <h3 className="text-[14px] font-[480] text-fg">{title}</h3>
-      <p className="mt-0.5 text-[12.5px] leading-[18px] text-fg-muted">{description}</p>
+      <h3 className="text-[15px] font-[480] text-fg">{title}</h3>
+      {takeaway && <p className="mt-1.5 text-[14px] leading-[21px] text-fg">{takeaway}</p>}
+      <p className="mt-1 text-[12.5px] leading-[18px] text-fg-muted">{description}</p>
       <div className="mt-3 flex-1">{children}</div>
       <details className="group mt-2 text-[12px]">
         <summary className="cursor-pointer list-none text-fg-muted hover:text-fg [&::-webkit-details-marker]:hidden">
@@ -63,9 +68,9 @@ export function twoLines(text: string, max = 12) {
   return `${text.slice(0, at)}\n${text.slice(at + 1)}`;
 }
 
-/** Common bar styling: thin rounded bars, recessive axes, integer ticks. */
+/** Common bar styling: one olive for every bar (red only for bars marked urgent), recessive axes, integer ticks. */
 export function barChart(
-  data: { label: string; value: number; urgent?: boolean; color?: string }[],
+  data: { label: string; value: number; urgent?: boolean }[],
   opts: { horizontal?: boolean; yName: string; format?: (v: number) => string },
 ): AgCartesianChartOptions {
   const format = opts.format ?? ((v: number) => String(v));
@@ -83,7 +88,7 @@ export function barChart(
         direction: opts.horizontal ? "horizontal" : "vertical",
         cornerRadius: 4,
         fill: COLORS.ink,
-        itemStyler: ({ datum }) => ({ fill: datum.color ?? (datum.urgent ? COLORS.urgent : COLORS.ink) }),
+        itemStyler: ({ datum }) => ({ fill: datum.urgent ? COLORS.urgent : COLORS.ink }),
         label: { enabled: true, color: COLORS.text, fontWeight: 500, placement: "outside-end", formatter: ({ value }) => format(value) },
         tooltip: { renderer: ({ datum }) => ({ heading: datum.label, data: [{ label: opts.yName, value: format(datum.value) }] }) },
       },
@@ -269,14 +274,22 @@ export type OutcomeBar = { label: string; won: number; settled: number; lost: nu
 export function OutcomeChart({ bars }: { bars: OutcomeBar[] }) {
   const total = bars.reduce((s, b) => s + b.won + b.settled + b.lost, 0);
   const series = [
-    { yKey: "won", yName: "Won", fill: BLUES[0] },
-    { yKey: "settled", yName: "Settled", fill: BLUES[2] },
-    { yKey: "lost", yName: "Lost", fill: COLORS.urgent },
+    { yKey: "won", yName: "Won", fill: OUTCOME.won },
+    { yKey: "settled", yName: "Settled", fill: OUTCOME.settled },
+    { yKey: "lost", yName: "Lost", fill: OUTCOME.lost },
   ] as const;
+  const won = bars.reduce((s, b) => s + b.won, 0);
+  const fought = bars.find((b) => b.label === "Fought");
   return (
     <ChartCard
-      title="How disputes ended"
-      description="Resolved disputes by what you did, and how PayPal closed them."
+      title="How did they end?"
+      takeaway={
+        total === 0
+          ? undefined
+          : `You won ${won} of ${total} resolved disputes` +
+            (fought && fought.won + fought.settled + fought.lost > 0 ? `, and ${fought.won} of ${fought.won + fought.settled + fought.lost} you fought.` : ".")
+      }
+      description="Each bar is what you did; its colours show how PayPal closed those disputes: won, settled or lost."
       table={bars.map((b) => ({ label: b.label, value: `${b.won} won · ${b.settled} settled · ${b.lost} lost` }))}
     >
       {total === 0 ? (

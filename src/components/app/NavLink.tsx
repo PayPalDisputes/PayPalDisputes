@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
-/** Sidebar / tab link that highlights itself when its section is open. */
+/** Sidebar, top-bar or tab link that highlights itself when its section is open. */
 export function NavLink({
   href,
   exact,
@@ -18,11 +18,28 @@ export function NavLink({
   exact?: boolean;
   icon?: React.ReactNode;
   badge?: number;
-  variant?: "sidebar" | "tab";
+  variant?: "sidebar" | "tab" | "top";
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const active = exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+
+  if (variant === "top") {
+    return (
+      <Link
+        href={href}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "inline-flex h-9 items-center gap-2 rounded-md px-3 text-[14px] whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-fg",
+          active ? "bg-accent-bg font-medium text-accent" : "text-fg-body hover:bg-muted hover:text-fg",
+        )}
+      >
+        <span className="[&>svg]:size-4">{icon}</span>
+        {children}
+        {badge ? <span className={cn("text-[12.5px] tabular-nums", active ? "text-accent" : "text-fg-muted")}>{badge}</span> : null}
+      </Link>
+    );
+  }
 
   if (variant === "tab") {
     return (

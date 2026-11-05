@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { landingWrap } from "@/components/landing/container";
 import { LandingHeader } from "@/components/landing/LandingHeader";
+import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { Logo } from "@/components/ui/Logo";
 import { footer, site } from "@/data/site";
 
@@ -25,6 +26,7 @@ export default function LandingLayout({ children }: LayoutProps<"/">) {
       >
         Skip to content
       </a>
+      <SmoothScroll />
       <LandingHeader />
       <main id="main" className="flex-1">
         {children}

@@ -16,10 +16,10 @@ export function LogoMark({ className }: { className?: string }) {
 }
 
 /** The logo as the site's name, for headers and the sidebar. */
-export function Logo({ className }: { className?: string }) {
+export function Logo({ className, imageClassName = "h-14" }: { className?: string; imageClassName?: string }) {
   return (
     <span className={cn("inline-flex items-center", className)}>
-      <Image src={LOGO.src} width={LOGO.width} height={LOGO.height} alt={site.name} priority className="h-14 w-auto" />
+      <Image src={LOGO.src} width={LOGO.width} height={LOGO.height} alt={site.name} priority className={cn("w-auto", imageClassName)} />
     </span>
   );
 }

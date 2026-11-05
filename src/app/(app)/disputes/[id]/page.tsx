@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Money } from "@/components/app/bits";
-import { Button } from "@/components/ui/Button";
 import { computeUrgency } from "@/lib/agent";
 import { canAccessDispute, requireSession, sessionMode } from "@/lib/auth";
 import { getDisputeDetail, type OrderEvidence, type PayPalDisputeDetail } from "@/lib/dashboard";
@@ -156,7 +155,6 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
   const hold = raw.fund_movements?.find((f) => f.reason === "HOLD_PLACED");
   const allowed = (raw.links ?? []).filter((l) => l.method === "POST").map((l) => l.rel);
   const waiting = dispute.status === "WAITING_FOR_SELLER_RESPONSE";
-  const draftReady = dispute.decision?.current && dispute.decision.status === "pending_review" && dispute.status !== "RESOLVED";
   const due = waiting ? dueLabel(dispute.daysLeft) : null;
   const sample = isSample(dispute.id);
 
@@ -199,11 +197,6 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
                 </a>
               )}
               <EvidencePackButton disputeId={dispute.id} className="h-[38px]" />
-              {draftReady && (
-                <Button href="/review" prefetch={false} className="h-[38px] px-4">
-                  Review draft
-                </Button>
-              )}
             </div>
           </div>
         </div>
