@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { ArrowRight, ChevronDown, ChevronRight, CircleAlert, Copy, ExternalLink, PackageOpen, PackageSearch, PackageX, ReceiptText, ShieldAlert } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, ChevronDown, ChevronRight, CircleAlert, Copy, ExternalLink, PackageOpen, PackageSearch, PackageX, ReceiptText, ShieldAlert } from "lucide-react";
 import { Amount, Money, Panel } from "@/components/app/bits";
 import { reasonLabel } from "@/app/_components/dispute-ui";
 import { MoneyChart, type MoneyPoint } from "@/components/app/HomeCharts";
@@ -103,11 +103,15 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
         {/* Money kept is the hero: a line that only climbs, like a revenue chart. Both cards share one header style and height. */}
         <Card title="Money kept" className="flex flex-col">
           <div className="flex flex-1 flex-col px-6 pt-4 pb-2">
-            <Money amount={kept30} currency={currency} className={cn("text-[28px] leading-none font-[480]", kept30 > 0 ? "text-ok" : "text-fg")} />
+            <span className={cn("flex items-center gap-1.5", kept30 > 0 ? "text-ok" : "text-fg")}>
+              <ArrowUpRight aria-hidden strokeWidth={2} className="size-6 shrink-0" />
+              <Money amount={kept30} currency={currency} className="text-[28px] leading-none font-[480]" />
+            </span>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[13px] text-fg-body">
               <span>Last 30 days</span>
               {refunded30 > 0 && (
-                <span className="text-bad">
+                <span className="inline-flex items-center gap-1 text-bad">
+                  <ArrowDownRight aria-hidden strokeWidth={2} className="size-3.5 shrink-0" />
                   <Amount amount={refunded30} currency={currency} /> refunded
                 </span>
               )}
