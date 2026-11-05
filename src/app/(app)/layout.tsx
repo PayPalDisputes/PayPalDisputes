@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, Settings } from "lucide-react";
+import { Bell, ChartNoAxesColumn, FileText, House, Inbox, Settings } from "lucide-react";
 import { AccountMenu } from "@/components/app/AccountMenu";
 import { MobileNav } from "@/components/app/MobileNav";
 import { NavLink } from "@/components/app/NavLink";
@@ -21,8 +21,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const needsResponse = disputes.filter((d) => d.status === "WAITING_FOR_SELLER_RESPONSE").length;
   const mode = sessionMode(session);
   const bellLabel = needsResponse === 1 ? "1 dispute needs a response" : `${needsResponse} disputes need a response`;
-  // Team-only tools (Evals) stay out of the seller's navigation unless SHOW_INTERNAL_TOOLS=true.
-  const showInternal = process.env.SHOW_INTERNAL_TOOLS === "true";
 
   return (
     <div className="theme-app flex min-h-full flex-1 flex-col bg-subtle text-fg [color-scheme:light]">
@@ -46,11 +44,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <NavLink variant="top" href="/insights" icon={<ChartNoAxesColumn strokeWidth={1.7} />}>
               Insights
             </NavLink>
-            {showInternal && (
-              <NavLink variant="top" href="/evals" icon={<FlaskConical strokeWidth={1.7} />}>
-                Evals
-              </NavLink>
-            )}
           </nav>
 
           <div className="col-start-3 flex items-center justify-self-end gap-2">
@@ -86,7 +79,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           { href: "/evidence", label: "Shipping proof", icon: "evidence" },
           { href: "/insights", label: "Insights", icon: "insights" },
           { href: "/settings", label: "Settings", icon: "settings" },
-          ...(showInternal ? [{ href: "/evals", label: "Evals", icon: "evals" as const }] : []),
         ]}
       />
     </div>
