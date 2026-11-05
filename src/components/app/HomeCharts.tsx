@@ -7,7 +7,7 @@ import { baseChart, COLORS } from "./ag-setup";
 export type RiskPoint = { label: string; value: number };
 
 /** Amount at risk over the last 30 days: one soft blue area, like Mercury's balance card. */
-export function AtRiskChart({ points, currency, height = 170 }: { points: RiskPoint[]; currency: string; height?: number }) {
+export function AtRiskChart({ points, currency, height = 170 }: { points: RiskPoint[]; currency: string; height?: number | string }) {
   const money = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(v);
   const options = {
     ...baseChart(),
