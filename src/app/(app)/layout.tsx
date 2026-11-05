@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, SlidersHorizontal } from "lucide-react";
+import { Bell, ChartNoAxesColumn, FileText, FlaskConical, House, Inbox, Settings } from "lucide-react";
 import { AccountMenu } from "@/components/app/AccountMenu";
-import { HideAmounts } from "@/components/app/HideAmounts";
 import { MobileNav } from "@/components/app/MobileNav";
 import { NavLink } from "@/components/app/NavLink";
 import { Logo } from "@/components/ui/Logo";
@@ -47,9 +46,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <NavLink variant="top" href="/insights" icon={<ChartNoAxesColumn strokeWidth={1.7} />}>
               Insights
             </NavLink>
-            <NavLink variant="top" href="/settings" icon={<SlidersHorizontal strokeWidth={1.7} />}>
-              Settings
-            </NavLink>
             {showInternal && (
               <NavLink variant="top" href="/evals" icon={<FlaskConical strokeWidth={1.7} />}>
                 Evals
@@ -64,16 +60,14 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             >
               {mode === "live" ? "Live" : "Demo mode"}
             </span>
-            <HideAmounts />
-            <Link
-              href="/disputes?view=needs-response"
-              aria-label={bellLabel}
-              title={bellLabel}
-              className="relative inline-flex size-10 items-center justify-center rounded-md bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
-            >
-              <Bell strokeWidth={1.6} className="size-[17px]" />
-              {needsResponse > 0 && <span className="absolute top-2 right-2.5 size-2 rounded-full border-2 border-muted bg-accent" />}
-            </Link>
+            <HeaderIcon href="/disputes?view=needs-response" label={bellLabel} tooltip="Notifications">
+              {/* The bell rings once when the page opens if something needs a response, and again on hover */}
+              <Bell strokeWidth={1.6} className={`bell-icon size-[18px] ${needsResponse > 0 ? "animate-bell-ring" : ""}`} />
+              {needsResponse > 0 && <span className="animate-pulse-dot absolute top-2 right-2.5 size-2 rounded-full border-2 border-canvas bg-accent" />}
+            </HeaderIcon>
+            <HeaderIcon href="/settings" label="Settings" tooltip="Settings">
+              <Settings strokeWidth={1.6} className="size-[18px] transition-transform duration-300 group-hover:rotate-45" />
+            </HeaderIcon>
             <AccountMenu name={accountName} initials={initials} variant="compact" />
           </div>
         </div>
@@ -96,5 +90,24 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         ]}
       />
     </div>
+  );
+}
+
+/** A round icon button in the top bar with a dark tooltip under it on hover or keyboard focus, like Stripe's. */
+function HeaderIcon({ href, label, tooltip, children }: { href: string; label: string; tooltip: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className="group relative inline-flex size-10 items-center justify-center rounded-full text-fg-body transition-colors hover:bg-muted hover:text-fg focus-visible:bg-muted"
+    >
+      {children}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute top-full left-1/2 z-40 mt-2 -translate-x-1/2 rounded-md bg-fg px-2.5 py-1 text-[12.5px] whitespace-nowrap text-white opacity-0 transition-opacity delay-150 duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+      >
+        {tooltip}
+      </span>
+    </Link>
   );
 }
