@@ -99,17 +99,15 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         {/* Money kept is the hero: a line that only climbs, like a revenue chart. Both cards share one header style and height. */}
         <Card title="Money kept" className="flex flex-col">
           <div className="flex flex-1 flex-col px-6 pt-4 pb-2">
             <Money amount={kept30} currency={currency} className={cn("text-[28px] leading-none font-[480]", kept30 > 0 ? "text-ok" : "text-fg")} />
             <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[13px] text-fg-body">
-              <span>
-                Last 30 days · {keptRows.length === 0 ? "none yet" : `${keptRows.length} dispute${keptRows.length === 1 ? "" : "s"} won or closed by the buyer`}
-              </span>
+              <span>Last 30 days</span>
               {refunded30 > 0 && (
-                <span className="text-fg-muted">
+                <span className="text-bad">
                   <Amount amount={refunded30} currency={currency} /> refunded
                 </span>
               )}
@@ -125,7 +123,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
           <div className="grid flex-1 grid-cols-2">
             <StatTile href="/disputes?view=needs-response" label="Need your response" value={waiting.length} hint={overdue > 0 ? `${overdue} overdue` : undefined} tone={overdue > 0 ? "bad" : undefined} className="border-r border-b" />
             <StatTile href="/review" label="Drafts to review" value={drafts.length} className="border-b" />
-            <StatTile href="/disputes" label="At risk now" value={<Amount amount={atRisk} currency={currency} />} hint={`across ${open.length} open dispute${open.length === 1 ? "" : "s"}`} className="border-r" />
+            <StatTile href="/disputes" label="At risk now" value={<Amount amount={atRisk} currency={currency} className={atRisk > 0 ? "text-bad" : undefined} />} className="border-r" />
             <StatTile label="Handled by Sira" value={insights.impact.handled} hint={`about ${Math.round(insights.impact.hoursSaved)} hours saved`} />
           </div>
         </Card>
