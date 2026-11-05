@@ -7,7 +7,7 @@ import { baseChart, COLORS } from "./ag-setup";
 export type RiskPoint = { label: string; value: number };
 
 /** Amount at risk over the last 30 days: one soft blue area, like Mercury's balance card. */
-export function AtRiskChart({ points, currency }: { points: RiskPoint[]; currency: string }) {
+export function AtRiskChart({ points, currency, height = 170 }: { points: RiskPoint[]; currency: string; height?: number }) {
   const money = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(v);
   const options = {
     ...baseChart(),
@@ -54,7 +54,7 @@ export function AtRiskChart({ points, currency }: { points: RiskPoint[]; currenc
     legend: { enabled: false },
   } as unknown as AgCartesianChartOptions;
   return (
-    <div className="h-[170px]" role="img" aria-label={`Amount at risk over the last 30 days, now ${money(points.at(-1)?.value ?? 0)}`}>
+    <div style={{ height }} role="img" aria-label={`Amount at risk over the last 30 days, now ${money(points.at(-1)?.value ?? 0)}`}>
       <AgCharts options={options} style={{ height: "100%" }} />
     </div>
   );

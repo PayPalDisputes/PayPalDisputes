@@ -113,6 +113,30 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
         </div>
       </header>
 
+      {/* At risk: the big number, what came back and went out over 30 days, and the trend */}
+      <Panel aria-labelledby="atrisk" className="flex flex-col px-6 pt-6 pb-3">
+        <h2 id="atrisk" className="text-[14px] text-fg-muted">
+          At risk
+        </h2>
+        <Money amount={atRisk} currency={currency} className="mt-2 text-[34px] leading-none font-[480] text-fg" />
+        <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-[13px] text-fg-body">
+          <span>
+            Claimed on your {open.length} open dispute{open.length === 1 ? "" : "s"} · last 30 days
+          </span>
+          <span className="flex gap-4">
+            <span className="text-ok">
+              ↗ <Amount amount={kept30} currency={currency} /> kept
+            </span>
+            <span className="text-bad">
+              ↘ <Amount amount={refunded30} currency={currency} /> refunded
+            </span>
+          </span>
+        </div>
+        <div className="money mt-2">
+          <AtRiskChart points={points} currency={currency} height={240} />
+        </div>
+      </Panel>
+
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         {/* Main column */}
         <div className="flex min-w-0 flex-col gap-6">
@@ -211,17 +235,6 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
 
         {/* Summary column */}
         <div className="flex min-w-0 flex-col gap-6">
-          <Card title="At risk">
-            <div className="px-6 pt-4 pb-3">
-              <Money amount={atRisk} currency={currency} className="text-[30px] leading-none font-[480] text-fg" />
-              <p className="mt-2 text-[13px] leading-5 text-fg-body">What buyers are claiming on your {open.length} open dispute{open.length === 1 ? "" : "s"} today.</p>
-              <p className="mt-1 text-[12.5px] leading-[18px] text-fg-muted">Each day over the last 30 days.</p>
-              <div className="money mt-3">
-                <AtRiskChart points={points} currency={currency} />
-              </div>
-            </div>
-          </Card>
-
           <Card title="Your disputes">
             <SummaryRow href="/disputes?view=needs-response" label="Need your response" value={waiting.length} tone={overdue > 0 ? "bad" : undefined} hint={overdue > 0 ? `${overdue} overdue` : undefined} />
             <SummaryRow href="/review" label="Drafts ready to review" value={drafts.length} />
