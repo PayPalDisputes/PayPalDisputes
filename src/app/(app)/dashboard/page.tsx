@@ -107,32 +107,32 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* At risk: the big number, what came back and went out over 30 days, and the trend */}
-        <Panel aria-labelledby="atrisk" className="flex min-w-0 flex-col px-6 pt-6 pb-3">
-          <h2 id="atrisk" className="text-[14px] text-fg-muted">
-            At risk
-          </h2>
-          <Money amount={atRisk} currency={currency} className="mt-2 text-[34px] leading-none font-[480] text-fg" />
-          <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-[13px] text-fg-body">
-            <span>
-              Claimed on your {open.length} open dispute{open.length === 1 ? "" : "s"} · last 30 days
-            </span>
-            <span className="flex gap-4">
-              <span className="text-ok">
-                ↗ <Amount amount={kept30} currency={currency} /> kept
+        {/* At risk and Your disputes share one header style and one height, so the row reads as a pair */}
+        <Card title="At risk" className="flex flex-col">
+          <div className="flex flex-1 flex-col px-6 pt-5 pb-3">
+            <Money amount={atRisk} currency={currency} className="text-[32px] leading-none font-[480] text-fg" />
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[13px] text-fg-body">
+              <span>
+                Claimed on your {open.length} open dispute{open.length === 1 ? "" : "s"}
               </span>
-              <span className="text-bad">
-                ↘ <Amount amount={refunded30} currency={currency} /> refunded
+              <span className="flex gap-4">
+                <span className="text-ok">
+                  ↗ <Amount amount={kept30} currency={currency} /> kept
+                </span>
+                <span className="text-bad">
+                  ↘ <Amount amount={refunded30} currency={currency} /> refunded
+                </span>
               </span>
-            </span>
+            </div>
+            <div className="money mt-3 min-h-[150px] flex-1">
+              <AtRiskChart points={points} currency={currency} height="100%" />
+            </div>
           </div>
-          <div className="money mt-2 min-h-[220px] flex-1">
-            <AtRiskChart points={points} currency={currency} height="100%" />
-          </div>
-        </Panel>
-        {/* Summary column */}
-        <div className="flex min-w-0 flex-col gap-6">
-          <Card title="Your disputes">
+        </Card>
+
+        <Card title="Your disputes" className="flex flex-col">
+          {/* The rows share the card's height, so it lines up with At risk */}
+          <div className="flex flex-1 flex-col *:flex-1">
             <SummaryRow href="/disputes?view=needs-response" label="Need your response" value={waiting.length} tone={overdue > 0 ? "bad" : undefined} hint={overdue > 0 ? `${overdue} overdue` : undefined} />
             <SummaryRow href="/review" label="Drafts ready to review" value={drafts.length} />
             <SummaryRow href="/disputes" label="Open disputes" value={open.length} />
@@ -142,9 +142,8 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
               hint={`since you started · about ${Math.round(insights.impact.hoursSaved)} hours saved`}
               last
             />
-          </Card>
-
-        </div>
+          </div>
+        </Card>
       </div>
 
       {/* Main column */}
@@ -207,10 +206,10 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
 /* ------------------------------------------------------------------ */
 
 /** A white card with a title row, an optional count and "View all ›", then its content under a divider. */
-function Card({ title, count, action, children }: { title: string; count?: number; action?: { href: string; label: string }; children: React.ReactNode }) {
+function Card({ title, count, action, className, children }: { title: string; count?: number; action?: { href: string; label: string }; className?: string; children: React.ReactNode }) {
   const id = `card-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
-    <Panel aria-labelledby={id} className="overflow-hidden">
+    <Panel aria-labelledby={id} className={cn("min-w-0 overflow-hidden", className)}>
       <div className="flex items-center justify-between gap-3 border-b border-line-subtle px-6 py-4">
         <h2 id={id} className="text-[17px] font-[480] text-fg">
           {title}

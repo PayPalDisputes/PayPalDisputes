@@ -11,7 +11,7 @@ export function AtRiskChart({ points, currency, height = 170 }: { points: RiskPo
   const money = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(v);
   const options = {
     ...baseChart(),
-    padding: { top: 6, right: 16, bottom: 0, left: 2 },
+    padding: { top: 6, right: 2, bottom: 0, left: 2 },
     data: points,
     series: [
       {
@@ -39,12 +39,12 @@ export function AtRiskChart({ points, currency, height = 170 }: { points: RiskPo
         position: "bottom",
         line: { enabled: false },
         gridLine: { enabled: false },
-        // One date a week (plus today) so labels never crowd or wrap.
         label: {
           color: COLORS.muted,
           fontSize: 12,
           avoidCollisions: false,
-          formatter: ({ value, index }: { value: string; index: number }) => (index % 7 === 2 || index === points.length - 1 ? value : ""),
+          // One date a week; the last point is today, and the chart's label is dropped at the edge anyway.
+          formatter: ({ value, index }: { value: string; index: number }) => (index % 7 === 2 && index < points.length - 1 ? value : ""),
         },
         paddingInner: 0,
         paddingOuter: 0,
