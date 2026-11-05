@@ -13,6 +13,8 @@ import { Amount } from "./bits";
 import { gridTheme } from "./ag-setup";
 import { EvidenceImport } from "./EvidenceImport";
 
+const shortDate = (iso: string) => new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
 const STATUS_LABEL: Record<string, string> = {
   NOT_SHIPPED: "Not shipped",
   LABEL_CREATED: "Label created",
@@ -36,6 +38,7 @@ function DisputeCell({ data: d }: Cell) {
         {d.simulated && <span className="text-[12px] text-fg-muted">· demo data</span>}
       </span>
       <span className="truncate text-[12.5px] text-fg-muted">
+        {d.orderNumber ? `${d.orderNumber} · ` : ""}
         {reasonLabel(d.reason)} · <Amount amount={d.amount} currency={d.currency} />
       </span>
     </span>
@@ -73,20 +76,28 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
 
   const columnDefs = useMemo<ColDef<EvidenceRow>[]>(
     () => [
-      { headerName: "Dispute", colId: "dispute", valueGetter: (p) => p.data?.buyerName, cellRenderer: DisputeCell, pinned: "left", minWidth: 220, editable: false },
-      { headerName: "Order #", field: "orderNumber", minWidth: 120 },
+      // Nine columns that fit a laptop screen: order # sits under the buyer, the dates under the status, notes wrap.
+      {
+        headerName: "Dispute",
+        colId: "dispute",
+        valueGetter: (p) => p.data?.buyerName,
+        getQuickFilterText: (p) => [p.data?.buyerName, p.data?.orderNumber].filter(Boolean).join(" "),
+        cellRenderer: DisputeCell,
+        width: 220,
+        editable: false,
+      },
       {
         headerName: "Carrier",
         field: "carrier",
         cellEditor: "agSelectCellEditor",
         cellEditorParams: { values: ["", ...CARRIERS] },
-        minWidth: 130,
+        width: 95,
       },
       {
         headerName: "Tracking #",
         field: "trackingNumber",
-        minWidth: 250,
-        cellClass: "font-mono text-[12.5px]",
+        width: 200,
+        cellClass: "font-mono text-[12px]",
         // Missing tracking reads as an empty field to fill in (dashed), not a warning colour.
         cellClassRules: { "evidence-missing": (p) => !p.value && !!p.data && NEEDS_TRACKING.has(p.data.reason ?? "") },
         cellRenderer: ({ value, data }: Cell) => {
@@ -117,20 +128,53 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
         cellEditor: "agSelectCellEditor",
         cellEditorParams: { values: ["", ...SHIPPING_STATUSES] },
         valueFormatter: (p) => (p.value ? STATUS_LABEL[p.value] : ""),
-        minWidth: 150,
+        // The status, with the delivered (or shipped) date under it; dates come from the carrier or a CSV import.
+        cellRenderer: ({ value, data }: Cell) => {
+          const date = value === "DELIVERED" && data?.deliveredAt ? `Delivered ${shortDate(data.deliveredAt)}` : data?.shippedAt ? `Shipped ${shortDate(data.shippedAt)}` : null;
+          return (
+            <span className="flex min-w-0 flex-col gap-[3px] leading-tight">
+              <span className="truncate">{value ? STATUS_LABEL[value] : <span className="text-fg-muted">Not set</span>}</span>
+              {date && <span className="truncate text-[12px] text-fg-muted">{date}</span>}
+            </span>
+          );
+        },
+        width: 140,
       },
-      { headerName: "Shipped", field: "shippedAt", cellEditor: "agDateStringCellEditor", minWidth: 120 },
-      { headerName: "Delivered", field: "deliveredAt", cellEditor: "agDateStringCellEditor", minWidth: 120 },
-      { headerName: "Signature", field: "signatureConfirmed", cellDataType: "boolean", cellEditor: "agCheckboxCellEditor", minWidth: 105 },
-      { headerName: "Sent to PayPal address", headerTooltip: "Tick if you shipped to the address on the buyer's PayPal payment.", field: "shipToMatchesPayPal", cellDataType: "boolean", cellEditor: "agCheckboxCellEditor", minWidth: 150 },
-      { headerName: "Notes", field: "notes", cellEditor: "agLargeTextCellEditor", cellEditorPopup: true, cellEditorParams: { maxLength: 1000 }, minWidth: 200, flex: 1 },
+      { headerName: "Signed", headerTooltip: "The buyer signed for the parcel.", field: "signatureConfirmed", cellDataType: "boolean", cellEditor: "agCheckboxCellEditor", width: 80 },
+      {
+        headerName: "To PayPal address",
+        headerTooltip: "Tick if you shipped to the address on the buyer's PayPal payment.",
+        field: "shipToMatchesPayPal",
+        cellDataType: "boolean",
+        cellEditor: "agCheckboxCellEditor",
+        wrapHeaderText: true,
+        autoHeaderHeight: true,
+        width: 100,
+      },
+      {
+        headerName: "Notes",
+        field: "notes",
+        cellEditor: "agLargeTextCellEditor",
+        cellEditorPopup: true,
+        cellEditorParams: { maxLength: 1000 },
+        // Up to three lines show in the row; the whole note shows on hover. Double-click still edits it.
+        cellRenderer: ({ value }: Cell) =>
+          value ? (
+            <span title={value} className="line-clamp-3 text-[13px] leading-[18px] whitespace-normal text-fg-body">
+              {value}
+            </span>
+          ) : (
+            <span className="text-[13px] text-fg-muted">Add a note</span>
+          ),
+        minWidth: 200,
+        flex: 1,
+      },
       {
         headerName: "Sira's call",
         colId: "agent",
-        pinned: "right",
         editable: false,
         sortable: false,
-        minWidth: 190,
+        width: 150,
         cellRenderer: ({ data: d }: Cell) =>
           d ? (
             <span className="flex items-center gap-2">
@@ -160,7 +204,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
   );
 
   const defaultColDef = useMemo<ColDef<EvidenceRow>>(
-    () => ({ editable: true, sortable: true, resizable: true, cellStyle: { display: "flex", alignItems: "center" } }),
+    () => ({ editable: true, sortable: true, resizable: false, cellStyle: { display: "flex", alignItems: "center" } }),
     [],
   );
 
@@ -209,6 +253,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
         defaultColDef={defaultColDef}
         getRowId={(p) => p.data.disputeId}
         domLayout="autoHeight"
+        rowHeight={76}
         undoRedoCellEditing
         undoRedoCellEditingLimit={50}
         stopEditingWhenCellsLoseFocus
