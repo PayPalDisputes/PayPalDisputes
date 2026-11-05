@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { ArrowRight, ChevronDown, ChevronRight, CircleAlert, Copy, ExternalLink, PackageOpen, PackageSearch, PackageX, ReceiptText, ShieldAlert } from "lucide-react";
-import { Amount, Money, Panel, ProgressLine } from "@/components/app/bits";
+import { Amount, Money, Panel } from "@/components/app/bits";
 import { reasonLabel } from "@/app/_components/dispute-ui";
 import { AtRiskChart, type RiskPoint } from "@/components/app/HomeCharts";
 import { Button } from "@/components/ui/Button";
 import { requireSession } from "@/lib/auth";
 import { getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
 import { getDeliveries, type Delivery } from "@/lib/deliveries";
-import { callLabel, dueLabel, stageLabel } from "@/lib/dispute-stage";
+import { dueLabel } from "@/lib/dispute-stage";
 import { getInsights } from "@/lib/insights";
 import { cn } from "@/lib/cn";
 
@@ -55,7 +55,6 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
   const [currency, atRisk] = byCurrency[0] ?? ["USD", 0];
 
   const now = nowMs();
-  const outcomes = insights.impact.outcomes;
   const resolvedRows = insights.outcomeRows;
   const last30 = resolvedRows.filter((r) => r.resolvedAt && now - new Date(r.resolvedAt).getTime() <= 30 * DAY && r.currency === currency);
   const kept30 = last30.reduce((s, r) => s + r.kept, 0);
@@ -75,12 +74,6 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
       .reduce((s, d) => s + (d.amount ?? 0), 0);
     return { label: i === 30 ? "Today" : new Date(day).toLocaleDateString("en-US", { month: "short", day: "numeric" }), value };
   });
-
-  // Dispute activity over the same 30 days as the chart, like Mercury's money in / money out.
-  const keptRows = last30.filter((r) => r.kept > 0);
-  const refundRows = last30.filter((r) => r.refunded > 0);
-
-  const recent = [...disputes].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")).slice(0, 6);
 
   // Things to do: every dispute waiting on the seller, soonest deadline first, then parcels that stopped moving.
   const draftIds = new Set(drafts.map((d) => d.id));
@@ -151,11 +144,6 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
             />
           </Card>
 
-          <Card title="Last 30 days" action={{ href: "/insights", label: "Insights" }}>
-            <SummaryRow label="Kept" value={<Amount amount={kept30} currency={currency} className={kept30 > 0 ? "text-ok" : undefined} />} hint={`${keptRows.length} dispute${keptRows.length === 1 ? "" : "s"}`} />
-            <SummaryRow label="Refunded" value={<Amount amount={refunded30} currency={currency} className={refunded30 > 0 ? "text-bad" : undefined} />} hint={`${refundRows.length} dispute${refundRows.length === 1 ? "" : "s"}`} last />
-            {outcomes.resolved === 0 && <p className="px-6 pb-4 text-[13px] text-fg-muted">Results appear here as disputes close.</p>}
-          </Card>
         </div>
       </div>
 
@@ -211,47 +199,6 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
 
         <Deliveries {...deliveries} />
 
-        <Card title="Recent disputes" action={{ href: "/disputes", label: "View all" }}>
-          {recent.length === 0 ? (
-            <p className="px-6 py-10 text-center text-[14px] text-fg-muted">No disputes yet. They appear here as soon as PayPal sends them.</p>
-          ) : (
-            <div className="overflow-x-auto px-6 pb-2">
-              <table className="w-full min-w-[600px] border-collapse text-left text-[14px]">
-                <thead>
-                  <tr className="text-[12.5px] text-fg-muted">
-                    <th scope="col" className="py-2.5 font-[420]">Buyer</th>
-                    <th scope="col" className="py-2.5 font-[420]">Where it stands</th>
-                    <th scope="col" className="py-2.5 font-[420]">Sira&apos;s call</th>
-                    <th scope="col" className="py-2.5 text-right font-[420]">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recent.map((d) => (
-                    <tr key={d.id} className="group relative border-t border-line-subtle">
-                      <td className="py-3 pr-4">
-                        {/* the whole row is clickable through this stretched link */}
-                        <Link href={`/disputes/${d.id}`} className="flex flex-col gap-[3px] after:absolute after:inset-0">
-                          <span className="text-fg group-hover:underline">{d.buyerName ?? "Buyer"}</span>
-                          <span className="text-[13px] text-fg-muted">{d.item ?? "Order"}</span>
-                        </Link>
-                      </td>
-                      <td className="py-3 pr-4">
-                        <span className="flex flex-col gap-1.5">
-                          <span className="text-fg-body">{stageLabel(d)}</span>
-                          <ProgressLine dispute={d} className="w-[150px]" />
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4 text-fg-body">{callLabel(d.report, d.currency) ? <span className="money">{callLabel(d.report, d.currency)}</span> : <span className="text-fg-muted">Not assessed</span>}</td>
-                      <td className="py-3 text-right">
-                        <Amount amount={d.amount} currency={d.currency} className="text-fg" />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
       </div>
     </div>
   );
