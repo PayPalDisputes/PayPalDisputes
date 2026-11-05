@@ -112,9 +112,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
           <div className="flex flex-1 flex-col px-6 pt-4 pb-2">
             <Money amount={atRisk} currency={currency} className="text-[28px] leading-none font-[480] text-fg" />
             <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[13px] text-fg-body">
-              <span>
-                Claimed on your {open.length} open dispute{open.length === 1 ? "" : "s"}
-              </span>
+              <span>Last 30 days</span>
               <span className="flex gap-4">
                 <span className="text-ok">
                   ↗ <Amount amount={kept30} currency={currency} /> kept
