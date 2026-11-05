@@ -216,8 +216,8 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
             mode={sessionMode(session)}
             chat="none"
           />
-          {/* Ask Sira lives in the bottom-right corner here (fixed, so its place in the markup doesn't matter) */}
-          <ChatPanel disputeId={dispute.id} variant="floating" />
+          {/* Ask Sira lives in the bottom-right corner here. Keyed by dispute so moving to another dispute never carries this chat over. */}
+          <ChatPanel key={dispute.id} disputeId={dispute.id} variant="floating" />
           <section aria-labelledby="activity" className="rounded-xl border border-line bg-canvas px-6 py-5">
             <h2 id="activity" className="mb-1 text-[13px] font-medium text-accent">
               Activity

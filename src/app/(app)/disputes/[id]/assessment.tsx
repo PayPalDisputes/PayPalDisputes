@@ -278,7 +278,7 @@ export function AssessmentReport({
         )}
       </Block>
 
-      {chat === "inline" && <ChatPanel disputeId={disputeId} />}
+      {chat === "inline" && <ChatPanel key={disputeId} disputeId={disputeId} />}
     </div>
   );
 }
