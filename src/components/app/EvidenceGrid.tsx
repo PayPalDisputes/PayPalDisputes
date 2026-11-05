@@ -66,7 +66,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
     if (res.ok) {
       const node = gridRef.current?.api.getRowNode(d.disputeId);
       node?.setData({ ...d, recommendation: res.recommendation as EvidenceRow["recommendation"], evidenceChangedSinceReport: false });
-      show({ tone: "ok", text: `Agent now recommends: ${res.recommendation}.` });
+      show({ tone: "ok", text: `Sira now recommends: ${({ fight: "Fight", settle: "Settle", refund: "Refund" } as Record<string, string>)[res.recommendation ?? ""] ?? res.recommendation}.` });
     } else show({ tone: "bad", text: res.error });
   }
 
@@ -103,7 +103,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
       { headerName: "Shipped", field: "shippedAt", cellEditor: "agDateStringCellEditor", minWidth: 120 },
       { headerName: "Delivered", field: "deliveredAt", cellEditor: "agDateStringCellEditor", minWidth: 120 },
       { headerName: "Signature", field: "signatureConfirmed", cellDataType: "boolean", cellEditor: "agCheckboxCellEditor", minWidth: 105 },
-      { headerName: "To PayPal address", field: "shipToMatchesPayPal", cellDataType: "boolean", cellEditor: "agCheckboxCellEditor", minWidth: 150 },
+      { headerName: "Sent to PayPal address", headerTooltip: "Tick if you shipped to the address on the buyer's PayPal payment.", field: "shipToMatchesPayPal", cellDataType: "boolean", cellEditor: "agCheckboxCellEditor", minWidth: 150 },
       { headerName: "Notes", field: "notes", cellEditor: "agLargeTextCellEditor", cellEditorPopup: true, cellEditorParams: { maxLength: 1000 }, minWidth: 200, flex: 1 },
       {
         headerName: "Sira's call",

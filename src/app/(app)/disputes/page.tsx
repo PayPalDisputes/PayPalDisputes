@@ -62,7 +62,7 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
         <div className="flex flex-col gap-1.5">
           <h1 className="text-[24px] font-[480] tracking-[0.01em] text-fg">Disputes</h1>
           <p className="text-[14px] text-fg-muted">
-            {open_.length} open · <Amount amount={riskTotal} currency={riskCurrency} /> at risk · {needsYou} need your response
+            {open_.length} open · <Amount amount={riskTotal} currency={riskCurrency} /> at risk · {needsYou} {needsYou === 1 ? "needs" : "need"} your response
           </p>
         </div>
         {drafts > 0 && (
@@ -98,11 +98,9 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
       {rows.length === 0 ? (
         <p className="rounded-xl border border-dashed border-line-strong p-10 text-center text-[14px] text-fg-body">
           {disputes.length === 0 ? (
-            <>
-              No disputes yet. Run <code className="font-mono">npm run sync</code> to pull them from PayPal.
-            </>
+"No disputes yet. New PayPal disputes show up here automatically."
           ) : (
-            "Nothing here right now."
+            "No disputes in this view."
           )}
         </p>
       ) : (

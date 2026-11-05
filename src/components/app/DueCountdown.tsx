@@ -43,7 +43,9 @@ export function DueCountdown({ dueAt, className }: { dueAt: string; className?: 
         <span className="font-mono text-[17px] font-medium tabular-nums">
           {left === null ? "—" : left < 0 ? `Overdue by ${span(-left)}` : `${span(left)} left`}
         </span>
-        <span className="text-[13px] opacity-80">to respond · due {dueText}</span>
+        <span className="text-[13px] opacity-80">
+          {left !== null && left < 0 ? `was due ${dueText} · PayPal may close it in the buyer's favour` : `to respond · due ${dueText}`}
+        </span>
       </span>
     </div>
   );

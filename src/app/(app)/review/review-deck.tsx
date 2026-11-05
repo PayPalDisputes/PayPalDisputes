@@ -148,11 +148,6 @@ export function ReviewDeck({
                 {draftTitle(d, firstName)}
                 {d.action === "provide_evidence" && <EvidencePackLink disputeId={card.disputeId} />}
               </h2>
-              {n === 0 && !finished && (
-                <button type="button" onClick={() => setEditing((e) => !e)} className="text-[13px] text-accent hover:underline">
-                  {editing ? "Done editing" : "Edit message"}
-                </button>
-              )}
             </div>
             {/* The textarea is always submitted; it just looks like plain text until you edit. */}
             <textarea
@@ -204,7 +199,7 @@ export function ReviewDeck({
             {rejectState.ok
               ? rejectState.mode === "demo"
                 ? "Demo mode: the draft would be marked rejected and nothing sent."
-                : "Rejected. Nothing was sent to PayPal."
+                : "Draft discarded. Nothing was sent; the dispute is still open."
               : rejectState.error}
           </p>
         )}
@@ -238,7 +233,7 @@ export function ReviewDeck({
                 disabled={busy}
                 className="h-10 rounded-md px-4 text-[14px] text-fg-muted hover:text-bad disabled:opacity-50"
               >
-                {rejecting ? "Rejecting…" : "Reject"}
+                {rejecting ? "Discarding…" : "Discard draft"}
               </button>
               <Link href={nextHref} onClick={() => setLoading(true)} className="inline-flex h-10 items-center rounded-md px-4 text-[14px] text-fg-body hover:bg-muted">
                 Skip
@@ -248,7 +243,7 @@ export function ReviewDeck({
                 onClick={() => setEditing((e) => !e)}
                 className="h-10 rounded-md bg-muted px-[18px] text-[14px] text-fg hover:bg-inset"
               >
-                {editing ? "Done editing" : "Edit message"}
+                {editing ? "Done editing" : card.drafts.length === 1 ? "Edit draft" : "Edit drafts"}
               </button>
               <button
                 type="submit"

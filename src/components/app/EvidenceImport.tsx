@@ -180,7 +180,7 @@ const FIELD_LABEL: Record<EvidenceField, string> = {
   shippedAt: "Shipped",
   deliveredAt: "Delivered",
   signatureConfirmed: "Signature",
-  shipToMatchesPayPal: "To PayPal address",
+  shipToMatchesPayPal: "Sent to PayPal address",
   notes: "Notes",
 };
 
@@ -276,8 +276,13 @@ export function EvidenceImport({ existing, onClose }: { existing: EvidenceRow[];
       {preview && (
         <div className="mt-4">
           <p className="mb-3 text-[12.5px] text-fg-body">
-            {preview.rows.length} rows · <span className="font-medium text-ok">{good.length} ready</span> ·{" "}
-            <span className="font-medium text-bad">{preview.rows.length - good.length} need attention</span>
+            {preview.rows.length} row{preview.rows.length === 1 ? "" : "s"} · <span className="font-medium text-ok">{good.length} ready</span>
+            {preview.rows.length - good.length > 0 && (
+              <>
+                {" "}
+                · <span className="font-medium text-bad">{preview.rows.length - good.length} need attention</span>
+              </>
+            )}
             {preview.usedHeaders.length > 0 && <> · reading {preview.usedHeaders.join(", ")}</>}
             {preview.unknownHeaders.length > 0 && <span className="text-fg-muted"> · ignoring {preview.unknownHeaders.join(", ")}</span>}
           </p>
@@ -303,7 +308,7 @@ export function EvidenceImport({ existing, onClose }: { existing: EvidenceRow[];
                   }
                   setResult(
                     `Saved evidence for ${res.saved} dispute${res.saved === 1 ? "" : "s"}.` +
-                      (res.failed.length ? ` ${res.failed.length} failed: ${res.failed.map((f) => f.error).join("; ")}` : " Use Re-check to have the agent take another look."),
+                      (res.failed.length ? ` ${res.failed.length} failed: ${res.failed.map((f) => f.error).join("; ")}` : " Press Re-check on each row so Sira takes another look."),
                   );
                   setPreview(null);
                   setFileName(null);

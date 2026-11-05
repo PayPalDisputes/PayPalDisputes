@@ -21,6 +21,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const initials = accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "S";
   const needsResponse = disputes.filter((d) => d.status === "WAITING_FOR_SELLER_RESPONSE").length;
   const mode = sessionMode(session);
+  const bellLabel = needsResponse === 1 ? "1 dispute needs a response" : `${needsResponse} disputes need a response`;
   // Team-only tools (Evals) stay out of the seller's navigation unless SHOW_INTERNAL_TOOLS=true.
   const showInternal = process.env.SHOW_INTERNAL_TOOLS === "true";
 
@@ -58,14 +59,15 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           <div className="ml-auto flex items-center gap-2">
             <span
               title={mode === "live" ? "Approvals reach PayPal" : "Nothing is sent to PayPal"}
-              className="mr-1 hidden rounded-full bg-muted px-2.5 py-1 text-[12px] text-fg-body xl:inline"
+              className="mr-1 hidden rounded-full bg-muted px-2.5 py-1 text-[12px] whitespace-nowrap text-fg-body lg:inline"
             >
               {mode === "live" ? "Live" : "Demo mode"}
             </span>
             <HideAmounts />
             <Link
               href="/disputes?view=needs-response"
-              aria-label={`${needsResponse} disputes need a response`}
+              aria-label={bellLabel}
+              title={bellLabel}
               className="relative inline-flex size-10 items-center justify-center rounded-md bg-muted text-fg-body transition-colors hover:bg-inset hover:text-fg"
             >
               <Bell strokeWidth={1.6} className="size-[17px]" />

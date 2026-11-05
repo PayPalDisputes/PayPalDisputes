@@ -143,7 +143,6 @@ export default async function InsightsPage() {
           <>
             <p className="text-[14px] text-fg-body">
               {outcomes.followed ? `Sira's call held up ${outcomes.heldUp} of ${outcomes.followed} times you followed it.` : "Results so far."}
-              {outcomes.fought ? ` You won ${outcomes.foughtWon} of ${outcomes.fought} you fought.` : ""}
               {outcomes.avgResponseHours !== null ? ` Average time to respond: ${formatHours(outcomes.avgResponseHours)}.` : ""}
             </p>
             <div className="grid gap-5 lg:grid-cols-3">

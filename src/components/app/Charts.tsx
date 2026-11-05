@@ -165,13 +165,13 @@ export function ReasonChart({ reasons }: { reasons: { label: string; value: numb
 
 const RECOMMENDATION_COLORS = { Fight: COLORS.fight, Settle: COLORS.settle, Refund: COLORS.refund } as const;
 
-/** What the agent recommends across open disputes. Each option keeps its own colour; the axis names it too. */
+/** What Sira recommends across open disputes. Each option keeps its own colour; the axis names it too. */
 export function RecommendationChart({ mix }: { mix: { label: "Fight" | "Settle" | "Refund"; value: number }[] }) {
   const total = mix.reduce((s, m) => s + m.value, 0);
   const data = mix.map((m) => ({ ...m, color: RECOMMENDATION_COLORS[m.label] }));
   return (
     <ChartCard
-      title="What the agent recommends"
+      title="What Sira recommends"
       description="The agent's call on open disputes. You still approve every response."
       table={mix.map((m) => ({ label: m.label, value: `${m.value}${total ? ` (${Math.round((m.value / total) * 100)}%)` : ""}` }))}
     >

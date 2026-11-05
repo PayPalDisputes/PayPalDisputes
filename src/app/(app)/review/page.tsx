@@ -41,8 +41,8 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
           const facts: { label: string; value: string }[] = [
             { label: "Delivery", value: delivery },
             ...(detail.buyerHistory ? [{ label: "Buyer history", value: detail.buyerHistory.summary }] : []),
-            ...a.key_evidence.slice(0, 3).map((value, n) => ({ label: n === 0 ? "Supports" : "", value })),
-            ...a.missing_evidence.slice(0, 2).map((value, n) => ({ label: n === 0 ? "Missing" : "", value })),
+            ...a.key_evidence.slice(0, 3).map((value, n) => ({ label: n === 0 ? "In your favour" : "", value })),
+            ...a.missing_evidence.slice(0, 2).map((value, n) => ({ label: n === 0 ? "Not on file" : "", value })),
           ];
           const amount = formatAmount(detail.amount, detail.currency);
           const offer = a.settle_amount != null ? formatAmount(a.settle_amount, detail.currency) : null;

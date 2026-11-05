@@ -134,7 +134,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
                       detail={
                         <>
                           {reasonLabel(d.reason)} · <Amount amount={d.amount} currency={d.currency} /> ·{" "}
-                          {draftIds.has(d.id) ? "Sira's response is ready to review" : "Sira is preparing a response"}
+                          {draftIds.has(d.id) ? "Response ready to review" : "Sira is preparing a response"}
                         </>
                       }
                       when={due}
@@ -148,7 +148,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
                     icon={PackageSearch}
                     tone="warn"
                     title={`Check ${notMoving} parcel${notMoving === 1 ? "" : "s"} that aren't moving`}
-                    detail="A label was printed but the carrier never scanned it. Without a scan there's no proof of shipment."
+                    detail="No carrier scan yet, so there's no proof of shipment. Add tracking or check with the carrier."
                   />
                 )}
               </ul>
@@ -196,7 +196,7 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
                             <ProgressLine dispute={d} className="w-[150px]" />
                           </span>
                         </td>
-                        <td className="py-3 pr-4 text-fg-body">{callLabel(d.report, d.currency) ?? <span className="text-fg-muted">Not assessed</span>}</td>
+                        <td className="py-3 pr-4 text-fg-body">{callLabel(d.report, d.currency) ? <span className="money">{callLabel(d.report, d.currency)}</span> : <span className="text-fg-muted">Not assessed</span>}</td>
                         <td className="py-3 text-right">
                           <Amount amount={d.amount} currency={d.currency} className="text-fg" />
                         </td>
@@ -211,11 +211,11 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
 
         {/* Summary column */}
         <div className="flex min-w-0 flex-col gap-6">
-          <Card title="At risk" action={{ href: "/disputes", label: "View all" }}>
+          <Card title="At risk">
             <div className="px-6 pt-4 pb-3">
               <Money amount={atRisk} currency={currency} className="text-[30px] leading-none font-[480] text-fg" />
               <p className="mt-2 text-[13px] leading-5 text-fg-body">What buyers are claiming on your {open.length} open dispute{open.length === 1 ? "" : "s"} today.</p>
-              <p className="mt-1 text-[12.5px] leading-[18px] text-fg-muted">The line shows that total each day for the last 30 days: it rises when a dispute opens and falls when one closes.</p>
+              <p className="mt-1 text-[12.5px] leading-[18px] text-fg-muted">Each day over the last 30 days.</p>
               <div className="money mt-3">
                 <AtRiskChart points={points} currency={currency} />
               </div>
@@ -225,18 +225,18 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
           <Card title="Your disputes">
             <SummaryRow href="/disputes?view=needs-response" label="Need your response" value={waiting.length} tone={overdue > 0 ? "bad" : undefined} hint={overdue > 0 ? `${overdue} overdue` : undefined} />
             <SummaryRow href="/review" label="Drafts ready to review" value={drafts.length} />
-            <SummaryRow href="/disputes" label="Active with PayPal" value={open.length} last />
+            <SummaryRow href="/disputes" label="Open disputes" value={open.length} />
+            <SummaryRow
+              label="Handled by Sira"
+              value={insights.impact.handled}
+              hint={`since you started · about ${Math.round(insights.impact.hoursSaved)} hours saved`}
+              last
+            />
           </Card>
 
           <Card title="Last 30 days" action={{ href: "/insights", label: "Insights" }}>
             <SummaryRow label="Kept" value={<Amount amount={kept30} currency={currency} className={kept30 > 0 ? "text-ok" : undefined} />} hint={`${keptRows.length} dispute${keptRows.length === 1 ? "" : "s"}`} />
-            <SummaryRow label="Refunded" value={<Amount amount={refunded30} currency={currency} className={refunded30 > 0 ? "text-bad" : undefined} />} hint={`${refundRows.length} dispute${refundRows.length === 1 ? "" : "s"}`} />
-            <SummaryRow
-              label="Handled by Sira"
-              value={insights.impact.handled}
-              hint={`about ${Number.isInteger(insights.impact.hoursSaved) ? insights.impact.hoursSaved : insights.impact.hoursSaved.toFixed(1)} hours saved`}
-              last
-            />
+            <SummaryRow label="Refunded" value={<Amount amount={refunded30} currency={currency} className={refunded30 > 0 ? "text-bad" : undefined} />} hint={`${refundRows.length} dispute${refundRows.length === 1 ? "" : "s"}`} last />
             {outcomes.resolved === 0 && <p className="px-6 pb-4 text-[13px] text-fg-muted">Results appear here as disputes close.</p>}
           </Card>
         </div>
@@ -383,7 +383,7 @@ function Deliveries({ deliveries, counts, total }: Awaited<ReturnType<typeof get
     { label: "Returned", value: counts.returned, tone: counts.returned > 0 ? "text-bad" : undefined },
   ];
   return (
-    <Card title="Deliveries" count={total} action={{ href: "/evidence", label: "Add tracking" }}>
+    <Card title="Deliveries" count={total} action={{ href: "/evidence", label: "Shipping proof" }}>
       <div className="px-6 pb-2">
       {total === 0 ? (
         <p className="py-10 text-center text-[14px] text-fg-muted">No orders yet. Add tracking and every parcel shows up here.</p>
@@ -414,7 +414,14 @@ function Deliveries({ deliveries, counts, total }: Awaited<ReturnType<typeof get
               </tbody>
             </table>
           </div>
-          {total > deliveries.length && <p className="py-2.5 text-[13px] text-fg-muted">Showing {deliveries.length} of {total} orders.</p>}
+          {total > deliveries.length && (
+            <p className="py-2.5 text-[13px] text-fg-muted">
+              Showing {deliveries.length} of {total} orders.{" "}
+              <Link href="/evidence" className="text-accent hover:underline">
+                See all in Shipping proof
+              </Link>
+            </p>
+          )}
         </>
       )}
       </div>
@@ -424,6 +431,7 @@ function Deliveries({ deliveries, counts, total }: Awaited<ReturnType<typeof get
 
 function DeliveryRow({ d }: { d: Delivery }) {
   const status = d.status ? DELIVERY_STATUS[d.status] : null;
+  const sub = d.status === "DELIVERED" && d.deliveredAt ? shortDate(d.deliveredAt) : d.shippedAt ? `Shipped ${shortDate(d.shippedAt)}` : null;
   return (
     <tr className="border-t border-line-subtle align-top">
       <td className="py-3 pr-4">
@@ -434,11 +442,10 @@ function DeliveryRow({ d }: { d: Delivery }) {
       </td>
       <td className="py-3 pr-4">
         <span className="flex flex-col gap-[3px]">
-          <span className={status?.className ?? "text-fg-muted"}>{status?.label ?? "Unknown"}</span>
-          <span className="text-[13px] text-fg-muted">
-            {d.status === "DELIVERED" && d.deliveredAt ? shortDate(d.deliveredAt) : d.shippedAt ? `Shipped ${shortDate(d.shippedAt)}` : "Not shipped yet"}
-            {d.onPayPal && " · on PayPal"}
-          </span>
+          <span className={status?.className ?? "text-warn"}>{status?.label ?? "No tracking yet"}</span>
+          {(sub || d.onPayPal) && (
+            <span className="text-[13px] text-fg-muted">{[sub, d.onPayPal && "tracking sent to PayPal"].filter(Boolean).join(" · ")}</span>
+          )}
         </span>
       </td>
       <td className="max-w-[260px] py-3 pr-4 text-[13px] text-fg-body">

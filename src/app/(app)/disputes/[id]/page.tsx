@@ -176,7 +176,7 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
             </p>
             <p className="text-[13px] text-fg-muted">
               Opened {formatDate(raw.create_time)}
-              {dispute.status === "WAITING_FOR_BUYER_RESPONSE" && raw.buyer_response_due_date && ` · Buyer has until ${formatDate(raw.buyer_response_due_date)}`}
+              {dispute.status === "WAITING_FOR_BUYER_RESPONSE" && raw.buyer_response_due_date && ` · Buyer has until ${formatDate(raw.buyer_response_due_date)} to reply`}
               {" · "}
               {humanize(dispute.stage)} stage
               {dispute.sellerName ? ` · ${dispute.sellerName}` : ""}
@@ -196,7 +196,6 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
                   Open in PayPal
                 </a>
               )}
-              <EvidencePackButton disputeId={dispute.id} className="h-[38px]" />
             </div>
           </div>
         </div>
@@ -245,7 +244,7 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
               <Field label="PayPal ID">
                 <span className="font-mono text-[12px]">{tx?.seller_transaction_id ?? "—"}</span>
               </Field>
-              <Field label="Protection">
+              <Field label="Seller Protection">
                 {tx?.seller_protection_eligible ? <span className="text-ok">Eligible</span> : <span className="text-fg-muted">Not eligible</span>}
               </Field>
             </FieldList>

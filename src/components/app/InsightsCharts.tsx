@@ -100,7 +100,7 @@ export function ValueBandChart({ bands }: { bands: { label: string; value: numbe
         total === 0
           ? undefined
           : small > 0
-            ? `${small} of ${total} disputes ${small === 1 ? "was" : "were"} under $25. An auto-refund rule in Settings could handle ${small === 1 ? "it" : "those"} for you.`
+            ? `${small} of ${total} disputes ${small === 1 ? "was" : "were"} under $25. An auto-refund rule in Settings could handle claims this small for you.`
             : `None of your ${total} disputes were under $25.`
       }
       description="Number of disputes by how much the buyer is claiming."

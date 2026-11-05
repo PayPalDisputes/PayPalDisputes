@@ -11,7 +11,7 @@ export function AtRiskChart({ points, currency }: { points: RiskPoint[]; currenc
   const money = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(v);
   const options = {
     ...baseChart(),
-    padding: { top: 6, right: 2, bottom: 0, left: 2 },
+    padding: { top: 6, right: 16, bottom: 0, left: 2 },
     data: points,
     series: [
       {

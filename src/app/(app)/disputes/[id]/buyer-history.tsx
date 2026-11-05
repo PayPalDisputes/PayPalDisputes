@@ -18,8 +18,8 @@ function facts(h: BuyerHistory): string {
   const parts = [
     h.otherDisputes.length === 0 ? "No other disputes with you" : plural(h.otherDisputes.length, "other dispute"),
     h.otherDisputesLast30Days > 0 && h.otherDisputesLast30Days !== h.otherDisputes.length && `${h.otherDisputesLast30Days} in 30 days`,
-    h.otherDisputesLast30Days > 0 && h.otherDisputesLast30Days === h.otherDisputes.length && "all in 30 days",
-    h.notReceivedOnDeliveredParcels > 0 && `${h.notReceivedOnDeliveredParcels} "not received" on delivered parcels`,
+    h.otherDisputesLast30Days > 0 && h.otherDisputesLast30Days === h.otherDisputes.length && (h.otherDisputes.length === 1 ? "in the last 30 days" : "all in the last 30 days"),
+    h.notReceivedOnDeliveredParcels > 0 && `${plural(h.notReceivedOnDeliveredParcels, '"not received" claim')} on delivered parcels`,
     h.recentPurchases !== null && `${plural(h.recentPurchases, "purchase")} last month`,
   ];
   return parts.filter(Boolean).join(" · ");

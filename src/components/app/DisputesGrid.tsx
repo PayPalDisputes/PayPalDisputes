@@ -86,7 +86,12 @@ function DisputeCard({ d, href }: { d: HomeDispute; href: string }) {
           <span className="text-fg-body">{stageLabel(d)}</span>
           <ProgressLine dispute={d} />
         </span>
-        <span className="text-fg-body">{callLabel(d.report, d.currency) ?? ""}</span>
+        <span className="flex flex-col items-end gap-1">
+          <span className="text-fg-body">{callLabel(d.report, d.currency) ?? ""}</span>
+          {d.status === "WAITING_FOR_SELLER_RESPONSE" && dueLabel(d.daysLeft) && (
+            <span className={(d.daysLeft ?? 99) <= 0 ? "font-medium text-bad" : "text-fg-muted"}>{dueLabel(d.daysLeft)}</span>
+          )}
+        </span>
       </span>
     </Link>
   );

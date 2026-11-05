@@ -90,7 +90,7 @@ export function ReviewForm({
             disabled={busy}
             className="h-10 rounded-md bg-muted px-[18px] text-[14px] text-fg hover:bg-inset disabled:opacity-50"
           >
-            {rejecting ? "Rejecting…" : "Reject"}
+            {rejecting ? "Discarding…" : "Discard draft"}
           </button>
           <span className="text-[13px] text-fg-muted">You can edit the text before approving.</span>
         </div>
@@ -128,7 +128,7 @@ export function ReviewForm({
           {rejectState.ok
             ? rejectState.mode === "demo"
               ? "Demo mode: the report would be marked rejected and nothing sent. Reload the page to try again."
-              : "Rejected. Nothing was sent to PayPal."
+              : "Draft discarded. Nothing was sent; the dispute is still open."
             : rejectState.error}
         </p>
       )}

@@ -91,7 +91,7 @@ export function ChatPanel({ disputeId }: { disputeId: string }) {
       <div className="max-h-[440px] space-y-3 overflow-y-auto px-6 py-3">
         {loaded === undefined && <p className="text-fg-muted">Loading…</p>}
         {loaded === null && <p className="text-fg-muted">Chat isn&apos;t available for this dispute.</p>}
-        {loaded?.unavailable && <p className="text-fg-muted">Chat isn&apos;t set up yet (run supabase/chat.sql).</p>}
+        {loaded?.unavailable && <p className="text-fg-muted">Ask Sira isn&apos;t available right now.</p>}
 
         {loaded?.conversationId && resumeChoice === null && (
           <div className="rounded-xl bg-muted/70 px-4 py-3">

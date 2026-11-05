@@ -8,7 +8,7 @@ export function Skeleton({ className }: { className?: string }) {
 /** Placeholder for a dashboard page: title, a row of cards, then a list. */
 export function PageSkeleton() {
   return (
-    <div role="status" aria-label="Loading" className="mx-auto flex w-full max-w-[1080px] flex-col gap-6 px-5 pt-8 pb-20 md:px-8">
+    <div role="status" aria-label="Loading" className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-5 pt-8 pb-20 md:px-8">
       <Skeleton className="h-7 w-48" />
       <div className="grid grid-cols-2 gap-3 sm:max-w-[520px]">
         <Skeleton className="h-[104px]" />
