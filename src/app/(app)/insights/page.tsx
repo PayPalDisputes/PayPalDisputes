@@ -5,7 +5,6 @@ import { connection } from "next/server";
 import { Amount } from "@/components/app/bits";
 import { OutcomeChart, type OutcomeBar } from "@/components/app/Charts";
 import { ReasonChart, ShippingProofChart, TrendChart, ValueBandChart, type ProofBar, type ReasonCount } from "@/components/app/InsightsCharts";
-import { OutcomesGrid } from "@/components/app/OutcomesGrid";
 import { reasonLabel } from "@/app/_components/dispute-ui";
 import { requireSession, sellerScope } from "@/lib/auth";
 import { getInsights, MANUAL_HOURS_PER_DISPUTE, SHIPPING_PROOF_LABEL, type InsightDispute, type ShippingProof } from "@/lib/insights";
@@ -26,7 +25,7 @@ export default async function InsightsPage() {
 
   const winRate = outcomes.resolved ? Math.round((outcomes.won / outcomes.resolved) * 100) : null;
   // Four answers, each a number with a few words under it. No paragraphs.
-  const stats: { label: string; value: React.ReactNode; hint: string; tone?: string; title?: string }[] = [
+  const stats: { label: string; value: React.ReactNode; hint: string; tone?: string }[] = [
     {
       label: "Money kept",
       value: kept ? (
@@ -50,7 +49,6 @@ export default async function InsightsPage() {
       label: "Time saved",
       value: <>~{formatHours(impact.hoursSaved)}</>,
       hint: `${impact.handled} disputes handled`,
-      title: `Counts ${MANUAL_HOURS_PER_DISPUTE} hours per dispute handled by hand, the low end of the 1 to 3 hours industry estimates.`,
     },
   ];
 
@@ -63,7 +61,6 @@ export default async function InsightsPage() {
         {stats.map((s, i) => (
           <div
             key={s.label}
-            title={s.title}
             className={cn("flex flex-col gap-2 border-line px-6 py-[22px]", i % 2 === 1 && "border-l", i >= 2 && "border-t lg:border-t-0", i === 2 && "lg:border-l")}
           >
             <span className="text-[13px] text-fg-muted">{s.label}</span>
@@ -72,6 +69,9 @@ export default async function InsightsPage() {
           </div>
         ))}
       </section>
+      <p className="-mt-6 text-[12.5px] text-fg-muted">
+        Time saved counts {MANUAL_HOURS_PER_DISPUTE} hours per dispute handled by hand, the low end of the 1 to 3 hours industry estimates.
+      </p>
 
       {/* What to do about it: one line each, with the button; the reasoning is on hover */}
       {tips.length > 0 && (
@@ -119,12 +119,7 @@ export default async function InsightsPage() {
             Results appear here as disputes close.
           </p>
         ) : (
-          <div className="grid items-start gap-5 lg:grid-cols-3">
-            <OutcomeChart bars={outcomeBars(outcomeRows)} />
-            <div className="min-w-0 lg:col-span-2">
-              <OutcomesGrid rows={outcomeRows} />
-            </div>
-          </div>
+          <OutcomeChart bars={outcomeBars(outcomeRows)} />
         )}
       </section>
     </div>
