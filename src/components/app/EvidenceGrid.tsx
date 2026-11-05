@@ -85,7 +85,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
       {
         headerName: "Tracking #",
         field: "trackingNumber",
-        minWidth: 180,
+        minWidth: 250,
         cellClass: "font-mono text-[12.5px]",
         // Missing tracking reads as an empty field to fill in (dashed), not a warning colour.
         cellClassRules: { "evidence-missing": (p) => !p.value && !!p.data && NEEDS_TRACKING.has(p.data.reason ?? "") },
