@@ -3,7 +3,7 @@
 export const landing = {
   hero: {
     title: ["Your disputes,", "settled in seconds"],
-    body: "An AI dispute desk for PayPal sellers. It reads every case, recommends what to do, and drafts the response for you to approve.",
+    body: "AI dispute desk for PayPal sellers.",
     primary: { label: "Open dashboard", href: "/dashboard" },
     secondary: { label: "Try the demo", href: "/api/auth/demo" },
     /** Factual credit line under the buttons: Sira reads and answers cases through PayPal's Disputes API. */
