@@ -8,7 +8,7 @@ import { MoneyChart, type MoneyPoint } from "@/components/app/HomeCharts";
 import { Button } from "@/components/ui/Button";
 import { requireSession } from "@/lib/auth";
 import { getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
-import { getDeliveries, type Delivery } from "@/lib/deliveries";
+import { getDeliveries } from "@/lib/deliveries";
 import { dueLabel } from "@/lib/dispute-stage";
 import { getInsights } from "@/lib/insights";
 import { cn } from "@/lib/cn";
@@ -183,7 +183,6 @@ export default async function DashboardHome({ searchParams }: PageProps<"/dashbo
           )}
         </Card>
 
-        <Deliveries {...deliveries} />
 
       </div>
     </div>
@@ -304,114 +303,5 @@ function StoreSelector({ stores, current }: { stores: { id: string; name: string
         ))}
       </ul>
     </details>
-  );
-}
-
-const DELIVERY_STATUS: Record<string, { label: string; className: string }> = {
-  IN_TRANSIT: { label: "In transit", className: "text-fg" },
-  DELIVERED: { label: "Delivered", className: "text-ok" },
-  LABEL_CREATED: { label: "Label created, not scanned", className: "text-warn" },
-  NOT_SHIPPED: { label: "Not shipped", className: "text-warn" },
-  RETURNED_TO_SENDER: { label: "Returned to you", className: "text-bad" },
-};
-
-const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-/** Every order's delivery at a glance, parcels that need watching first, each linked to the carrier's live tracking. */
-function Deliveries({ deliveries, counts, total }: Awaited<ReturnType<typeof getDeliveries>>) {
-  const summary = [
-    { label: "In transit", value: counts.in_transit },
-    { label: "Delivered", value: counts.delivered },
-    { label: "Not moving", value: counts.not_moving, tone: counts.not_moving > 0 ? "text-warn" : undefined },
-    { label: "Returned", value: counts.returned, tone: counts.returned > 0 ? "text-bad" : undefined },
-  ];
-  return (
-    <Card title="Deliveries" count={total} action={{ href: "/evidence", label: "Shipping proof" }}>
-      <div className="px-6 pb-2">
-      {total === 0 ? (
-        <p className="py-10 text-center text-[14px] text-fg-muted">No orders yet. Add tracking and every parcel shows up here.</p>
-      ) : (
-        <>
-          <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {summary.map((x) => (
-              <div key={x.label} className="rounded-lg bg-muted/60 px-4 py-3">
-                <dt className="text-[12.5px] text-fg-muted">{x.label}</dt>
-                <dd className={cn("mt-1 text-[20px] leading-none font-[480] text-fg", x.tone)}>{x.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-left text-[14px]">
-              <thead>
-                <tr className="text-[12.5px] text-fg-muted">
-                  <th scope="col" className="py-2 font-[420]">Order</th>
-                  <th scope="col" className="py-2 font-[420]">Status</th>
-                  <th scope="col" className="py-2 font-[420]">Last scan</th>
-                  <th scope="col" className="py-2 text-right font-[420]">Tracking</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deliveries.map((d) => (
-                  <DeliveryRow key={d.id} d={d} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {total > deliveries.length && (
-            <p className="py-2.5 text-[13px] text-fg-muted">
-              Showing {deliveries.length} of {total} orders.{" "}
-              <Link href="/evidence" className="text-accent hover:underline">
-                See all in Shipping proof
-              </Link>
-            </p>
-          )}
-        </>
-      )}
-      </div>
-    </Card>
-  );
-}
-
-function DeliveryRow({ d }: { d: Delivery }) {
-  const status = d.status ? DELIVERY_STATUS[d.status] : null;
-  const sub = d.status === "DELIVERED" && d.deliveredAt ? shortDate(d.deliveredAt) : d.shippedAt ? `Shipped ${shortDate(d.shippedAt)}` : null;
-  return (
-    <tr className="border-t border-line-subtle align-top">
-      <td className="py-3 pr-4">
-        <span className="flex flex-col gap-[3px]">
-          <span className="text-fg">{d.buyerName ?? d.orderNumber ?? "Order"}</span>
-          <span className="text-[13px] text-fg-muted">{[d.orderNumber, d.item].filter(Boolean).join(" · ") || "No details"}</span>
-        </span>
-      </td>
-      <td className="py-3 pr-4">
-        <span className="flex flex-col gap-[3px]">
-          <span className={status?.className ?? "text-warn"}>{status?.label ?? "No tracking yet"}</span>
-          {(sub || d.onPayPal) && (
-            <span className="text-[13px] text-fg-muted">{[sub, d.onPayPal && "tracking sent to PayPal"].filter(Boolean).join(" · ")}</span>
-          )}
-        </span>
-      </td>
-      <td className="max-w-[260px] py-3 pr-4 text-[13px] text-fg-body">
-        {d.lastScan ? (
-          <>
-            {d.lastScan.description}
-            {d.lastScan.location && <span className="text-fg-muted">, {d.lastScan.location}</span>}
-            <span className="block text-fg-muted">{shortDate(d.lastScan.at)}</span>
-          </>
-        ) : (
-          <span className="text-fg-muted">No scans yet</span>
-        )}
-      </td>
-      <td className="py-3 text-right text-[13px]">
-        {d.trackingUrl ? (
-          <a href={d.trackingUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline">
-            {d.carrier}
-            <ExternalLink aria-hidden strokeWidth={1.6} className="size-3.5" />
-          </a>
-        ) : (
-          <span className="text-fg-muted">{d.carrier ?? "No tracking"}</span>
-        )}
-      </td>
-    </tr>
   );
 }

@@ -28,8 +28,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="theme-app flex min-h-full flex-1 flex-col bg-subtle text-fg [color-scheme:light]">
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/95 backdrop-blur-md">
-        <div className="flex h-[68px] items-center gap-4 px-5 md:px-8 xl:gap-6">
-          <Link href="/dashboard" className="shrink-0" aria-label="Sira dashboard home">
+        {/* Three columns: logo left, tabs dead centre, controls right */}
+        <div className="grid h-[68px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 md:px-8 xl:gap-6">
+          <Link href="/dashboard" className="justify-self-start" aria-label="Sira dashboard home">
             <Logo imageClassName="h-12" />
           </Link>
 
@@ -37,7 +38,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <NavLink variant="top" href="/dashboard" exact icon={<House strokeWidth={1.7} />}>
               Home
             </NavLink>
-            <NavLink variant="top" href="/disputes" icon={<Inbox strokeWidth={1.7} />} badge={needsResponse}>
+            <NavLink variant="top" href="/disputes" icon={<Inbox strokeWidth={1.7} />}>
               Disputes
             </NavLink>
             <NavLink variant="top" href="/evidence" icon={<FileText strokeWidth={1.7} />}>
@@ -56,7 +57,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             )}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="col-start-3 flex items-center justify-self-end gap-2">
             <span
               title={mode === "live" ? "Approvals reach PayPal" : "Nothing is sent to PayPal"}
               className="mr-1 hidden rounded-full bg-muted px-2.5 py-1 text-[12px] whitespace-nowrap text-fg-body lg:inline"
@@ -87,7 +88,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         accountName={accountName}
         items={[
           { href: "/dashboard", label: "Home", icon: "home", exact: true },
-          { href: "/disputes", label: "Disputes", icon: "disputes", badge: needsResponse },
+          { href: "/disputes", label: "Disputes", icon: "disputes" },
           { href: "/evidence", label: "Shipping proof", icon: "evidence" },
           { href: "/insights", label: "Insights", icon: "insights" },
           { href: "/settings", label: "Settings", icon: "settings" },
