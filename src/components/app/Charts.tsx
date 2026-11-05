@@ -29,15 +29,25 @@ export function ChartCard({
 }) {
   return (
     <section className={cn("flex flex-col rounded-xl border border-line bg-canvas p-6", className)}>
-      <h3 className="text-[15px] font-[480] text-fg">{title}</h3>
-      {takeaway && <p className="mt-1.5 text-[14px] leading-[21px] text-fg">{takeaway}</p>}
-      <p className="mt-1 text-[12.5px] leading-[18px] text-fg-muted">{description}</p>
+      {takeaway ? (
+        <>
+          {/* Answer first: the question is a small label, the answer is the headline, the explainer waits under "Show data". */}
+          <h3 className="text-[13px] text-fg-muted">{title}</h3>
+          <p className="mt-1 text-[18px] leading-[25px] font-[480] text-fg">{takeaway}</p>
+        </>
+      ) : (
+        <>
+          <h3 className="text-[15px] font-[480] text-fg">{title}</h3>
+          <p className="mt-1 text-[12.5px] leading-[18px] text-fg-muted">{description}</p>
+        </>
+      )}
       <div className="mt-3 flex-1">{children}</div>
       <details className="group mt-2 text-[12px]">
         <summary className="cursor-pointer list-none text-fg-muted hover:text-fg [&::-webkit-details-marker]:hidden">
           <span className="group-open:hidden">Show data</span>
           <span className="hidden group-open:inline">Hide data</span>
         </summary>
+        {takeaway && <p className="mt-2 text-fg-muted">{description}</p>}
         <table className="mt-2 w-full text-left">
           <tbody className="divide-y divide-line-subtle">
             {table.map((r) => (
@@ -286,8 +296,8 @@ export function OutcomeChart({ bars }: { bars: OutcomeBar[] }) {
       takeaway={
         total === 0
           ? undefined
-          : `You won ${won} of ${total} resolved disputes` +
-            (fought && fought.won + fought.settled + fought.lost > 0 ? `, and ${fought.won} of ${fought.won + fought.settled + fought.lost} you fought.` : ".")
+          : `Won ${won} of ${total}` +
+            (fought && fought.won + fought.settled + fought.lost > 0 ? ` · ${fought.won} of ${fought.won + fought.settled + fought.lost} you fought` : "")
       }
       description="Each bar is what you did; its colours show how PayPal closed those disputes: won, settled or lost."
       table={bars.map((b) => ({ label: b.label, value: `${b.won} won · ${b.settled} settled · ${b.lost} lost` }))}

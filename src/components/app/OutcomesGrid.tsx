@@ -24,11 +24,11 @@ function DisputeCell({ data }: Cell) {
   if (!data) return null;
   if (data.totals) return <span className="font-semibold text-fg">Total</span>;
   return (
-    <span className="flex min-w-0 flex-col gap-1 leading-none">
-      <span className="truncate font-medium text-fg">{data.buyerName ?? "Buyer"}</span>
-      <Link href={`/disputes/${data.disputeId}`} className="truncate font-mono text-[11.5px] text-fg-muted hover:text-fg hover:underline">
-        {data.disputeId}
+    <span className="flex min-w-0 flex-col gap-[3px] leading-tight">
+      <Link href={`/disputes/${data.disputeId}`} className="truncate font-medium text-fg hover:underline">
+        {data.buyerName ?? "Buyer"}
       </Link>
+      <span className="truncate text-[12.5px] text-fg-muted">{reasonLabel(data.reason)}</span>
     </span>
   );
 }
@@ -57,8 +57,6 @@ function DidCell({ data }: Cell) {
     </span>
   );
 }
-
-const hours = (h: number | null) => (h === null ? "—" : h < 1 ? `${Math.max(1, Math.round(h * 60))} min` : h < 48 ? `${h.toFixed(1)} h` : `${(h / 24).toFixed(1)} days`);
 
 /** Resolved disputes: what Sira advised, what the seller did, and how it ended (AG Grid Community). */
 export function OutcomesGrid({ rows }: { rows: OutcomeRow[] }) {
@@ -93,12 +91,18 @@ export function OutcomesGrid({ rows }: { rows: OutcomeRow[] }) {
 
   const columnDefs = useMemo<ColDef<Row>[]>(
     () => [
-      { headerName: "Dispute", colId: "dispute", valueGetter: (p) => p.data?.buyerName, cellRenderer: DisputeCell, pinned: "left", minWidth: 220, flex: 1.4, filter: "agTextColumnFilter" },
-      { headerName: "Reason", colId: "reason", valueGetter: (p) => (p.data?.totals ? "" : reasonLabel(p.data?.reason ?? null)), minWidth: 150, filter: "agTextColumnFilter" },
-      { headerName: "Sira advised", colId: "advised", valueGetter: (p) => (p.data?.advised ? CHOICE[p.data.advised] : p.data?.totals ? "" : "—"), minWidth: 120, filter: "agTextColumnFilter" },
-      { headerName: "You did", colId: "did", valueGetter: (p) => (p.data?.did ? CHOICE[p.data.did] : ""), cellRenderer: DidCell, minWidth: 140, filter: "agTextColumnFilter" },
-      { headerName: "Outcome", colId: "result", valueGetter: (p) => (p.data && !p.data.totals ? RESULT[p.data.result].label : ""), cellRenderer: ResultCell, minWidth: 110, filter: "agTextColumnFilter" },
-      { headerName: "Disputed", field: "amount", type: "rightAligned", valueFormatter: (p) => (p.data ? formatAmount(p.value, p.data.currency) : ""), filter: "agNumberColumnFilter", minWidth: 110 },
+      // Five columns that fit beside the chart: who, what you did (and whether it was Sira's call), how it ended, what you kept, when.
+      {
+        headerName: "Dispute",
+        colId: "dispute",
+        valueGetter: (p) => p.data?.buyerName,
+        getQuickFilterText: (p) => [p.data?.buyerName, p.data?.disputeId, reasonLabel(p.data?.reason ?? null)].filter(Boolean).join(" "),
+        cellRenderer: DisputeCell,
+        minWidth: 170,
+        flex: 1.6,
+      },
+      { headerName: "You did", colId: "did", valueGetter: (p) => (p.data?.did ? CHOICE[p.data.did] : ""), cellRenderer: DidCell, minWidth: 120, flex: 1.1 },
+      { headerName: "Outcome", colId: "result", valueGetter: (p) => (p.data && !p.data.totals ? RESULT[p.data.result].label : ""), cellRenderer: ResultCell, minWidth: 90, flex: 0.8 },
       {
         headerName: "Kept",
         field: "kept",
@@ -106,20 +110,28 @@ export function OutcomesGrid({ rows }: { rows: OutcomeRow[] }) {
         sort: "desc",
         valueFormatter: (p) => (p.data ? formatAmount(p.value, p.data.currency) : ""),
         cellClass: "font-medium",
-        filter: "agNumberColumnFilter",
-        minWidth: 110,
+        minWidth: 95,
+        flex: 0.9,
       },
-      { headerName: "Responded in", field: "respondedHours", type: "rightAligned", valueFormatter: (p) => (p.data?.totals ? "" : hours(p.value)), filter: "agNumberColumnFilter", minWidth: 120 },
       {
-        headerName: "Resolved",
+        headerName: "Closed",
         field: "resolvedAt",
+        type: "rightAligned",
         valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""),
-        minWidth: 110,
+        minWidth: 80,
+        flex: 0.7,
       },
     ],
     [],
   );
-  const defaultColDef = useMemo<ColDef>(() => ({ sortable: true, resizable: true, cellStyle: { display: "flex", alignItems: "center" } }), []);
+  const defaultColDef = useMemo<ColDef>(
+    () => ({
+      sortable: true,
+      resizable: false,
+      cellStyle: (p) => ({ display: "flex", alignItems: "center", justifyContent: p.colDef.type === "rightAligned" ? "flex-end" : "flex-start" }),
+    }),
+    [],
+  );
 
   return (
     <div>
@@ -146,7 +158,7 @@ export function OutcomesGrid({ rows }: { rows: OutcomeRow[] }) {
           Export CSV
         </button>
       </div>
-      <div style={{ height: Math.min(560, 104 + (rows.length + totals.length) * 58) }}>
+      <div>
         <AgGridReact<Row>
           ref={gridRef}
           theme={gridTheme}
@@ -156,6 +168,8 @@ export function OutcomesGrid({ rows }: { rows: OutcomeRow[] }) {
           defaultColDef={defaultColDef}
           quickFilterText={query}
           getRowId={(p) => p.data.disputeId || "totals"}
+          domLayout="autoHeight"
+          suppressHorizontalScroll
           suppressCellFocus
         />
       </div>
