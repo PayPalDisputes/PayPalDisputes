@@ -28,7 +28,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="theme-app flex min-h-full flex-1 flex-col bg-subtle text-fg [color-scheme:light]">
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/95 backdrop-blur-md">
-        <div className="flex h-[68px] items-center gap-6 px-5 md:px-8">
+        <div className="flex h-[68px] items-center gap-4 px-5 md:px-8 xl:gap-6">
           <Link href="/dashboard" className="shrink-0" aria-label="Sira dashboard home">
             <Logo imageClassName="h-12" />
           </Link>

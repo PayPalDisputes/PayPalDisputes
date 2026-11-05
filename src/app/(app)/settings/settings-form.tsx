@@ -59,7 +59,7 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
         <legend className="sr-only">Easy claims</legend>
         <Row
           title="Send easy claims automatically"
-          description="When a dispute matches one of the cases below, Sira submits the response to PayPal for you, written from your templates. Off: Sira prepares it and waits for you to press Send. Anything else always waits for you."
+          description="When a dispute matches one of the cases below, Sira submits the response to PayPal for you, written from your templates. Off: Sira prepares it and waits for you to approve it. Anything else always waits for you."
         >
           <div className="flex flex-col gap-3">
             <Switch name="easyClaimsAuto" checked={easyAuto} onChange={setEasyAuto} />
