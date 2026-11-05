@@ -3,11 +3,12 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { CellValueChangedEvent, ColDef, ICellRendererParams } from "ag-grid-community";
-import { Redo2, RefreshCw, Undo2, Upload } from "lucide-react";
+import { ExternalLink, RefreshCw, Upload } from "lucide-react";
 import { reasonLabel } from "@/app/_components/dispute-ui";
 import { reassess, saveEvidence } from "@/app/(app)/evidence/actions";
 import { CARRIERS, SHIPPING_STATUSES, type EvidenceField, type EvidenceRow } from "@/lib/evidence-shared";
 import { cn } from "@/lib/cn";
+import { trackingUrl } from "@/lib/tracking-url";
 import { Amount } from "./bits";
 import { gridTheme } from "./ag-setup";
 import { EvidenceImport } from "./EvidenceImport";
@@ -43,7 +44,7 @@ function DisputeCell({ data: d }: Cell) {
 
 /**
  * The seller's evidence for every open dispute, editable in place (AG Grid Community cell editing).
- * Each change saves immediately and can be undone (Cmd/Ctrl+Z or the buttons).
+ * Each change saves immediately and can be undone with Cmd/Ctrl+Z.
  */
 export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** Demo account: edits stay on screen but aren't saved. */ demo?: boolean }) {
   const gridRef = useRef<AgGridReact<EvidenceRow>>(null);
@@ -88,8 +89,26 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
         cellClass: "font-mono text-[12.5px]",
         // Missing tracking reads as an empty field to fill in (dashed), not a warning colour.
         cellClassRules: { "evidence-missing": (p) => !p.value && !!p.data && NEEDS_TRACKING.has(p.data.reason ?? "") },
-        cellRenderer: ({ value, data }: Cell) =>
-          value ? value : data && NEEDS_TRACKING.has(data.reason ?? "") ? <span className="font-sans text-[13px] text-fg-muted">Add tracking number</span> : null,
+        cellRenderer: ({ value, data }: Cell) => {
+          if (!value) return data && NEEDS_TRACKING.has(data.reason ?? "") ? <span className="font-sans text-[13px] text-fg-muted">Add tracking number</span> : null;
+          const url = trackingUrl(data?.carrier ?? null, value);
+          if (!url) return value;
+          // The number opens the carrier's live tracking; double-clicking the cell still edits it.
+          return (
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              title={`Track on ${data?.carrier}`}
+              onClick={(e) => e.stopPropagation()}
+              onDoubleClick={(e) => e.preventDefault()}
+              className="inline-flex items-center gap-1 text-accent hover:underline"
+            >
+              {value}
+              <ExternalLink aria-hidden strokeWidth={1.6} className="size-3.5 shrink-0" />
+            </a>
+          );
+        },
         tooltipValueGetter: (p) => (!p.value && p.data && NEEDS_TRACKING.has(p.data.reason ?? "") ? "Add tracking: it's the strongest proof for this kind of claim." : undefined),
       },
       {
@@ -176,25 +195,7 @@ export function EvidenceGrid({ rows, demo = false }: { rows: EvidenceRow[]; /** 
           Import CSV
         </button>
         <span className="text-[12.5px] text-fg-muted">
-          {demo ? "Double-click a cell to try editing. Demo changes aren't saved." : "Double-click a cell to edit. Changes save as you go."}
-        </span>
-        <span className="ml-auto flex items-center gap-1">
-          <button
-            type="button"
-            aria-label="Undo"
-            onClick={() => gridRef.current?.api.undoCellEditing()}
-            className="inline-flex size-9 items-center justify-center rounded-full border border-line bg-canvas text-fg-heading hover:bg-muted"
-          >
-            <Undo2 strokeWidth={1.75} className="size-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="Redo"
-            onClick={() => gridRef.current?.api.redoCellEditing()}
-            className="inline-flex size-9 items-center justify-center rounded-full border border-line bg-canvas text-fg-heading hover:bg-muted"
-          >
-            <Redo2 strokeWidth={1.75} className="size-4" />
-          </button>
+          {demo ? "Double-click a cell to try editing. Demo changes aren't saved." : "Double-click a cell to edit. Changes save as you go; Cmd/Ctrl+Z undoes the last one."}
         </span>
       </div>
 
