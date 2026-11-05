@@ -27,7 +27,9 @@ function BuyerCell({ data: d }: Cell) {
   return (
     <span className="flex min-w-0 flex-col gap-[3px] leading-tight">
       <span className="truncate text-fg">{d.buyerName ?? "Unknown buyer"}</span>
-      <span className="truncate text-[13px] text-fg-muted">{d.item ?? (d.sellerName ? d.sellerName : d.id)}</span>
+      <span className="truncate text-[13px] text-fg-muted">
+        {d.item ?? (d.sellerName ? d.sellerName : d.id)} · {reasonLabel(d.reason)}
+      </span>
     </span>
   );
 }
@@ -130,29 +132,18 @@ export function DisputesGrid({
         headerName: "Buyer",
         colId: "buyer",
         valueGetter: (p) => p.data?.buyerName ?? "Unknown buyer",
-        getQuickFilterText: (p) => [p.data?.buyerName, p.data?.item, p.data?.id, p.data?.sellerName].filter(Boolean).join(" "),
+        getQuickFilterText: (p) =>
+          [p.data?.buyerName, p.data?.item, p.data?.id, p.data?.sellerName, reasonLabel(p.data?.reason ?? null)].filter(Boolean).join(" "),
         cellRenderer: BuyerCell,
-        filter: "agTextColumnFilter",
-        pinned: "left",
         minWidth: 200,
-        flex: 1.3,
-      },
-      {
-        headerName: "Reason",
-        colId: "reason",
-        valueGetter: (p) => reasonLabel(p.data?.reason ?? null),
-        filter: "agTextColumnFilter",
-        cellClass: "text-fg-body",
-        minWidth: 140,
-        flex: 1,
+        flex: 1.6,
       },
       {
         headerName: "Where it stands",
         colId: "stage",
         valueGetter: (p) => (p.data ? stageLabel(p.data) : ""),
         cellRenderer: StageCell,
-        filter: "agTextColumnFilter",
-        minWidth: 190,
+        minWidth: 170,
         flex: 1.2,
       },
       {
@@ -161,17 +152,16 @@ export function DisputesGrid({
         valueGetter: (p) => (p.data?.status === "WAITING_FOR_SELLER_RESPONSE" ? p.data.daysLeft : null),
         comparator: deadlineComparator,
         cellRenderer: DeadlineCell,
-        filter: "agNumberColumnFilter",
         sort: "asc",
-        minWidth: 130,
+        minWidth: 115,
+        flex: 0.8,
       },
       {
         headerName: "Sira's call",
         colId: "call",
         valueGetter: (p) => (p.data ? (callLabel(p.data.report, p.data.currency) ?? "") : ""),
         cellRenderer: CallCell,
-        filter: "agTextColumnFilter",
-        minWidth: 150,
+        minWidth: 130,
         flex: 1,
       },
       {
@@ -181,8 +171,8 @@ export function DisputesGrid({
         type: "rightAligned",
         valueFormatter: (p) => formatAmount(p.value ?? null, p.data?.currency ?? null),
         cellRenderer: AmountCell,
-        filter: "agNumberColumnFilter",
-        minWidth: 110,
+        minWidth: 100,
+        flex: 0.7,
       },
     ],
     [],
@@ -191,7 +181,7 @@ export function DisputesGrid({
   const defaultColDef = useMemo<ColDef>(
     () => ({
       sortable: true,
-      resizable: true,
+      resizable: false,
       cellStyle: (p) => ({ display: "flex", alignItems: "center", justifyContent: p.colDef.type === "rightAligned" ? "flex-end" : "flex-start" }),
     }),
     [],
@@ -228,7 +218,7 @@ export function DisputesGrid({
         </button>
       </div>
 
-      <ul className="space-y-2 md:hidden">
+      <ul className="space-y-2 lg:hidden">
         {phoneRows.map((d) => (
           <li key={d.id}>
             <DisputeCard d={d} href={openHref(d.id)} />
@@ -236,7 +226,7 @@ export function DisputesGrid({
         ))}
       </ul>
 
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <AgGridReact<HomeDispute>
           ref={gridRef}
           theme={gridTheme}
@@ -246,6 +236,7 @@ export function DisputesGrid({
           getRowId={(p) => p.data.id}
           quickFilterText={query}
           domLayout="autoHeight"
+          suppressHorizontalScroll
           rowHeight={64}
           pagination={rows.length > 25}
           paginationPageSize={25}

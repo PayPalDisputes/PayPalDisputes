@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { Amount } from "@/components/app/bits";
 import { DisputesGrid } from "@/components/app/DisputesGrid";
 import { Button } from "@/components/ui/Button";
 import { canAccessDispute, requireSession, sellerScope, sessionMode } from "@/lib/auth";
@@ -26,8 +25,6 @@ const VIEWS = {
     label: "Due this week",
     match: (d: HomeDispute) => d.status === "WAITING_FOR_SELLER_RESPONSE" && d.daysLeft !== null && d.daysLeft <= 7,
   },
-  "high-value": { label: "Over $200", match: (d: HomeDispute) => d.status !== "RESOLVED" && (d.amount ?? 0) > 200 },
-  chargebacks: { label: "Chargebacks", match: (d: HomeDispute) => d.stage === "CHARGEBACK" || d.stage === "ARBITRATION" },
   resolved: { label: "Resolved", match: (d: HomeDispute) => d.status === "RESOLVED" },
 } as const;
 type View = keyof typeof VIEWS;
@@ -50,21 +47,12 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
   const listHref = `/disputes?view=${view}`;
   const rows = disputes.filter(VIEWS[view].match).sort(byUrgency);
 
-  const open_ = disputes.filter((d) => d.status !== "RESOLVED");
   const drafts = disputes.filter(draftReady).length;
-  const atRisk = new Map<string, number>();
-  for (const d of open_) atRisk.set(d.currency ?? "USD", (atRisk.get(d.currency ?? "USD") ?? 0) + (d.amount ?? 0));
-  const [riskCurrency, riskTotal] = [...atRisk.entries()].sort((a, b) => b[1] - a[1])[0] ?? ["USD", 0];
 
   return (
     <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 px-5 pt-8 pb-20 md:px-10 md:pt-9">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="text-[24px] font-[480] tracking-[0.01em] text-fg">Disputes</h1>
-          <p className="text-[14px] text-fg-muted">
-            {open_.length} open · <Amount amount={riskTotal} currency={riskCurrency} /> at risk · {needsYou} {needsYou === 1 ? "needs" : "need"} your response
-          </p>
-        </div>
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-[24px] font-[480] tracking-[0.01em] text-fg">Disputes</h1>
         {drafts > 0 && (
           <Button href="/review" prefetch={false} className="h-[38px] px-4">
             Review {drafts} draft{drafts === 1 ? "" : "s"}
@@ -87,7 +75,6 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
                 active ? "border-fg text-fg" : "border-transparent text-fg-body hover:text-fg",
               )}
             >
-              {/* Words in the label keep Inter's digits ("Over $200"); only the count is monospaced */}
               <span className="font-[family-name:var(--font-inter)]">{VIEWS[key].label}</span>
               <span className="text-fg-muted tabular-nums">{count}</span>
             </Link>
