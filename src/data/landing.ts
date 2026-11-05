@@ -8,8 +8,6 @@ export const landing = {
     secondary: { label: "Try the demo", href: "/api/auth/demo" },
     /** Factual credit line under the buttons: Sira reads and answers cases through PayPal's Disputes API. */
     builtOn: { label: "Built on the", name: "PayPal", product: "Disputes API" },
-    /** Small label above the headline. */
-    eyebrow: "For PayPal sellers",
   },
 
   /** The ticker under the product stage: kinds of work Sira does on a case (illustrative, not live counts). */

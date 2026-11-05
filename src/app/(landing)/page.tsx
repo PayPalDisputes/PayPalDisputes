@@ -64,8 +64,7 @@ export default function LandingPage() {
         {/* Top padding includes the 64px nav, which floats over this section */}
         <div className={cn(wrap, "grid items-center gap-12 pt-32 pb-16 md:pt-36 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-[clamp(2rem,4vw,6rem)]")}>
           <div className="max-w-[min(52rem,100%)]">
-            <p className="font-mono text-[11px] tracking-[0.12em] text-[#77736c] uppercase">{hero.eyebrow}</p>
-            <h1 className="mt-6 text-[clamp(2.75rem,5.4vw,7rem)] leading-[1.0] font-normal tracking-[-0.045em]">
+            <h1 className="text-[clamp(2.75rem,5.4vw,7rem)] leading-[1.0] font-normal tracking-[-0.045em]">
               {hero.title.map((l) => (
                 <span key={l} className="block lg:whitespace-nowrap">
                   {l}
