@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, ChevronRight, PenLine, Scale, Timer, X } from "lucide-react";
-import { ActivityTicker } from "@/components/landing/ActivityTicker";
 import { CaseStack } from "@/components/landing/CaseStack";
 import { landingWrap } from "@/components/landing/container";
 import { SlideInHand } from "@/components/landing/SlideInHand";
-import { HeroStage } from "@/components/landing/HeroStage";
 import { Process } from "@/components/landing/Process";
 import { SpringDots } from "@/components/landing/SpringDots";
 import { landing } from "@/data/landing";
@@ -54,7 +52,7 @@ function SecondaryButton({ href, children, inverted }: { href: string; children:
 }
 
 export default function LandingPage() {
-  const { hero, activity, reasons, jobs, how, rules, cta } = landing;
+  const { hero, reasons, jobs, how, rules, cta } = landing;
 
   return (
     <>
@@ -88,12 +86,6 @@ export default function LandingPage() {
           {/* Grows with its half of the screen, but never taller than the window */}
           <CaseStack theme="light" className="mx-auto max-w-[min(880px,calc((100svh-12rem)*0.82))] lg:mr-0" />
         </div>
-      </section>
-
-      {/* Product stage: one example dispute played through, then what Sira keeps doing */}
-      <section className={cn(wrap, "pt-14 pb-10")}>
-        <HeroStage />
-        <ActivityTicker label={activity.label} items={activity.items} className="mt-5" />
       </section>
 
       {/* Proof strip: what's covered, in place of a logo wall */}
