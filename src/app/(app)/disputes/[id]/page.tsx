@@ -13,6 +13,7 @@ import { EvidencePackButton, formatAmount, humanize, reasonLabel } from "@/app/_
 import { DueCountdown } from "@/components/app/DueCountdown";
 import { cn } from "@/lib/cn";
 import { AssessmentReport } from "./assessment";
+import { ChatPanel } from "./chat-panel";
 import { BuyerHistoryCard } from "./buyer-history";
 
 export const metadata: Metadata = { title: "Dispute · Sira" };
@@ -213,7 +214,10 @@ export default async function DisputeDetailPage({ params }: PageProps<"/disputes
             currency={dispute.currency}
             disputeStatus={dispute.status}
             mode={sessionMode(session)}
+            chat="none"
           />
+          {/* Ask Sira lives in the bottom-right corner here (fixed, so its place in the markup doesn't matter) */}
+          <ChatPanel disputeId={dispute.id} variant="floating" />
           <section aria-labelledby="activity" className="rounded-xl border border-line bg-canvas px-6 py-5">
             <h2 id="activity" className="mb-1 text-[13px] font-medium text-accent">
               Activity

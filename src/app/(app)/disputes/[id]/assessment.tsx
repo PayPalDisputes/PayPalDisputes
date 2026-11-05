@@ -124,6 +124,7 @@ export function AssessmentReport({
   currency,
   disputeStatus,
   mode,
+  chat = "inline",
 }: {
   disputeId: string;
   decision: Decision | null;
@@ -133,6 +134,8 @@ export function AssessmentReport({
   currency: string | null;
   disputeStatus: string | null;
   mode: ActionsMode;
+  /** "none" when the page shows Ask Sira as the floating chat button instead. */
+  chat?: "inline" | "none";
 }) {
   if (!decision) {
     return (
@@ -275,7 +278,7 @@ export function AssessmentReport({
         )}
       </Block>
 
-      <ChatPanel disputeId={disputeId} />
+      {chat === "inline" && <ChatPanel disputeId={disputeId} />}
     </div>
   );
 }
