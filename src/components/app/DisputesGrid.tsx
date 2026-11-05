@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import type { ColDef, GridApi, ICellRendererParams } from "ag-grid-community";
 import { Search } from "lucide-react";
 import { formatAmount, reasonLabel } from "@/app/_components/dispute-ui";
 import type { HomeDispute } from "@/lib/dashboard";
@@ -99,6 +99,20 @@ function DisputeCard({ d, href }: { d: HomeDispute; href: string }) {
   );
 }
 
+/** Width each column's content needs; fitColumns shares out the rest. */
+const COL_MIN = { buyer: 230, stage: 175, deadline: 120, call: 135, amount: 110 } as const;
+
+/**
+ * Each column gets its content width plus an equal share of what's left, so the gaps between columns match.
+ * Amount is right-aligned, so it takes no share: extra width there would only open a gap after Sira's call.
+ */
+function fitColumns(api: GridApi<HomeDispute>, width: number) {
+  const keys = Object.keys(COL_MIN) as (keyof typeof COL_MIN)[];
+  const growing = keys.filter((k) => k !== "amount");
+  const spare = Math.max(0, width - keys.reduce((s, k) => s + COL_MIN[k], 0));
+  api.setColumnWidths(keys.map((k) => ({ key: k, newWidth: COL_MIN[k] + (k === "amount" ? 0 : Math.floor(spare / growing.length)) })));
+}
+
 /** Soonest deadline first; disputes without one go last. */
 const deadlineComparator = (a: number | null, b: number | null) => (a ?? Infinity) - (b ?? Infinity);
 
@@ -135,16 +149,14 @@ export function DisputesGrid({
         getQuickFilterText: (p) =>
           [p.data?.buyerName, p.data?.item, p.data?.id, p.data?.sellerName, reasonLabel(p.data?.reason ?? null)].filter(Boolean).join(" "),
         cellRenderer: BuyerCell,
-        minWidth: 200,
-        flex: 1.6,
+        minWidth: COL_MIN.buyer,
       },
       {
         headerName: "Where it stands",
         colId: "stage",
         valueGetter: (p) => (p.data ? stageLabel(p.data) : ""),
         cellRenderer: StageCell,
-        minWidth: 170,
-        flex: 1.2,
+        minWidth: COL_MIN.stage,
       },
       {
         headerName: "Deadline",
@@ -153,16 +165,14 @@ export function DisputesGrid({
         comparator: deadlineComparator,
         cellRenderer: DeadlineCell,
         sort: "asc",
-        minWidth: 115,
-        flex: 0.8,
+        minWidth: COL_MIN.deadline,
       },
       {
         headerName: "Sira's call",
         colId: "call",
         valueGetter: (p) => (p.data ? (callLabel(p.data.report, p.data.currency) ?? "") : ""),
         cellRenderer: CallCell,
-        minWidth: 130,
-        flex: 1,
+        minWidth: COL_MIN.call,
       },
       {
         headerName: "Amount",
@@ -171,8 +181,7 @@ export function DisputesGrid({
         type: "rightAligned",
         valueFormatter: (p) => formatAmount(p.value ?? null, p.data?.currency ?? null),
         cellRenderer: AmountCell,
-        minWidth: 100,
-        flex: 0.7,
+        minWidth: COL_MIN.amount,
       },
     ],
     [],
@@ -248,6 +257,8 @@ export function DisputesGrid({
             if (key === "Enter" && e.data) openDispute(e.data.id);
           }}
           onModelUpdated={(e) => setShown(e.api.getDisplayedRowCount())}
+          // Fires once the table has a width, and again whenever the window resizes
+          onGridSizeChanged={(e) => fitColumns(e.api, e.clientWidth)}
           overlayNoRowsTemplate='<span style="color:#6f7364">No disputes match.</span>'
         />
       </div>
