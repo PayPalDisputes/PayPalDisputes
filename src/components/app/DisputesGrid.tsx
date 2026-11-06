@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import type { ColDef, GridApi, ICellRendererParams } from "ag-grid-community";
 import { Search } from "lucide-react";
 import { formatAmount, reasonLabel } from "@/app/_components/dispute-ui";
 import type { HomeDispute } from "@/lib/dashboard";
@@ -27,7 +27,9 @@ function BuyerCell({ data: d }: Cell) {
   return (
     <span className="flex min-w-0 flex-col gap-[3px] leading-tight">
       <span className="truncate text-fg">{d.buyerName ?? "Unknown buyer"}</span>
-      <span className="truncate text-[13px] text-fg-muted">{d.item ?? (d.sellerName ? d.sellerName : d.id)}</span>
+      <span className="truncate text-[13px] text-fg-muted">
+        {d.item ?? (d.sellerName ? d.sellerName : d.id)} · {reasonLabel(d.reason)}
+      </span>
     </span>
   );
 }
@@ -71,7 +73,7 @@ function AmountCell({ data: d }: Cell) {
 /** Phone layout: one tappable card per dispute instead of a wide grid. */
 function DisputeCard({ d, href }: { d: HomeDispute; href: string }) {
   return (
-    <Link href={href} scroll={false} className="block rounded-xl border border-line bg-canvas p-4 transition-colors active:bg-subtle">
+    <Link href={href} className="block rounded-xl border border-line bg-canvas p-4 transition-colors active:bg-subtle">
       <span className="flex items-start justify-between gap-3">
         <span className="min-w-0">
           <span className="block truncate text-[15px] text-fg">{d.buyerName ?? "Unknown buyer"}</span>
@@ -86,10 +88,29 @@ function DisputeCard({ d, href }: { d: HomeDispute; href: string }) {
           <span className="text-fg-body">{stageLabel(d)}</span>
           <ProgressLine dispute={d} />
         </span>
-        <span className="text-fg-body">{callLabel(d.report, d.currency) ?? ""}</span>
+        <span className="flex flex-col items-end gap-1">
+          <span className="text-fg-body">{callLabel(d.report, d.currency) ?? ""}</span>
+          {d.status === "WAITING_FOR_SELLER_RESPONSE" && dueLabel(d.daysLeft) && (
+            <span className={(d.daysLeft ?? 99) <= 0 ? "font-medium text-bad" : "text-fg-muted"}>{dueLabel(d.daysLeft)}</span>
+          )}
+        </span>
       </span>
     </Link>
   );
+}
+
+/** Width each column's content needs; fitColumns shares out the rest. */
+const COL_MIN = { buyer: 230, stage: 175, deadline: 120, call: 135, amount: 110 } as const;
+
+/**
+ * Each column gets its content width plus an equal share of what's left, so the gaps between columns match.
+ * Amount is right-aligned, so it takes no share: extra width there would only open a gap after Sira's call.
+ */
+function fitColumns(api: GridApi<HomeDispute>, width: number) {
+  const keys = Object.keys(COL_MIN) as (keyof typeof COL_MIN)[];
+  const growing = keys.filter((k) => k !== "amount");
+  const spare = Math.max(0, width - keys.reduce((s, k) => s + COL_MIN[k], 0));
+  api.setColumnWidths(keys.map((k) => ({ key: k, newWidth: COL_MIN[k] + (k === "amount" ? 0 : Math.floor(spare / growing.length)) })));
 }
 
 /** Soonest deadline first; disputes without one go last. */
@@ -101,20 +122,18 @@ const deadlineComparator = (a: number | null, b: number | null) => (a ?? Infinit
  */
 export function DisputesGrid({
   rows,
-  listHref,
   csvName = "disputes",
   initialQuery = "",
 }: {
   rows: HomeDispute[];
-  /** The current list URL; opening a dispute adds `open=<id>` to it so the side panel shows over the list. */
-  listHref: string;
   csvName?: string;
   /** Pre-filled search, e.g. from the top bar (`?q=`). */
   initialQuery?: string;
 }) {
   const router = useRouter();
-  const openHref = (id: string) => `${listHref}${listHref.includes("?") ? "&" : "?"}open=${encodeURIComponent(id)}`;
-  const openDispute = (id: string) => router.push(openHref(id), { scroll: false });
+  // Opening a dispute goes straight to its full page (no side panel first).
+  const openHref = (id: string) => `/disputes/${encodeURIComponent(id)}`;
+  const openDispute = (id: string) => router.push(openHref(id));
   const gridRef = useRef<AgGridReact<HomeDispute>>(null);
   const [query, setQuery] = useState(initialQuery);
   const [shown, setShown] = useState(rows.length);
@@ -125,30 +144,17 @@ export function DisputesGrid({
         headerName: "Buyer",
         colId: "buyer",
         valueGetter: (p) => p.data?.buyerName ?? "Unknown buyer",
-        getQuickFilterText: (p) => [p.data?.buyerName, p.data?.item, p.data?.id, p.data?.sellerName].filter(Boolean).join(" "),
+        getQuickFilterText: (p) =>
+          [p.data?.buyerName, p.data?.item, p.data?.id, p.data?.sellerName, reasonLabel(p.data?.reason ?? null)].filter(Boolean).join(" "),
         cellRenderer: BuyerCell,
-        filter: "agTextColumnFilter",
-        pinned: "left",
-        minWidth: 200,
-        flex: 1.3,
-      },
-      {
-        headerName: "Reason",
-        colId: "reason",
-        valueGetter: (p) => reasonLabel(p.data?.reason ?? null),
-        filter: "agTextColumnFilter",
-        cellClass: "text-fg-body",
-        minWidth: 140,
-        flex: 1,
+        minWidth: COL_MIN.buyer,
       },
       {
         headerName: "Where it stands",
         colId: "stage",
         valueGetter: (p) => (p.data ? stageLabel(p.data) : ""),
         cellRenderer: StageCell,
-        filter: "agTextColumnFilter",
-        minWidth: 190,
-        flex: 1.2,
+        minWidth: COL_MIN.stage,
       },
       {
         headerName: "Deadline",
@@ -156,18 +162,15 @@ export function DisputesGrid({
         valueGetter: (p) => (p.data?.status === "WAITING_FOR_SELLER_RESPONSE" ? p.data.daysLeft : null),
         comparator: deadlineComparator,
         cellRenderer: DeadlineCell,
-        filter: "agNumberColumnFilter",
         sort: "asc",
-        minWidth: 130,
+        minWidth: COL_MIN.deadline,
       },
       {
         headerName: "Sira's call",
         colId: "call",
         valueGetter: (p) => (p.data ? (callLabel(p.data.report, p.data.currency) ?? "") : ""),
         cellRenderer: CallCell,
-        filter: "agTextColumnFilter",
-        minWidth: 150,
-        flex: 1,
+        minWidth: COL_MIN.call,
       },
       {
         headerName: "Amount",
@@ -176,8 +179,7 @@ export function DisputesGrid({
         type: "rightAligned",
         valueFormatter: (p) => formatAmount(p.value ?? null, p.data?.currency ?? null),
         cellRenderer: AmountCell,
-        filter: "agNumberColumnFilter",
-        minWidth: 110,
+        minWidth: COL_MIN.amount,
       },
     ],
     [],
@@ -186,7 +188,7 @@ export function DisputesGrid({
   const defaultColDef = useMemo<ColDef>(
     () => ({
       sortable: true,
-      resizable: true,
+      resizable: false,
       cellStyle: (p) => ({ display: "flex", alignItems: "center", justifyContent: p.colDef.type === "rightAligned" ? "flex-end" : "flex-start" }),
     }),
     [],
@@ -223,7 +225,7 @@ export function DisputesGrid({
         </button>
       </div>
 
-      <ul className="space-y-2 md:hidden">
+      <ul className="space-y-2 lg:hidden">
         {phoneRows.map((d) => (
           <li key={d.id}>
             <DisputeCard d={d} href={openHref(d.id)} />
@@ -231,7 +233,7 @@ export function DisputesGrid({
         ))}
       </ul>
 
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <AgGridReact<HomeDispute>
           ref={gridRef}
           theme={gridTheme}
@@ -241,6 +243,7 @@ export function DisputesGrid({
           getRowId={(p) => p.data.id}
           quickFilterText={query}
           domLayout="autoHeight"
+          suppressHorizontalScroll
           rowHeight={64}
           pagination={rows.length > 25}
           paginationPageSize={25}
@@ -252,6 +255,8 @@ export function DisputesGrid({
             if (key === "Enter" && e.data) openDispute(e.data.id);
           }}
           onModelUpdated={(e) => setShown(e.api.getDisplayedRowCount())}
+          // Fires once the table has a width, and again whenever the window resizes
+          onGridSizeChanged={(e) => fitColumns(e.api, e.clientWidth)}
           overlayNoRowsTemplate='<span style="color:#6f7364">No disputes match.</span>'
         />
       </div>

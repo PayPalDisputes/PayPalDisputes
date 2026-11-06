@@ -22,35 +22,40 @@ export function ChartCard({
   takeaway?: string;
   /** What the chart shows: the measure and what the colours mean. */
   description: string;
-  /** Rows for the "Show data" table, so values are never colour- or hover-only. */
+  /** The values, for screen readers, so they are never colour- or hover-only. */
   table: { label: string; value: string }[];
   className?: string;
   children: React.ReactNode;
 }) {
   return (
     <section className={cn("flex flex-col rounded-xl border border-line bg-canvas p-6", className)}>
-      <h3 className="text-[15px] font-[480] text-fg">{title}</h3>
-      {takeaway && <p className="mt-1.5 text-[14px] leading-[21px] text-fg">{takeaway}</p>}
-      <p className="mt-1 text-[12.5px] leading-[18px] text-fg-muted">{description}</p>
+      {takeaway ? (
+        <>
+          {/* Answer first: the question is a small label and the answer is the headline. */}
+          <h3 className="text-[13px] text-fg-muted">{title}</h3>
+          <p className="mt-1 text-[18px] leading-[25px] font-[480] text-fg">{takeaway}</p>
+        </>
+      ) : (
+        <>
+          <h3 className="text-[15px] font-[480] text-fg">{title}</h3>
+          <p className="mt-1 text-[12.5px] leading-[18px] text-fg-muted">{description}</p>
+        </>
+      )}
       <div className="mt-3 flex-1">{children}</div>
-      <details className="group mt-2 text-[12px]">
-        <summary className="cursor-pointer list-none text-fg-muted hover:text-fg [&::-webkit-details-marker]:hidden">
-          <span className="group-open:hidden">Show data</span>
-          <span className="hidden group-open:inline">Hide data</span>
-        </summary>
-        <table className="mt-2 w-full text-left">
-          <tbody className="divide-y divide-line-subtle">
+      {/* No "Show data" button: the bars carry their numbers. Screen readers still get the explainer and the values. */}
+      <div className="sr-only">
+        {takeaway && <p>{description}</p>}
+        <table>
+          <tbody>
             {table.map((r) => (
               <tr key={r.label}>
-                <th scope="row" className="py-1.5 font-normal text-fg-body">
-                  {r.label}
-                </th>
-                <td className="py-1.5 text-right font-medium text-fg tabular-nums">{r.value}</td>
+                <th scope="row">{r.label}</th>
+                <td>{r.value}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </details>
+      </div>
     </section>
   );
 }
@@ -165,13 +170,13 @@ export function ReasonChart({ reasons }: { reasons: { label: string; value: numb
 
 const RECOMMENDATION_COLORS = { Fight: COLORS.fight, Settle: COLORS.settle, Refund: COLORS.refund } as const;
 
-/** What the agent recommends across open disputes. Each option keeps its own colour; the axis names it too. */
+/** What Sira recommends across open disputes. Each option keeps its own colour; the axis names it too. */
 export function RecommendationChart({ mix }: { mix: { label: "Fight" | "Settle" | "Refund"; value: number }[] }) {
   const total = mix.reduce((s, m) => s + m.value, 0);
   const data = mix.map((m) => ({ ...m, color: RECOMMENDATION_COLORS[m.label] }));
   return (
     <ChartCard
-      title="What the agent recommends"
+      title="What Sira recommends"
       description="The agent's call on open disputes. You still approve every response."
       table={mix.map((m) => ({ label: m.label, value: `${m.value}${total ? ` (${Math.round((m.value / total) * 100)}%)` : ""}` }))}
     >
@@ -286,8 +291,8 @@ export function OutcomeChart({ bars }: { bars: OutcomeBar[] }) {
       takeaway={
         total === 0
           ? undefined
-          : `You won ${won} of ${total} resolved disputes` +
-            (fought && fought.won + fought.settled + fought.lost > 0 ? `, and ${fought.won} of ${fought.won + fought.settled + fought.lost} you fought.` : ".")
+          : `Won ${won} of ${total}` +
+            (fought && fought.won + fought.settled + fought.lost > 0 ? ` · ${fought.won} of ${fought.won + fought.settled + fought.lost} you fought` : "")
       }
       description="Each bar is what you did; its colours show how PayPal closed those disputes: won, settled or lost."
       table={bars.map((b) => ({ label: b.label, value: `${b.won} won · ${b.settled} settled · ${b.lost} lost` }))}

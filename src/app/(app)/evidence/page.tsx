@@ -33,7 +33,7 @@ export default async function EvidencePage() {
               <span className="font-medium text-bad">
                 {missingTracking} {missingTracking === 1 ? "order is" : "orders are"} missing tracking.
               </span>{" "}
-              <span className="text-fg-body">Without it, &ldquo;not received&rdquo; claims are usually lost.</span>
+              <span className="text-fg-body">Without it, &ldquo;not received&rdquo; and &ldquo;unauthorised&rdquo; claims are usually lost.</span>
             </p>
           )}
           {demo && <p className="text-fg-muted">You&apos;re in the demo account: try editing and importing, but nothing is saved.</p>}

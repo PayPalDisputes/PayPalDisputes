@@ -1,5 +1,6 @@
 import type { ShippingStatus } from "@/lib/evidence-shared";
 import { supabaseAdmin } from "@/lib/supabase";
+import { trackingUrl } from "@/lib/tracking-url";
 
 // Every order's delivery, for the Deliveries section on Home: where each parcel is, as of the
 // carrier's last scan, with a link to the carrier's own live tracking page.
@@ -22,20 +23,6 @@ export type Delivery = {
 };
 
 export type DeliveryCounts = Record<"in_transit" | "delivered" | "not_moving" | "returned", number>;
-
-const TRACKING_URL: Record<string, (n: string) => string> = {
-  usps: (n) => `https://tools.usps.com/go/TrackConfirmAction?tLabels=${n}`,
-  ups: (n) => `https://www.ups.com/track?tracknum=${n}`,
-  fedex: (n) => `https://www.fedex.com/fedextrack/?trknbr=${n}`,
-  dhl: (n) => `https://www.dhl.com/global-en/home/tracking.html?tracking-id=${n}`,
-  "canada post": (n) => `https://www.canadapost-postescanada.ca/track-reperage/en#/search?searchFor=${n}`,
-};
-
-export function trackingUrl(carrier: string | null, trackingNumber: string | null): string | null {
-  if (!carrier || !trackingNumber) return null;
-  const url = TRACKING_URL[carrier.trim().toLowerCase()];
-  return url ? url(encodeURIComponent(trackingNumber)) : null;
-}
 
 /** The seller's orders, newest shipment first, and how many are in each state. `sellerId` undefined means all (demo). */
 export async function getDeliveries(sellerId?: string, limit = 8): Promise<{ deliveries: Delivery[]; counts: DeliveryCounts; total: number }> {

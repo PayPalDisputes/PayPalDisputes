@@ -4,10 +4,10 @@ import { AgCharts } from "ag-charts-react";
 import type { AgCartesianChartOptions } from "ag-charts-community";
 import { baseChart, COLORS } from "./ag-setup";
 
-export type RiskPoint = { label: string; value: number };
+export type MoneyPoint = { label: string; value: number };
 
-/** Amount at risk over the last 30 days: one soft blue area, like Mercury's balance card. */
-export function AtRiskChart({ points, currency }: { points: RiskPoint[]; currency: string }) {
+/** Money over the last 30 days as one soft olive area (Home uses it for money kept, which only ever climbs). */
+export function MoneyChart({ points, currency, name, height = 170 }: { points: MoneyPoint[]; currency: string; name: string; height?: number | string }) {
   const money = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(v);
   const options = {
     ...baseChart(),
@@ -18,7 +18,7 @@ export function AtRiskChart({ points, currency }: { points: RiskPoint[]; currenc
         type: "area",
         xKey: "label",
         yKey: "value",
-        yName: "At risk",
+        yName: name,
         stroke: COLORS.ink,
         strokeWidth: 1.6,
         fill: {
@@ -30,7 +30,7 @@ export function AtRiskChart({ points, currency }: { points: RiskPoint[]; currenc
         },
         fillOpacity: 0.16,
         marker: { enabled: false },
-        tooltip: { renderer: ({ datum }: { datum: RiskPoint }) => ({ heading: datum.label, data: [{ label: "At risk", value: money(datum.value) }] }) },
+        tooltip: { renderer: ({ datum }: { datum: MoneyPoint }) => ({ heading: datum.label, data: [{ label: name, value: money(datum.value) }] }) },
       },
     ],
     axes: {
@@ -39,12 +39,12 @@ export function AtRiskChart({ points, currency }: { points: RiskPoint[]; currenc
         position: "bottom",
         line: { enabled: false },
         gridLine: { enabled: false },
-        // One date a week (plus today) so labels never crowd or wrap.
         label: {
           color: COLORS.muted,
           fontSize: 12,
           avoidCollisions: false,
-          formatter: ({ value, index }: { value: string; index: number }) => (index % 7 === 2 || index === points.length - 1 ? value : ""),
+          // One date a week; the last point is today, and the chart's label is dropped at the edge anyway.
+          formatter: ({ value, index }: { value: string; index: number }) => (index % 7 === 2 && index < points.length - 1 ? value : ""),
         },
         paddingInner: 0,
         paddingOuter: 0,
@@ -54,7 +54,7 @@ export function AtRiskChart({ points, currency }: { points: RiskPoint[]; currenc
     legend: { enabled: false },
   } as unknown as AgCartesianChartOptions;
   return (
-    <div className="h-[170px]" role="img" aria-label={`Amount at risk over the last 30 days, now ${money(points.at(-1)?.value ?? 0)}`}>
+    <div style={{ height }} role="img" aria-label={`${name} over the last 30 days, now ${money(points.at(-1)?.value ?? 0)}`}>
       <AgCharts options={options} style={{ height: "100%" }} />
     </div>
   );

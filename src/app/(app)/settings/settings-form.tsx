@@ -59,7 +59,7 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
         <legend className="sr-only">Easy claims</legend>
         <Row
           title="Send easy claims automatically"
-          description="Easy claims are ones the facts settle on their own. Sira always prepares them instantly from your templates; turn this on and it sends them too. Anything else waits for you."
+          description="When a dispute matches one of the cases below, Sira submits the response to PayPal for you, written from your templates. Off: Sira prepares it and waits for you to approve it. Anything else always waits for you."
         >
           <div className="flex flex-col gap-3">
             <Switch name="easyClaimsAuto" checked={easyAuto} onChange={setEasyAuto} />
@@ -70,7 +70,7 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
             </ul>
           </div>
         </Row>
-        <Row title="Auto-refund small claims" description="Sira refunds small claims straight away, unless you already refunded the buyer or PayPal doesn't allow it. Everything else still waits for you.">
+        <Row title="Auto-refund small claims" description="For disputes under this amount, Sira accepts the claim and PayPal refunds the buyer in full from your balance. The buyer usually keeps the item. Skipped if you already refunded or PayPal doesn't allow it.">
           <div className="flex flex-col gap-3.5">
             <Switch name="autoRefundEnabled" checked={auto} onChange={setAuto} />
             <label className="flex items-center gap-2.5 text-[14px] text-fg-body">
@@ -112,8 +112,8 @@ export function SettingsForm({ policy, readOnly }: { policy: SellerPolicy; readO
         <div className="border-b border-line-subtle py-5">
           <h3 className="text-[15px] font-[480] text-fg">Response templates</h3>
           <p className="mt-1 text-[13.5px] leading-[21px] text-fg-body">
-            Everything Sira sends to PayPal or your buyers comes from these, filled in with the case&apos;s facts. Words in {"{braces}"} are filled in for you; a line
-            whose fact this order doesn&apos;t have is left out. You can still edit the text on each dispute before it&apos;s sent.
+            Everything Sira sends to PayPal or your buyers starts from these. Words in {"{braces}"} are filled in from the order. You can still edit the text on
+            each dispute before it&apos;s sent.
           </p>
         </div>
         {TEMPLATES.map((t, i) => (

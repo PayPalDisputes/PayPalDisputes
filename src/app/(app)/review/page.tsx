@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { ChevronLeft } from "lucide-react";
-import { formatAmount, reasonLabel } from "@/app/_components/dispute-ui";
+import { formatAmount } from "@/app/_components/dispute-ui";
 import { requireSession, sellerScope, sessionMode } from "@/lib/auth";
-import { getDisputeDetail, getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
-import { callLabel, dueLabel } from "@/lib/dispute-stage";
-import { ReviewDeck, type ReviewCard } from "./review-deck";
+import { getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
+import { DisputeDetail } from "../disputes/[id]/detail-view";
+import { ReviewTransition } from "./review-transition";
 
 export const metadata: Metadata = { title: "Review drafts · Sira" };
 
 const draftReady = (d: HomeDispute) => d.status !== "RESOLVED" && d.report?.status === "pending_review" && d.report.current;
 
-/** Review mode: every draft waiting for approval, one at a time, most urgent first (Mock 2). */
+/** Review mode: every draft waiting for approval, one at a time, most urgent first, each on its full dispute page. */
 export default async function ReviewPage({ searchParams }: PageProps<"/review">) {
   await connection();
   const session = await requireSession();
@@ -23,53 +23,6 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
   const current = queue[index];
   const next = queue[index + 1];
   const mode = sessionMode(session);
-
-  const detail = current ? await getDisputeDetail(current.id) : null;
-  const decision = detail?.decision ?? null;
-  const card: ReviewCard | null =
-    detail && decision
-      ? (() => {
-          const a = decision.assessment;
-          const o = detail.order;
-          const delivery = !o
-            ? "No order record in Sira."
-            : o.shippingStatus === "DELIVERED"
-              ? `Delivered${o.deliveredAt ? ` ${new Date(o.deliveredAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""} by ${o.carrier ?? "the carrier"}${o.signatureConfirmed ? ", signed for" : ""}.`
-              : o.trackingNumber
-                ? `Shipped with ${o.carrier ?? "the carrier"}${o.shippedAt ? ` on ${new Date(o.shippedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}, not delivered yet.`
-                : "Shipped without a tracking number.";
-          const facts: { label: string; value: string }[] = [
-            { label: "Delivery", value: delivery },
-            ...(detail.buyerHistory ? [{ label: "Buyer history", value: detail.buyerHistory.summary }] : []),
-            ...a.key_evidence.slice(0, 3).map((value, n) => ({ label: n === 0 ? "Supports" : "", value })),
-            ...a.missing_evidence.slice(0, 2).map((value, n) => ({ label: n === 0 ? "Missing" : "", value })),
-          ];
-          const amount = formatAmount(detail.amount, detail.currency);
-          const offer = a.settle_amount != null ? formatAmount(a.settle_amount, detail.currency) : null;
-          return {
-            disputeId: detail.id,
-            decisionId: decision.id,
-            buyerName: detail.raw.disputed_transactions?.[0]?.buyer?.name ?? "Buyer",
-            item: detail.raw.disputed_transactions?.[0]?.items?.[0]?.item_name ?? "Order",
-            meta: [
-              reasonLabel(detail.reason),
-              detail.raw.create_time ? `opened ${new Date(detail.raw.create_time).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : null,
-              dueLabel(detail.daysLeft)?.toLowerCase(),
-            ]
-              .filter(Boolean)
-              .join(" · "),
-            amount: detail.amount,
-            currency: detail.currency,
-            recommendation: a.recommendation,
-            call: a.recommendation === "refund" ? `Refund ${amount}` : (callLabel({ recommendation: a.recommendation, settleAmount: a.settle_amount }, detail.currency) ?? ""),
-            summary: a.reasoning,
-            facts,
-            drafts: a.drafts,
-            refundAmount: amount,
-            offerAmount: offer,
-          };
-        })()
-      : null;
 
   return (
     <div className="flex min-h-full flex-col">
@@ -87,15 +40,19 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
         <div className="h-full bg-accent transition-[width] duration-300" style={{ width: `${queue.length ? (Math.min(index, queue.length) / queue.length) * 100 : 0}%` }} />
       </div>
 
-      {card ? (
-        <ReviewDeck
-          key={card.decisionId}
-          card={card}
-          mode={mode}
-          nextHref={`/review?i=${index + 1}`}
-          first={index === 0}
-          upNext={next ? { name: next.buyerName ?? "Buyer", amount: formatAmount(next.amount, next.currency) } : null}
-        />
+      {current ? (
+        // The full dispute, with the decision bar (Skip · Edit · Approve) pinned along the bottom.
+        <ReviewTransition key={current.id} first={index === 0}>
+          <DisputeDetail
+            id={current.id}
+            review={{
+              upNext: next ? { name: next.buyerName ?? "Buyer", amount: formatAmount(next.amount, next.currency) } : null,
+              skipHref: `/review?i=${index + 1}`,
+              // Live: an approved draft leaves the queue, so the next one moves into this spot.
+              doneHref: mode === "live" ? `/review?i=${index}` : `/review?i=${index + 1}`,
+            }}
+          />
+        </ReviewTransition>
       ) : (
         <section aria-labelledby="done-title" className="mx-auto flex w-full max-w-[720px] flex-col gap-3 px-8 py-20">
           <h1 id="done-title" className="text-[28px] font-[480] tracking-[0.01em] text-fg">

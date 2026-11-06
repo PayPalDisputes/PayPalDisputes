@@ -5,15 +5,7 @@ import { DRAFT_LABELS, EvidencePackLink, formatAmount, RECOMMENDATION } from "@/
 import { AlertTriangle, CheckCircle2, PenLine, XCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ChatPanel } from "./chat-panel";
-import { ReviewForm } from "./review";
-
-const STATUS_LABELS: Record<Decision["status"], string> = {
-  pending_review: "Waiting for your review",
-  approved: "Approved",
-  rejected: "Rejected",
-  submitted: "Sent to PayPal",
-  failed: "Sending failed",
-};
+import { ReviewForm, type ReviewBarProps } from "./review";
 
 /** Risk and urgency as coloured words (no pills): high red, medium amber, low green. */
 const LEVEL_TEXT = { high: "text-bad", medium: "text-warn", low: "text-ok" } as const;
@@ -132,6 +124,8 @@ export function AssessmentReport({
   currency,
   disputeStatus,
   mode,
+  chat = "inline",
+  review,
 }: {
   disputeId: string;
   decision: Decision | null;
@@ -141,6 +135,10 @@ export function AssessmentReport({
   currency: string | null;
   disputeStatus: string | null;
   mode: ActionsMode;
+  /** "none" when the page shows Ask Sira as the floating chat button instead. */
+  chat?: "inline" | "none";
+  /** Review drafts: the Approve/Discard buttons move into the decision bar along the bottom. */
+  review?: ReviewBarProps;
 }) {
   if (!decision) {
     return (
@@ -166,8 +164,8 @@ export function AssessmentReport({
 
   const checked = [
     ...(a.investigation ?? []).map((t) => ({ label: TOOL_LABELS[t.tool] ?? t.tool, value: t.summary, muted: !t.ok })),
-    ...a.key_evidence.map((value, i) => ({ label: i === 0 ? "Supports" : "", value })),
-    ...a.missing_evidence.map((value, i) => ({ label: i === 0 ? "Missing" : "", value, muted: true })),
+    ...a.key_evidence.map((value, i) => ({ label: i === 0 ? "In your favour" : "", value })),
+    ...a.missing_evidence.map((value, i) => ({ label: i === 0 ? "Not on file" : "", value, muted: true })),
   ];
 
   return (
@@ -200,10 +198,6 @@ export function AssessmentReport({
           <span title={a.risk_reason}>
             <span className="text-fg-muted">Risk if you fight </span>
             <span className={cn("font-medium", LEVEL_TEXT[a.risk])}>{LEVEL_WORD[a.risk]}</span>
-          </span>
-          <span>
-            <span className="text-fg-muted">Confidence </span>
-            <span className="font-medium text-fg">{Math.round(a.confidence * 100)}%</span>
           </span>
         </div>
         <p className="mt-2 text-[13px] leading-5 text-fg-muted">
@@ -250,7 +244,7 @@ export function AssessmentReport({
       >
         {reviewable ? (
           <>
-            {mode === "demo" && <p className="mb-3 text-[13px] text-fg-muted">Demo mode: try Approve or Reject freely. Nothing is sent to PayPal or saved.</p>}
+            {mode === "demo" && <p className="mb-3 text-[13px] text-fg-muted">Demo mode: try Approve freely. Nothing is sent to PayPal or saved.</p>}
             {decision.status === "failed" && <SentActions actions={decision.actions} />}
             <ReviewForm
               key={a.drafts.map((d) => d.text).join("|")}
@@ -260,6 +254,8 @@ export function AssessmentReport({
               mode={mode}
               refundAmount={formatAmount(amount, currency)}
               offerAmount={a.settle_amount !== null ? formatAmount(a.settle_amount, currency) : null}
+              recommendation={a.recommendation}
+              bar={review}
             />
           </>
         ) : (
@@ -287,13 +283,7 @@ export function AssessmentReport({
         )}
       </Block>
 
-      <ChatPanel disputeId={disputeId} />
-
-      <p className="text-[12px] text-fg-muted">
-        {STATUS_LABELS[decision.status] ?? decision.status} · assessed {assessedAt}
-        {decision.model && ` · ${decision.model}`}
-        {decision.promptVersion && ` · prompt ${decision.promptVersion}`}
-      </p>
+      {chat === "inline" && <ChatPanel key={disputeId} disputeId={disputeId} />}
     </div>
   );
 }

@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { Amount } from "@/components/app/bits";
 import { DisputesGrid } from "@/components/app/DisputesGrid";
 import { Button } from "@/components/ui/Button";
-import { canAccessDispute, requireSession, sellerScope, sessionMode } from "@/lib/auth";
-import { getDisputeDetail, getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
-import { Suspense } from "react";
-import { SidePanelSkeleton } from "@/components/app/SidePanel";
-import { DisputePanel } from "./panel";
+import { requireSession, sellerScope } from "@/lib/auth";
+import { getHomeDataCached, type HomeDispute } from "@/lib/dashboard";
 import { cn } from "@/lib/cn";
 
 export const metadata: Metadata = { title: "Disputes · Sira" };
@@ -26,8 +23,6 @@ const VIEWS = {
     label: "Due this week",
     match: (d: HomeDispute) => d.status === "WAITING_FOR_SELLER_RESPONSE" && d.daysLeft !== null && d.daysLeft <= 7,
   },
-  "high-value": { label: "Over $200", match: (d: HomeDispute) => d.status !== "RESOLVED" && (d.amount ?? 0) > 200 },
-  chargebacks: { label: "Chargebacks", match: (d: HomeDispute) => d.stage === "CHARGEBACK" || d.stage === "ARBITRATION" },
   resolved: { label: "Resolved", match: (d: HomeDispute) => d.status === "RESOLVED" },
 } as const;
 type View = keyof typeof VIEWS;
@@ -40,6 +35,8 @@ const byUrgency = (a: HomeDispute, b: HomeDispute) =>
 export default async function DisputesPage({ searchParams }: PageProps<"/disputes">) {
   await connection(); // always read fresh rows from Supabase, never a build-time snapshot
   const { view: rawView, open, q } = await searchParams;
+  // Old links opened a side panel with ?open=<id>; disputes now always open on their own page.
+  if (typeof open === "string") redirect(`/disputes/${encodeURIComponent(open)}`);
   const session = await requireSession();
   const { disputes } = await getHomeDataCached(sellerScope(session));
   // Old links used ?view=approval for drafts; they now land on the merged tab.
@@ -47,24 +44,14 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
   const needsYou = disputes.filter(VIEWS["needs-response"].match).length;
   const view: View =
     typeof requested === "string" && requested in VIEWS ? (requested as View) : needsYou > 0 ? "needs-response" : "all";
-  const listHref = `/disputes?view=${view}`;
   const rows = disputes.filter(VIEWS[view].match).sort(byUrgency);
 
-  const open_ = disputes.filter((d) => d.status !== "RESOLVED");
   const drafts = disputes.filter(draftReady).length;
-  const atRisk = new Map<string, number>();
-  for (const d of open_) atRisk.set(d.currency ?? "USD", (atRisk.get(d.currency ?? "USD") ?? 0) + (d.amount ?? 0));
-  const [riskCurrency, riskTotal] = [...atRisk.entries()].sort((a, b) => b[1] - a[1])[0] ?? ["USD", 0];
 
   return (
     <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 px-5 pt-8 pb-20 md:px-10 md:pt-9">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="text-[24px] font-[480] tracking-[0.01em] text-fg">Disputes</h1>
-          <p className="text-[14px] text-fg-muted">
-            {open_.length} open · <Amount amount={riskTotal} currency={riskCurrency} /> at risk · {needsYou} need your response
-          </p>
-        </div>
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-[24px] font-[480] tracking-[0.01em] text-fg">Disputes</h1>
         {drafts > 0 && (
           <Button href="/review" prefetch={false} className="h-[38px] px-4">
             Review {drafts} draft{drafts === 1 ? "" : "s"}
@@ -87,7 +74,6 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
                 active ? "border-fg text-fg" : "border-transparent text-fg-body hover:text-fg",
               )}
             >
-              {/* Words in the label keep Inter's digits ("Over $200"); only the count is monospaced */}
               <span className="font-[family-name:var(--font-inter)]">{VIEWS[key].label}</span>
               <span className="text-fg-muted tabular-nums">{count}</span>
             </Link>
@@ -98,29 +84,15 @@ export default async function DisputesPage({ searchParams }: PageProps<"/dispute
       {rows.length === 0 ? (
         <p className="rounded-xl border border-dashed border-line-strong p-10 text-center text-[14px] text-fg-body">
           {disputes.length === 0 ? (
-            <>
-              No disputes yet. Run <code className="font-mono">npm run sync</code> to pull them from PayPal.
-            </>
+"No disputes yet. New PayPal disputes show up here automatically."
           ) : (
-            "Nothing here right now."
+            "No disputes in this view."
           )}
         </p>
       ) : (
-        <DisputesGrid rows={rows} listHref={listHref} csvName={`sira-disputes-${view}`} initialQuery={typeof q === "string" ? q : ""} />
+        <DisputesGrid rows={rows} csvName={`sira-disputes-${view}`} initialQuery={typeof q === "string" ? q : ""} />
       )}
 
-      {/* The panel opens at once with a skeleton; the dispute streams in behind it */}
-      {typeof open === "string" && (
-        <Suspense key={open} fallback={<SidePanelSkeleton closeHref={listHref} fullHref={`/disputes/${encodeURIComponent(open)}`} />}>
-          <OpenDispute id={open} listHref={listHref} mode={sessionMode(session)} />
-        </Suspense>
-      )}
     </div>
   );
-}
-
-/** Loads one dispute for the side panel (only if this session may see it). */
-async function OpenDispute({ id, listHref, mode }: { id: string; listHref: string; mode: ReturnType<typeof sessionMode> }) {
-  const dispute = (await canAccessDispute(id)) ? await getDisputeDetail(id) : null;
-  return dispute ? <DisputePanel dispute={dispute} listHref={listHref} mode={mode} /> : null;
 }
