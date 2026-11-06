@@ -38,8 +38,10 @@ function PrimaryButton({ href, children, inverted }: { href: string; children: R
 }
 
 function SecondaryButton({ href, children, inverted }: { href: string; children: React.ReactNode; inverted?: boolean }) {
+  // Plain link for routes that set a cookie: a <Link> would prefetch them and sign the visitor in just by viewing the page.
+  const Tag = href.startsWith("/api/") ? "a" : Link;
   return (
-    <Link
+    <Tag
       href={href}
       className={cn(
         "inline-flex h-11 items-center rounded-md px-5 text-[14.5px]",
@@ -47,7 +49,7 @@ function SecondaryButton({ href, children, inverted }: { href: string; children:
       )}
     >
       {children}
-    </Link>
+    </Tag>
   );
 }
 

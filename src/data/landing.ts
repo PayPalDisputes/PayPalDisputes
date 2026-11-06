@@ -4,7 +4,7 @@ export const landing = {
   hero: {
     title: ["Your disputes,", "settled in seconds"],
     body: "AI dispute desk for PayPal sellers.",
-    primary: { label: "Open dashboard", href: "/dashboard" },
+    primary: { label: "Open dashboard", href: "/signin" },
     secondary: { label: "Try the demo", href: "/api/auth/demo" },
     /** Factual credit line under the buttons: Sira reads and answers cases through PayPal's Disputes API. */
     builtOn: { label: "Built on the", name: "PayPal", product: "Disputes API" },
@@ -66,7 +66,7 @@ export const landing = {
   how: {
     lead: "Sira",
     title: "drafts every response. You decide what gets sent.",
-    cta: { label: "Open dashboard", href: "/dashboard" },
+    cta: { label: "Open dashboard", href: "/signin" },
     /** The scroll-through walkthrough: one example dispute, seven steps. Each id has a scene in ProcessScenes. */
     steps: [
       {
