@@ -7,7 +7,7 @@ export const site = {
   tagline: "Your PayPal disputes, settled in seconds.",
   description:
     "Sira reads every PayPal dispute, recommends whether to fight, refund or settle, and drafts the response for you to approve.",
-  appHref: "/dashboard",
+  appHref: "/signin",
   sdkPackage: "@sira/sdk",
   announcement: {
     enabled: true,
@@ -74,7 +74,6 @@ export const nav: NavItem[] = [
       },
     ],
   },
-  { label: "Pricing", href: "/pricing" },
 ];
 
 export const footer = {
@@ -85,7 +84,6 @@ export const footer = {
         { label: "Dashboard", href: "/dashboard" },
         { label: "Assessment", href: "/#assessment" },
         { label: "Evidence", href: "/#evidence" },
-        { label: "Pricing", href: "/pricing" },
       ],
     },
     {

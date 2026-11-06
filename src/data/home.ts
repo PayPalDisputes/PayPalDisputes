@@ -115,7 +115,7 @@ export const finalCta = {
   title: "Every dispute.\nOne calm queue.",
   body: "Connect a PayPal account and see what Sira recommends for your open cases.",
   primary: { label: "Open dashboard", href: "/dashboard" },
-  secondary: { label: "View pricing", href: "/pricing" },
+  secondary: { label: "Try the demo", href: "/api/auth/demo" },
 };
 
 /* ------------------------------------------------------------------ */

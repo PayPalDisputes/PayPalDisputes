@@ -9,9 +9,9 @@ const footerColumns = [
   {
     title: "Product",
     links: [
-      { label: "Dashboard", href: "/dashboard" },
-      { label: "Disputes", href: "/disputes" },
-      { label: "Shipping proof", href: "/evidence" },
+      { label: "Dashboard", href: "/signin" },
+      { label: "Disputes", href: "/signin" },
+      { label: "Shipping proof", href: "/signin" },
     ],
   },
 ];
